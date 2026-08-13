@@ -156,6 +156,23 @@
       "subscribers": "{{count}} iscritto",
       "subscribers_other": "{{count}} iscritti"
     },
+    "newChat": {
+      "trigger": "Nuova conversazione",
+      "title": "Avvia una nuova conversazione",
+      "nameLabel": "Nome del contatto (facoltativo)",
+      "namePlaceholder": "es: Mario Rossi",
+      "phoneLabel": "Numero di telefono",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "Includi il prefisso internazionale, es: +5520966505354",
+      "phoneInvalid": "Inserisci un numero di telefono valido con prefisso internazionale",
+      "messageLabel": "Messaggio",
+      "attachmentLabel": "Allegato (audio, documento, immagine, video)",
+      "submit": "Avvia conversazione",
+      "numberNotFound": "Questo numero non è su WhatsApp",
+      "contactSaveFailed": "Impossibile salvare il contatto, ma il messaggio verrà comunque inviato",
+      "created": "Conversazione avviata",
+      "createFailed": "Impossibile avviare la conversazione"
+    },
     "errors": {
       "loadSessions": "Impossibile caricare le sessioni",
       "loadChats": "Impossibile caricare le chat",

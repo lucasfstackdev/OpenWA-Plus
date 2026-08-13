@@ -856,6 +856,13 @@ export const contactApi = {
         .map(encodeURIComponent)
         .join(',')}`,
     ),
+  // Saves (or edits) an addressbook entry. Requires OPERATOR role server-side. `contactId` must be a
+  // phone-based id (e.g. `…@c.us`) — the backend rejects `@lid` privacy ids.
+  upsertContact: (sessionId: string, contactId: string, firstName: string, lastName?: string) =>
+    request<{ success: boolean; message: string }>(`/sessions/${sessionId}/contacts/${encodeURIComponent(contactId)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ firstName, lastName }),
+    }),
 };
 
 // =============================================================================

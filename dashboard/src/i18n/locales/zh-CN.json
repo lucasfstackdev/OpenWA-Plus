@@ -156,6 +156,23 @@
       "subscribers": "{{count}} 位订阅者",
       "subscribers_other": "{{count}} 位订阅者"
     },
+    "newChat": {
+      "trigger": "新建对话",
+      "title": "发起新对话",
+      "nameLabel": "联系人姓名（可选）",
+      "namePlaceholder": "例如：张三",
+      "phoneLabel": "电话号码",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "请包含国家代码，例如：+5520966505354",
+      "phoneInvalid": "请输入包含国家代码的有效电话号码",
+      "messageLabel": "消息",
+      "attachmentLabel": "附件（音频、文档、图片、视频）",
+      "submit": "发起对话",
+      "numberNotFound": "该号码未注册 WhatsApp",
+      "contactSaveFailed": "无法保存联系人，但仍会发送消息",
+      "created": "对话已创建",
+      "createFailed": "无法发起对话"
+    },
     "errors": {
       "loadSessions": "加载会话失败",
       "loadChats": "加载聊天失败",

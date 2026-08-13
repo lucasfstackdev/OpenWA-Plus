@@ -156,6 +156,23 @@
       "subscribers": "{{count}} abonné",
       "subscribers_other": "{{count}} abonnés"
     },
+    "newChat": {
+      "trigger": "Nouvelle conversation",
+      "title": "Démarrer une nouvelle conversation",
+      "nameLabel": "Nom du contact (facultatif)",
+      "namePlaceholder": "ex : Jean Dupont",
+      "phoneLabel": "Numéro de téléphone",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "Incluez l'indicatif du pays, ex : +5520966505354",
+      "phoneInvalid": "Saisissez un numéro de téléphone valide avec l'indicatif du pays",
+      "messageLabel": "Message",
+      "attachmentLabel": "Pièce jointe (audio, document, image, vidéo)",
+      "submit": "Démarrer la conversation",
+      "numberNotFound": "Ce numéro n'est pas sur WhatsApp",
+      "contactSaveFailed": "Impossible d'enregistrer le contact, mais le message sera quand même envoyé",
+      "created": "Conversation démarrée",
+      "createFailed": "Impossible de démarrer la conversation"
+    },
     "errors": {
       "loadSessions": "Échec du chargement des sessions",
       "loadChats": "Échec du chargement des discussions",

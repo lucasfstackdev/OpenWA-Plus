@@ -9,6 +9,7 @@ import { messagesQueryKey, useChatMessagesActions } from '../../hooks/useChatMes
 import { useRole } from '../../hooks/useRole';
 import { useToast } from '../../hooks/useToast';
 import type { ScrollDirection } from '../../utils/scrollDecision';
+import { pickRecordingMimeType, recordingFileExtension, formatRecordingTime } from '../../utils/audioRecording';
 
 // Map an attachment MIME type to the neutral MessageType for the optimistic outgoing bubble, so the
 // placeholder matches what the backend will persist (e.g. a PDF is `document`, not `application`).
@@ -41,30 +42,6 @@ export interface StagedAttachment {
    */
   ptt?: boolean;
 }
-
-// Ogg/Opus first: it is the only container this app sends as `ptt: true` (see `ptt` above). WebM is
-// listed anyway so recording still works (as a plain audio attachment) on Chromium/Edge, which don't
-// offer Ogg to MediaRecorder at all.
-const RECORDING_MIME_CANDIDATES = ['audio/ogg;codecs=opus', 'audio/webm;codecs=opus', 'audio/webm', 'audio/mp4'];
-
-const pickRecordingMimeType = (): string => {
-  if (typeof MediaRecorder === 'undefined') return '';
-  return RECORDING_MIME_CANDIDATES.find(type => MediaRecorder.isTypeSupported?.(type)) ?? '';
-};
-
-const recordingFileExtension = (mimetype: string): string => {
-  if (mimetype.includes('ogg')) return 'ogg';
-  if (mimetype.includes('mp4')) return 'm4a';
-  return 'webm';
-};
-
-const formatRecordingTime = (totalSeconds: number): string => {
-  const minutes = Math.floor(totalSeconds / 60)
-    .toString()
-    .padStart(2, '0');
-  const seconds = (totalSeconds % 60).toString().padStart(2, '0');
-  return `${minutes}:${seconds}`;
-};
 
 interface ChatComposerProps {
   selectedSessionId: string;

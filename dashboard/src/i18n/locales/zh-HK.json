@@ -156,6 +156,23 @@
       "subscribers": "{{count}} 位訂閱者",
       "subscribers_other": "{{count}} 位訂閱者"
     },
+    "newChat": {
+      "trigger": "新對話",
+      "title": "開始新對話",
+      "nameLabel": "聯絡人姓名（可選）",
+      "namePlaceholder": "例如：陳大文",
+      "phoneLabel": "電話號碼",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "請包含國家代碼，例如：+5520966505354",
+      "phoneInvalid": "請輸入包含國家代碼的有效電話號碼",
+      "messageLabel": "訊息",
+      "attachmentLabel": "附件（音訊、文件、圖片、影片）",
+      "submit": "開始對話",
+      "numberNotFound": "此號碼未在 WhatsApp 註冊",
+      "contactSaveFailed": "無法儲存聯絡人，但訊息仍會傳送",
+      "created": "對話已建立",
+      "createFailed": "無法開始對話"
+    },
     "errors": {
       "loadSessions": "載入工作階段失敗",
       "loadChats": "載入聊天失敗",

@@ -156,6 +156,23 @@
       "subscribers": "{{count}} Abonnent",
       "subscribers_other": "{{count}} Abonnenten"
     },
+    "newChat": {
+      "trigger": "Neue Unterhaltung",
+      "title": "Neue Unterhaltung starten",
+      "nameLabel": "Kontaktname (optional)",
+      "namePlaceholder": "z. B. Max Mustermann",
+      "phoneLabel": "Telefonnummer",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "Landesvorwahl einschließen, z. B. +5520966505354",
+      "phoneInvalid": "Geben Sie eine gültige Telefonnummer mit Landesvorwahl ein",
+      "messageLabel": "Nachricht",
+      "attachmentLabel": "Anhang (Audio, Dokument, Bild, Video)",
+      "submit": "Unterhaltung starten",
+      "numberNotFound": "Diese Nummer ist nicht bei WhatsApp registriert",
+      "contactSaveFailed": "Der Kontakt konnte nicht gespeichert werden, die Nachricht wird trotzdem gesendet",
+      "created": "Unterhaltung gestartet",
+      "createFailed": "Unterhaltung konnte nicht gestartet werden"
+    },
     "errors": {
       "loadSessions": "Sitzungen konnten nicht geladen werden",
       "loadChats": "Chats konnten nicht geladen werden",

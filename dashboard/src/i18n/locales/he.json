@@ -163,6 +163,23 @@
       "subscribers_two": "שני מנויים",
       "subscribers_many": "{{count}} מנויים"
     },
+    "newChat": {
+      "trigger": "שיחה חדשה",
+      "title": "התחלת שיחה חדשה",
+      "nameLabel": "שם איש הקשר (אופציונלי)",
+      "namePlaceholder": "לדוגמה: ישראל ישראלי",
+      "phoneLabel": "מספר טלפון",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "כלול קידומת מדינה, לדוגמה: +5520966505354",
+      "phoneInvalid": "הזן מספר טלפון תקין עם קידומת מדינה",
+      "messageLabel": "הודעה",
+      "attachmentLabel": "קובץ מצורף (שמע, מסמך, תמונה, וידאו)",
+      "submit": "התחל שיחה",
+      "numberNotFound": "מספר זה אינו רשום בוואטסאפ",
+      "contactSaveFailed": "לא ניתן היה לשמור את איש הקשר, אך ההודעה עדיין תישלח",
+      "created": "השיחה החלה",
+      "createFailed": "לא ניתן היה להתחיל את השיחה"
+    },
     "errors": {
       "loadSessions": "טעינת הסשנים נכשלה",
       "loadChats": "טעינת השיחות נכשלה",

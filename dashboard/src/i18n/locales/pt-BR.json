@@ -156,6 +156,23 @@
       "subscribers": "{{count}} inscrito",
       "subscribers_other": "{{count}} inscritos"
     },
+    "newChat": {
+      "trigger": "Nova conversa",
+      "title": "Iniciar nova conversa",
+      "nameLabel": "Nome do contato (opcional)",
+      "namePlaceholder": "ex: João Silva",
+      "phoneLabel": "Número de telefone",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "Inclua o código do país, ex: +5520966505354",
+      "phoneInvalid": "Informe um número de telefone válido com o código do país",
+      "messageLabel": "Mensagem",
+      "attachmentLabel": "Anexo (áudio, documento, imagem, vídeo)",
+      "submit": "Iniciar conversa",
+      "numberNotFound": "Este número não está no WhatsApp",
+      "contactSaveFailed": "Não foi possível salvar o contato, mas a mensagem será enviada mesmo assim",
+      "created": "Conversa iniciada",
+      "createFailed": "Não foi possível iniciar a conversa"
+    },
     "errors": {
       "loadSessions": "Erro ao carregar as sessões",
       "loadChats": "Erro ao carregar os chats",

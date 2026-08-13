@@ -167,6 +167,23 @@
       "subscribers_few": "{{count}} مشتركين",
       "subscribers_many": "{{count}} مشترك"
     },
+    "newChat": {
+      "trigger": "محادثة جديدة",
+      "title": "بدء محادثة جديدة",
+      "nameLabel": "اسم جهة الاتصال (اختياري)",
+      "namePlaceholder": "مثال: محمد أحمد",
+      "phoneLabel": "رقم الهاتف",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "أدرج رمز الدولة، مثال: +5520966505354",
+      "phoneInvalid": "أدخل رقم هاتف صالحًا مع رمز الدولة",
+      "messageLabel": "الرسالة",
+      "attachmentLabel": "مرفق (صوت، مستند، صورة، فيديو)",
+      "submit": "بدء المحادثة",
+      "numberNotFound": "هذا الرقم غير مسجل في واتساب",
+      "contactSaveFailed": "تعذر حفظ جهة الاتصال، لكن سيتم إرسال الرسالة على أي حال",
+      "created": "تم بدء المحادثة",
+      "createFailed": "تعذر بدء المحادثة"
+    },
     "errors": {
       "loadSessions": "فشل تحميل الجلسات",
       "loadChats": "فشل تحميل المحادثات",

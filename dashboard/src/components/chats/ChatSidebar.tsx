@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, CircleDashed, Loader2, Megaphone, Plus, Search } from 'lucide-react';
+import { AlertCircle, CircleDashed, Loader2, Megaphone, MessageSquarePlus, Plus, Search } from 'lucide-react';
 import type { UseQueryResult } from '@tanstack/react-query';
 import type { Channel, Chat, ContactStatusGroup, Session } from '../../services/api';
 import ChatAvatar from './ChatAvatar';
@@ -15,6 +15,8 @@ interface ChatSidebarProps {
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
   onComposeStatus: () => void;
+  onComposeChat: () => void;
+  canComposeChat: boolean;
   formatChatTime: (timestamp?: number) => string;
   chatsTab: {
     loading: boolean;
@@ -51,6 +53,8 @@ function ChatSidebar({
   searchQuery,
   onSearchQueryChange,
   onComposeStatus,
+  onComposeChat,
+  canComposeChat,
   formatChatTime,
   chatsTab,
   channelsTab,
@@ -140,15 +144,29 @@ function ChatSidebar({
           ))}
         </div>
 
-        {/* Search bar */}
-        <div className="chat-search-input">
-          <Search size={18} />
-          <input
-            type="text"
-            placeholder={t('chats.searchPlaceholder')}
-            value={searchQuery}
-            onChange={e => onSearchQueryChange(e.target.value)}
-          />
+        {/* Search bar, with the new-conversation trigger alongside it on the Chats tab. */}
+        <div className="chat-search-row">
+          <div className="chat-search-input">
+            <Search size={18} />
+            <input
+              type="text"
+              placeholder={t('chats.searchPlaceholder')}
+              value={searchQuery}
+              onChange={e => onSearchQueryChange(e.target.value)}
+            />
+          </div>
+          {activeTab === 'chats' && (
+            <button
+              type="button"
+              className="btn-new-chat-trigger"
+              onClick={onComposeChat}
+              disabled={!canComposeChat}
+              title={t('chats.newChat.trigger')}
+              aria-label={t('chats.newChat.trigger')}
+            >
+              <MessageSquarePlus size={18} />
+            </button>
+          )}
         </div>
 
         {/* Compose a new status — only meaningful on the Status tab. */}
