@@ -5,6 +5,7 @@ import { Check, Loader2, Mic, Paperclip, Send, Smile, Trash2, X } from 'lucide-r
 import { messageApi, type Chat, type MessageType } from '../../services/api';
 import { mergeOrAppend, type ChatMessageView } from '../../utils/chatMessages';
 import { promoteChatWithSnippet } from '../../utils/chatList';
+import { buildMediaSendPayload, buildOptimisticMetadata, quotedIdOf } from '../../utils/composerSend';
 import { messagesQueryKey, useChatMessagesActions } from '../../hooks/useChatMessages';
 import { useRole } from '../../hooks/useRole';
 import { useToast } from '../../hooks/useToast';
@@ -284,22 +285,7 @@ function ChatComposer({
       direction: 'outgoing',
       status: 'pending',
       createdAt: new Date().toISOString(),
-      metadata: attachment
-        ? {
-            media: {
-              mimetype: attachment.mimetype,
-              filename: attachment.filename,
-              data: attachment.base64,
-            },
-          }
-        : replyingTo
-          ? {
-              quotedMessage: {
-                id: replyingTo.waMessageId || replyingTo.id,
-                body: replyingTo.type !== 'text' ? `[${replyingTo.type}]` : replyingTo.body,
-              },
-            }
-          : undefined,
+      metadata: buildOptimisticMetadata(attachment, replyingTo),
     };
 
     appendMessage(selectedSessionId, activeChat.id, tempMessage);
@@ -320,17 +306,18 @@ function ChatComposer({
         else if (mime.startsWith('video/')) mediaType = 'video';
         else if (mime.startsWith('audio/')) mediaType = 'audio';
 
-        result = await messageApi.sendMedia(selectedSessionId, activeChat.id, mediaType, {
-          base64: currentAttachment.base64,
-          mimetype: currentAttachment.mimetype,
-          filename: currentAttachment.filename,
-          caption: mediaType !== 'audio' ? textToSend : undefined,
-          ptt: mediaType === 'audio' ? currentAttachment.ptt : undefined,
-        });
+      result = await messageApi.sendMedia(selectedSessionId, activeChat.id, mediaType, {
+        base64: currentAttachment.base64,
+        mimetype: currentAttachment.mimetype,
+        filename: currentAttachment.filename,
+        caption: mediaType !== 'audio' ? textToSend : undefined,
+        ptt: mediaType === 'audio' ? currentAttachment.ptt : undefined,
+      });
+
       } else if (currentReplyingTo) {
         result = await messageApi.reply(selectedSessionId, {
           chatId: activeChat.id,
-          quotedMessageId: currentReplyingTo.waMessageId || currentReplyingTo.id,
+          quotedMessageId: quotedIdOf(currentReplyingTo)!,
           text: textToSend,
         });
       } else {
@@ -345,9 +332,9 @@ function ChatComposer({
       // Race guard: the realtime `message.sent` echo can arrive before this response and already
       // append the message by its real WA id (the dedup at receive time misses because the
       // optimistic placeholder still carries the temp id). If so, fold the placeholder INTO the
-      // echo's row via mergeOrAppend instead of just dropping it — the echo carries no media
-      // payload (engine parity marker), so dropping the placeholder would erase the attachment's
-      // base64 and leave a bare "📎 Media" bubble until the next refetch.
+      // echo's row via mergeOrAppend instead of just dropping it — the echo may carry no media
+      // payload (a Baileys API send echoes only a marker), so dropping the placeholder would erase
+      // the attachment's base64 and leave a bare "📎 Media" bubble until the next refetch.
       const sendKey = messagesQueryKey(selectedSessionId, activeChat.id);
       queryClient.setQueryData<ChatMessageView[]>(sendKey, (prev = []) => {
         const reconciled: ChatMessageView = {

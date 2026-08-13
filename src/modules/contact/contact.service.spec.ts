@@ -14,6 +14,16 @@ describe('ContactService', () => {
     expect(() => makeService(undefined).getContacts('s1')).toThrow(BadRequestException);
   });
 
+  it('getBlockedContacts delegates to the engine and returns the bare id list', async () => {
+    const getBlockedContacts = jest.fn().mockResolvedValue(['628111@c.us']);
+    await expect(makeService({ getBlockedContacts }).getBlockedContacts('s1')).resolves.toEqual(['628111@c.us']);
+    expect(getBlockedContacts).toHaveBeenCalledTimes(1);
+  });
+
+  it('getBlockedContacts throws 400 when the session is not started', () => {
+    expect(() => makeService(undefined).getBlockedContacts('s1')).toThrow(BadRequestException);
+  });
+
   it('caps an unbounded contacts list at the default limit (1000)', async () => {
     const big = Array.from({ length: 1500 }, (_, i) => ({ id: `${i}@c.us` }));
     const getContacts = jest.fn().mockResolvedValue(big);
@@ -131,5 +141,39 @@ describe('ContactService', () => {
         expect(upsertContact).not.toHaveBeenCalled();
       },
     );
+
+    /**
+     * The guard checked the JID DOMAIN only: `parseWaId(id).kind === 'user'` holds for anything
+     * ending in `@c.us` / `@s.whatsapp.net` whatever its user-part. So free text reached the engine
+     * and the caller was told the contact was saved — while the three sibling surfaces on the same
+     * shapes (group participants, channel admin, message mentions) reject exactly these strings
+     * through isAddressableParticipant, which also requires the user-part to be numeric.
+     */
+    it.each([
+      ['free text', 'NOT A USER@c.us'],
+      ['letters', 'abc@c.us'],
+      ['an empty user-part', '@c.us'],
+      ['the engine dialect with free text', 'abc@s.whatsapp.net'],
+    ])('refuses %s without reaching the engine', (_label, id) => {
+      const upsertContact = jest.fn();
+      const deleteContact = jest.fn();
+      const svc = makeService({ upsertContact, deleteContact });
+
+      expect(() => svc.upsertContact('s1', id, 'Ada')).toThrow(BadRequestException);
+      expect(() => svc.deleteContact('s1', id)).toThrow(BadRequestException);
+      expect(upsertContact).not.toHaveBeenCalled();
+      expect(deleteContact).not.toHaveBeenCalled();
+    });
+
+    // Negative twin: the ids this route exists to serve must still pass.
+    it.each([
+      ['a phone jid', '628123456789@c.us'],
+      ['the engine dialect', '628123456789@s.whatsapp.net'],
+      ['a bare number', '628123456789'],
+    ])('still accepts %s', async (_label, id) => {
+      const upsertContact = jest.fn();
+      await makeService({ upsertContact }).upsertContact('s1', id, 'Ada');
+      expect(upsertContact).toHaveBeenCalled();
+    });
   });
 });

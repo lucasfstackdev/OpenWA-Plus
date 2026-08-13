@@ -113,6 +113,13 @@ curl -X POST 'http://localhost:2785/api/infra/import-data' \
   -d @data-backup.json
 ```
 
+> [!IMPORTANT]
+> Post the whole exported file, as the `-d @data-backup.json` above does. The import empties all 14
+> migration tables before repopulating, so a hand-built body carrying only some keys restores the rest
+> **empty**. The export also bounds the inline media it carries
+> (`EXPORT_INLINE_MEDIA_BUDGET_BYTES`, 8 MiB by default); for a byte-exact copy including media, use
+> `scripts/backup.sh`, which snapshots the database file itself.
+
 > [!NOTE]
 > **Dual-Database Architecture**
 >
@@ -142,7 +149,8 @@ curl -X POST 'http://localhost:2785/api/infra/import-data' \
     "ingressEvents": [...],
     "webhookDeliveryFailures": [...],
     "integrationDeliveryFailures": [...],
-    "statusUpdates": [...]
+    "statusUpdates": [...],
+    "automationRules": [...]
   },
   "counts": {
     "sessions": 5,
@@ -157,7 +165,8 @@ curl -X POST 'http://localhost:2785/api/infra/import-data' \
     "ingressEvents": 12,
     "webhookDeliveryFailures": 0,
     "integrationDeliveryFailures": 0,
-    "statusUpdates": 19
+    "statusUpdates": 19,
+    "automationRules": 7
   },
   "skippedTables": []
 }
@@ -221,12 +230,18 @@ REDIS_USERNAME=optional
 REDIS_PASSWORD=optional
 ```
 
-| Scenario                  | Support | Notes                                     |
-| ------------------------- | ------- | ----------------------------------------- |
-| Built-in → External Redis | ✅      | Config change only                        |
-| External → Built-in Redis | ✅      | Config change only                        |
+> Setting `REDIS_BUILTIN` in `.env` **pins** it: the env value wins, so the dashboard's built-in
+> Redis toggle can no longer switch the container back on. That is the right trade for a deployment
+> whose configuration lives in `.env` — but if you manage datastores from the dashboard, leave the
+> key unset (as the shipped templates do) and set only the connection details above. The same holds
+> for `POSTGRES_BUILTIN` and `MINIO_BUILTIN`.
+
+| Scenario                  | Support | Notes                                      |
+| ------------------------- | ------- | ------------------------------------------ |
+| Built-in → External Redis | ✅      | Config change only                         |
+| External → Built-in Redis | ✅      | Config change only                         |
 | Enable → Disable Redis    | ✅      | Cache no-ops; reads fall through to the DB |
-| Disable → Enable Redis    | ✅      | Cache rebuilds automatically              |
+| Disable → Enable Redis    | ✅      | Cache rebuilds automatically               |
 
 > [!TIP]
 > **Cache Warm-up**: After switching Redis instances, the cache will automatically rebuild as requests come in. No data migration is necessary.
@@ -337,6 +352,8 @@ async function migrateSqliteToPostgres(config: MigrationConfig): Promise<Migrati
     'webhook_delivery_failures',
     'integration_delivery_failures',
     'status_updates',
+    // ON DELETE CASCADE FK to sessions, so it must follow them.
+    'automation_rules',
   ];
 
   // 4. Migrate each table
@@ -703,13 +720,13 @@ docker compose run --rm openwa-api npm run migration:run:prod
 
 ### Known Upgrade Hazards
 
-| Release  | Change                                                                              | Action                                                                                                     |
-| -------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Release  | Change                                                                                                                                                                                           | Action                                                                                                                                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `0.12.0` | `PUT /api/plugins/:id/sessions` is a full replacement of the global activation set and now requires an **unrestricted ADMIN** key; a session-scoped key is rejected with `403` whatever it sends | Switch any automation that drives global plugin activation from a scoped key to an unrestricted ADMIN key. The per-session config override route `PUT /api/plugins/:id/config/:sessionId` is unaffected and stays scoped to the addressed session |
-| `0.8.15` | PostgreSQL schemas bootstrapped with `DATABASE_SYNCHRONIZE=true` crash-loop on boot | Self-healing guard migration; see [14.9](#149-troubleshooting-migration-issues) for the large-table window |
-| `0.9.0`  | `GET /api/settings` no longer returns the always-zero `general.sessionTimeout`      | Remove reads of that field — there is no replacement                                                       |
-| `0.10.3` | Boolean/numeric request fields are parsed strictly (`1`, `yes`, `""` now `400`)     | Send canonical JSON values; JSON clients and the SDKs are unaffected                                       |
-| `0.10.3` | Status posts pass the `message:sending` plugin gate, with no `chatId` in the input  | Branch on `source`/`type` before reading `input.chatId`                                                    |
+| `0.8.15` | PostgreSQL schemas bootstrapped with `DATABASE_SYNCHRONIZE=true` crash-loop on boot                                                                                                              | Self-healing guard migration; see [14.9](#149-troubleshooting-migration-issues) for the large-table window                                                                                                                                        |
+| `0.9.0`  | `GET /api/settings` no longer returns the always-zero `general.sessionTimeout`                                                                                                                   | Remove reads of that field — there is no replacement                                                                                                                                                                                              |
+| `0.10.3` | Boolean/numeric request fields are parsed strictly (`1`, `yes`, `""` now `400`)                                                                                                                  | Send canonical JSON values; JSON clients and the SDKs are unaffected                                                                                                                                                                              |
+| `0.10.3` | Status posts pass the `message:sending` plugin gate, with no `chatId` in the input                                                                                                               | Branch on `source`/`type` before reading `input.chatId`                                                                                                                                                                                           |
 
 The authoritative list is `CHANGELOG.md`; breaking items are flagged there with ⚠️ **Breaking**.
 

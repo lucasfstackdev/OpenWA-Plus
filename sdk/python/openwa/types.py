@@ -31,15 +31,80 @@ WebhookEvent = Literal[
     "message.received", "message.sent", "message.ack", "message.failed", "message.revoked",
     "message.reaction", "message.edited", "session.status", "session.qr", "session.authenticated",
     "session.disconnected", "session.reconnect_loop", "session.restriction", "presence.update",
-    "group.join", "group.leave", "group.update", "call.received", "status.received",
+    "group.join", "group.leave", "group.update", "group.join_request",
+    "call.received", "status.received",
     "call.accepted", "call.rejected", "call.missed",
     "*",
 ]
 
 
+class SetOwnPresenceRequest(TypedDict):
+    """Body for :meth:`SessionsResource.set_online_presence`.
+
+    ``available`` is True to appear online, False to appear offline (handing notifications back
+    to the phone).
+    """
+
+    available: bool
+
+
+CallLinkType = Literal["audio", "video"]
+
+
+class CreateCallLinkRequest(TypedDict):
+    """Body for :meth:`CallsResource.create_link`.
+
+    ``start_time`` is absolute epoch MILLISECONDS; a link for right now is the current timestamp
+    rather than an omitted field.
+    """
+
+    type: CallLinkType
+    startTime: float
+
+
+class CallLinkResponse(TypedDict):
+    """The shareable WhatsApp call link."""
+
+    link: str
+class DemoteChannelAdminRequest(TypedDict):
+    """Body for :meth:`ChannelsResource.demote_admin`."""
+
+    userId: str
+
+
+class TransferChannelOwnershipRequest(TypedDict):
+    """Body for :meth:`ChannelsResource.transfer_ownership`. The transfer is irreversible."""
+
+    newOwnerId: str
+
+
 class SuccessResult(TypedDict, total=False):
     success: bool
     message: str
+
+
+class ParticipantResult(TypedDict, total=False):
+    """One entry per requested participant, in the order they were requested.
+
+    ``success`` is true only when the engine confirmed the change for this participant. Engines that
+    confirm the batch rather than each member report one success entry per requested id, so a true
+    here does not always mean the engine spoke about that participant individually.
+    """
+
+    id: str
+    success: bool
+    status: int
+    message: str
+
+
+class ParticipantsResult(SuccessResult):
+    """The group membership writes.
+
+    A partial refusal does NOT fail the batch — the request answers 200 and reports the
+    per-participant outcome in ``results``, so ``success`` alone hides a member that was rejected.
+    """
+
+    results: list[ParticipantResult]
 
 
 class ParticipantPresence(TypedDict, total=False):
@@ -151,6 +216,29 @@ class SessionResponse(TypedDict, total=False):
     engineLoaded: bool
 
 
+class SessionConfig(TypedDict):
+    """A session's effective runtime configuration.
+
+    ``None`` on ``maxReconnectAttempts`` means unlimited -- not unset.
+    """
+
+    autoRejectCalls: bool
+    maxReconnectAttempts: int | None
+    reconnectBaseDelay: int
+
+
+class UpdateSessionConfigRequest(TypedDict, total=False):
+    """Partial update of a running session's config -- no re-link, no QR scan.
+
+    Send ``None`` for ``maxReconnectAttempts`` to restore unlimited retries, which no in-range number
+    can express.
+    """
+
+    autoRejectCalls: bool | None
+    maxReconnectAttempts: int | None
+    reconnectBaseDelay: int | None
+
+
 class CreateSessionRequest(TypedDict, total=False):
     name: str
     config: dict[str, Any]
@@ -209,6 +297,9 @@ class SendTextRequest(TypedDict, total=False):
     # so this works even for a URL the gateway cannot reach. Baileys only -- whatsapp-web.js takes a
     # boolean and answers 501. Cannot be combined with linkPreview=False.
     customLinkPreview: CustomLinkPreview
+    # Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+    # matches the serialized message id, Baileys the raw key id of a message it has already stored.
+    quotedMessageId: str
 
 
 class SendMediaRequest(TypedDict, total=False):
@@ -218,6 +309,9 @@ class SendMediaRequest(TypedDict, total=False):
     mimetype: str
     filename: str
     caption: str
+    # Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+    # matches the serialized message id, Baileys the raw key id of a message it has already stored.
+    quotedMessageId: str
 
 
 class SendAudioRequest(SendMediaRequest, total=False):
@@ -241,12 +335,23 @@ class SendLocationRequest(TypedDict, total=False):
     longitude: float
     description: str
     address: str
+    # Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+    # matches the serialized message id, Baileys the raw key id of a message it has already stored.
+    quotedMessageId: str
 
 
-class SendContactRequest(TypedDict):
+class _SendContactRequired(TypedDict):
     chatId: Jid
     contactName: str
     contactNumber: str
+
+
+# Split so the optional key can be added without loosening the three required ones — the same
+# inheritance shape SendAudioRequest already uses.
+class SendContactRequest(_SendContactRequired, total=False):
+    # Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+    # matches the serialized message id, Baileys the raw key id of a message it has already stored.
+    quotedMessageId: str
 
 
 class ReplyMessageRequest(TypedDict):
@@ -298,6 +403,9 @@ class SendPollRequest(TypedDict, total=False):
     # Options to vote on (WhatsApp allows between 2 and 12).
     options: list[str]
     allowMultipleAnswers: bool
+    # Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+    # matches the serialized message id, Baileys the raw key id of a message it has already stored.
+    quotedMessageId: str
 
 
 # ``from`` is a Python keyword, so use the functional TypedDict form.
@@ -358,6 +466,33 @@ class MessageLocation(TypedDict, total=False):
     url: str
 
 
+class MessageCall(TypedDict, total=False):
+    """Call block on a live history message, present on ``call`` messages only."""
+
+    video: bool
+    missed: bool
+
+
+class MessageContact(TypedDict, total=False):
+    """Sender contact block. History carries ``pushName`` only; the richer fields arrive on
+    ``message.received`` when ``WEBHOOK_CONTACT_DETAILS`` is enabled."""
+
+    id: Jid
+    number: str
+    name: str
+    pushName: str
+    shortName: str
+    type: str
+    isMyContact: bool
+    isWAContact: bool
+    isBusiness: bool
+    isEnterprise: bool
+    verifiedName: str
+    verifiedLevel: int
+    isBlocked: bool
+    labels: list
+
+
 # A message read live from WhatsApp by ``messages.history()`` — the engine
 # payload, richer and differently shaped than the persisted MessageRecord.
 ChatHistoryMessage = TypedDict(
@@ -374,10 +509,15 @@ ChatHistoryMessage = TypedDict(
         "isGroup": bool,
         "isStatusBroadcast": bool,
         "kind": str,
+        "ephemeralDuration": int,
         "author": Jid,
         "mentionedIds": list,
+        "call": MessageCall,
         "isLidSender": bool,
         "senderPhone": Optional[str],
+        "contact": MessageContact,
+        "backgroundColor": str,
+        "font": int,
         "media": ChatHistoryMedia,
         "quotedMessage": QuotedMessage,
         "location": MessageLocation,
@@ -489,12 +629,20 @@ class BatchStatusResponse(TypedDict, total=False):
 
 
 class ContactRecord(TypedDict, total=False):
+    """A contact as the gateway returns it.
+
+    ``isBlocked`` reflects the account's real blocklist on both engines. When the blocklist query
+    fails the field stays at its default rather than reporting "nobody is blocked", and the gateway
+    logs a warning — so a ``False`` is not proof the contact is unblocked if the link is unhealthy.
+    """
+
     id: Jid
     name: str | None
     number: str | None
-    pushname: str | None
-    isBusiness: bool
+    pushName: str | None
     isMyContact: bool
+    isBlocked: bool
+    profilePicUrl: str | None
 
 
 class CheckNumberResponse(TypedDict):
@@ -536,6 +684,22 @@ class GroupSummary(TypedDict, total=False):
     participantsCount: int
     isAdmin: bool
     linkedParentJID: str | None
+
+
+GroupMembershipRequestMethod = Literal["invite_link", "non_admin_add", "linked_group_join"]
+
+
+class GroupMembershipRequest(TypedDict, total=False):
+    """A pending request to join a group.
+
+    Only ``participantId`` is always present; the engine reports the rest when it has it, so treat
+    ``addedById``, ``method`` and ``requestedAt`` as absent rather than assuming a shape.
+    """
+
+    participantId: str
+    addedById: str
+    method: GroupMembershipRequestMethod
+    requestedAt: float
 
 
 class GroupInfo(TypedDict, total=False):
@@ -762,6 +926,26 @@ class ArchiveChatRequest(TypedDict):
     archive: bool
 
 
+class PinChatRequest(TypedDict):
+    """Pin a chat to the top of the list, or unpin it."""
+
+    chatId: str
+    pin: bool
+
+
+class MuteChatRequest(TypedDict):
+    """Mute a chat until an absolute timestamp, or unmute it.
+
+    ``muteUntil`` is epoch **milliseconds**, or ``None`` to unmute now. Milliseconds, not seconds:
+    a seconds-scale value is an instant in 1970, so the mute expires immediately while the request
+    still answers 200. Required rather than optional because the two readings of an omitted value,
+    unmute now and mute indefinitely, are opposites.
+    """
+
+    chatId: str
+    muteUntil: Optional[int]
+
+
 class VotePollRequest(TypedDict):
     """Vote on a poll. options are option TEXTS (no ids); [] clears the vote."""
 
@@ -784,7 +968,7 @@ class UnpinMessageRequest(TypedDict):
 
 
 class MessageMedia(TypedDict):
-    """A message's archived media file: raw bytes plus the served content type."""
+    """A message's stored media: raw bytes plus the served content type."""
 
     data: bytes
     contentType: str | None
@@ -985,6 +1169,17 @@ class PaginatedProducts(TypedDict):
 
     products: list[CatalogProduct]
     pagination: ProductPagination
+
+
+class ProductMessageResponse(TypedDict):
+    """Response of ``send-product``.
+
+    The route answers with the sent message's id under ``id``, not the ``messageId`` the other send
+    routes use.
+    """
+
+    id: str
+    timestamp: int
 
 
 # chatId + productId required; body optional. Modeled total=False for 3.9 compat

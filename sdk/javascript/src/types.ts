@@ -21,19 +21,36 @@ export type ChatKind = 'individual' | 'group' | 'channel' | 'status' | 'broadcas
 
 /** Session lifecycle status. */
 export type SessionStatus =
-  | 'created'
-  | 'initializing'
-  | 'qr_ready'
-  | 'authenticating'
-  | 'ready'
-  | 'disconnected'
-  | 'action_required'
-  | 'failed';
+  'created' | 'initializing' | 'qr_ready' | 'authenticating' | 'ready' | 'disconnected' | 'action_required' | 'failed';
 
 /** Minimal success envelope returned by some state-changing endpoints. */
 export interface SuccessResult {
   success: boolean;
   message?: string;
+}
+
+/** One entry per requested participant, in the order they were requested. */
+export interface ParticipantResult {
+  /** Neutral participant id the outcome belongs to. */
+  id: string;
+  /**
+   * True only when the engine confirmed the change for this participant. Engines that confirm the
+   * batch rather than each member report one success entry per requested id, so `true` does not
+   * always mean the engine spoke about that participant individually.
+   */
+  success: boolean;
+  /** The engine's own status code, when it gave one. */
+  status?: number;
+  /** Engine-reported reason, when it gave one. */
+  message?: string;
+}
+
+/**
+ * The group membership writes. A partial refusal does NOT fail the batch — the request answers 200
+ * and reports the per-participant outcome here, so `success` alone hides a member that was rejected.
+ */
+export interface ParticipantsResult extends SuccessResult {
+  results: ParticipantResult[];
 }
 
 // ── Session ───────────────────────────────────────────────────────
@@ -139,6 +156,29 @@ export interface GroupJoinInfo {
   participantCount?: number;
 }
 
+/**
+ * A session's effective runtime configuration.
+ *
+ * Only `maxReconnectAttempts` is nullable, and `null` there means UNLIMITED — not "unset". The
+ * server always reports a concrete `reconnectBaseDelay` and `autoRejectCalls`.
+ */
+export interface SessionConfig {
+  autoRejectCalls: boolean;
+  maxReconnectAttempts: number | null;
+  reconnectBaseDelay: number;
+}
+
+/**
+ * Partial update of a session's config. Applies to a session that is already running — no re-link and
+ * no QR scan. Send `null` for `maxReconnectAttempts` to restore unlimited retries, which no in-range
+ * number can express.
+ */
+export interface UpdateSessionConfigRequest {
+  autoRejectCalls?: boolean | null;
+  maxReconnectAttempts?: number | null;
+  reconnectBaseDelay?: number | null;
+}
+
 export interface CreateSessionRequest {
   /** Alphanumeric + hyphens, 3–50 chars. */
   name: string;
@@ -200,6 +240,12 @@ export interface SendTextRequest {
    * boolean and answers 501. Cannot be combined with `linkPreview: false`.
    */
   customLinkPreview?: { url: string; title: string; description?: string };
+  /**
+   * Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+   * matches the serialized message id, Baileys the raw message key id of a message it has already
+   * stored. An id the engine cannot resolve fails the send rather than delivering it unquoted.
+   */
+  quotedMessageId?: string;
 }
 
 export interface SendMediaRequest {
@@ -213,6 +259,12 @@ export interface SendMediaRequest {
   filename?: string;
   /** Max 1024 chars. */
   caption?: string;
+  /**
+   * Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+   * matches the serialized message id, Baileys the raw message key id of a message it has already
+   * stored. An id the engine cannot resolve fails the send rather than delivering it unquoted.
+   */
+  quotedMessageId?: string;
 }
 
 export interface SendAudioRequest extends SendMediaRequest {
@@ -236,12 +288,24 @@ export interface SendLocationRequest {
   longitude: number;
   description?: string;
   address?: string;
+  /**
+   * Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+   * matches the serialized message id, Baileys the raw message key id of a message it has already
+   * stored. An id the engine cannot resolve fails the send rather than delivering it unquoted.
+   */
+  quotedMessageId?: string;
 }
 
 export interface SendContactRequest {
   chatId: Jid;
   contactName: string;
   contactNumber: string;
+  /**
+   * Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+   * matches the serialized message id, Baileys the raw message key id of a message it has already
+   * stored. An id the engine cannot resolve fails the send rather than delivering it unquoted.
+   */
+  quotedMessageId?: string;
 }
 
 export interface ReplyMessageRequest {
@@ -301,6 +365,25 @@ export interface ArchiveChatRequest {
   archive: boolean;
 }
 
+export interface PinChatRequest {
+  chatId: Jid;
+  /** true to pin the chat to the top of the list, false to unpin it. */
+  pin: boolean;
+}
+
+export interface MuteChatRequest {
+  chatId: Jid;
+  /**
+   * Absolute epoch **milliseconds** at which the mute expires, or `null` to unmute now.
+   *
+   * Milliseconds, not seconds — a seconds-scale value is an instant in 1970, so the mute expires
+   * immediately while the request still answers 200 and nothing in the response says otherwise.
+   * Required rather than optional because the two readings of an omitted value, unmute now and mute
+   * indefinitely, are opposites.
+   */
+  muteUntil: number | null;
+}
+
 export interface VotePollRequest {
   chatId: Jid;
   /** The poll creation message to vote on. */
@@ -349,6 +432,12 @@ export interface SendPollRequest {
   options: string[];
   /** Allow voters to pick several options (default single choice). */
   allowMultipleAnswers?: boolean;
+  /**
+   * Quote an earlier message, turning this send into a reply. Engine-specific: whatsapp-web.js
+   * matches the serialized message id, Baileys the raw message key id of a message it has already
+   * stored. An id the engine cannot resolve fails the send rather than delivering it unquoted.
+   */
+  quotedMessageId?: string;
 }
 
 export interface ListMessagesQuery {
@@ -406,11 +495,38 @@ export interface ChatHistoryMessage {
   isGroup: boolean;
   isStatusBroadcast?: boolean;
   kind?: ChatKind;
+  /** Disappearing-messages timer on the chat, in seconds. Absent when the chat has none set. */
+  ephemeralDuration?: number;
   /** For group messages, the participant who sent it (`from` is the group JID). */
   author?: Jid;
   mentionedIds?: Jid[];
+  /** Present on `call` messages only. */
+  call?: { video: boolean; missed: boolean };
   isLidSender?: boolean;
   senderPhone?: string | null;
+  /**
+   * Sender contact info, best-effort from the engine's cache. History carries `pushName` only;
+   * the richer fields arrive on `message.received` when `WEBHOOK_CONTACT_DETAILS=true`.
+   */
+  contact?: {
+    id?: Jid;
+    number?: string;
+    name?: string;
+    pushName?: string;
+    shortName?: string;
+    type?: string;
+    isMyContact?: boolean;
+    isWAContact?: boolean;
+    isBusiness?: boolean;
+    isEnterprise?: boolean;
+    verifiedName?: string;
+    verifiedLevel?: number;
+    isBlocked?: boolean;
+    labels?: string[];
+  };
+  /** Status/story styling. Declared by the engine payload; this route never sets either. */
+  backgroundColor?: string;
+  font?: number;
   media?: {
     mimetype: string;
     filename?: string;
@@ -521,9 +637,17 @@ export interface ContactRecord {
   id: Jid;
   name?: string | null;
   number?: string | null;
-  pushname?: string | null;
-  isBusiness?: boolean;
+  /** The name the contact set on their own account. Both engines emit this as `pushName`. */
+  pushName?: string | null;
   isMyContact?: boolean;
+  /**
+   * Whether the account has blocked this contact. Reflects the account's real blocklist on both
+   * engines. When the blocklist query fails the field stays at its default rather than reporting
+   * "nobody is blocked", and the gateway logs a warning — so a `false` is not proof the contact is
+   * unblocked if the link is unhealthy.
+   */
+  isBlocked?: boolean;
+  profilePicUrl?: string | null;
 }
 
 export interface CheckNumberResponse {
@@ -578,6 +702,20 @@ export interface GroupInfo {
   isReadOnly?: boolean;
   isAnnounce?: boolean;
   linkedParentJID?: string | null;
+}
+
+/** How a pending join request was made, when the engine reports it. */
+export type GroupMembershipRequestMethod = 'invite_link' | 'non_admin_add' | 'linked_group_join';
+
+/** A pending request to join a group. Only `participantId` is always present. */
+export interface GroupMembershipRequest {
+  /** Neutral id of the user asking to join. */
+  participantId: Jid;
+  /** Who created the request — differs from the requester on a non-admin add. */
+  addedById?: Jid;
+  method?: GroupMembershipRequestMethod;
+  /** Unix seconds the request was created. */
+  requestedAt?: number;
 }
 
 export interface CreateGroupRequest {
@@ -682,6 +820,7 @@ export type WebhookEvent =
   | 'group.join'
   | 'group.leave'
   | 'group.update'
+  | 'group.join_request'
   | 'call.received'
   | 'status.received'
   | '*';
@@ -747,6 +886,40 @@ export interface ChatSummary {
   lastMessage?: string;
   timestamp?: string | number;
   kind?: ChatKind;
+}
+
+/** Body for {@link SessionsResource.setOnlinePresence}. */
+export interface SetOwnPresenceRequest {
+  /** `true` = appear online; `false` = appear offline, handing notifications back to the phone. */
+  available: boolean;
+}
+
+/** Which kind of call a link opens. WhatsApp's own URL path for `audio` is `/voice/`. */
+export type CallLinkType = 'audio' | 'video';
+
+/** Body for {@link CallsResource.createLink}. */
+export interface CreateCallLinkRequest {
+  type: CallLinkType;
+  /** Absolute epoch MILLISECONDS the call is scheduled to start at. */
+  startTime: number;
+}
+
+/** Result of {@link CallsResource.createLink}. */
+export interface CallLinkResponse {
+  /** The shareable WhatsApp call link. */
+  link: string;
+}
+
+/** Body for {@link ChannelsResource.demoteAdmin}. */
+export interface DemoteChannelAdminRequest {
+  /** WhatsApp ID of the admin to demote back to a subscriber. */
+  userId: Jid;
+}
+
+/** Body for {@link ChannelsResource.transferOwnership}. */
+export interface TransferChannelOwnershipRequest {
+  /** WhatsApp ID of the account that becomes the new owner. */
+  newOwnerId: Jid;
 }
 
 export interface MarkChatRequest {
@@ -989,6 +1162,16 @@ export interface CatalogProduct {
 export interface PaginatedProducts {
   products: CatalogProduct[];
   pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+/**
+ * Response of `send-product`. The route answers with the sent message's id under `id`, not the
+ * `messageId` the other send routes use.
+ */
+export interface ProductMessageResponse {
+  id: string;
+  /** Unix SECONDS the engine stamped on the outgoing message. */
+  timestamp: number;
 }
 
 export interface SendProductRequest {

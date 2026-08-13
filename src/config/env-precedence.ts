@@ -23,6 +23,14 @@
  */
 export const BLANK_SHADOWED_ENV_KEYS: string[] = [
   'ENGINE_TYPE',
+  // Inbound-media knobs. Not dashboard-managed, but every blank compose forward must be cleared or
+  // the empty value shadows .env / data/.env.generated — which is why the gate above requires an
+  // entry for each one.
+  'MESSAGE_LIST_INLINE_MEDIA_BUDGET_BYTES',
+  'MEDIA_DOWNLOAD_ENABLED',
+  'MEDIA_DOWNLOAD_MAX_BYTES',
+  'MEDIA_DOWNLOAD_TIMEOUT_MS',
+  'INBOUND_MEDIA_CONCURRENCY',
   // Database selection + connection details (#488)
   'DATABASE_TYPE',
   'DATABASE_HOST',
@@ -47,6 +55,7 @@ export const BLANK_SHADOWED_ENV_KEYS: string[] = [
   // Chat-media archiving. Blank-forwarded by compose like the storage keys above, so an operator
   // who sets nothing must not have an empty string pin the feature off against data/.env.generated.
   'CHAT_MEDIA_ARCHIVE_ENABLED',
+  'CHAT_MEDIA_ARCHIVE_OUTBOUND',
   'CHAT_MEDIA_ARCHIVE_MAX_BYTES',
   'CHAT_MEDIA_ARCHIVE_TTL_DAYS',
   'CHAT_MEDIA_ORPHAN_SWEEP_INTERVAL_MS',
@@ -75,6 +84,22 @@ export const BLANK_SHADOWED_ENV_KEYS: string[] = [
   // Autoreply rule cap, blank-forwarded like the knobs above so an operator who sets nothing does
   // not have an empty string shadow a value in .env / data/.env.generated.
   'AUTOMATION_MAX_PER_SESSION',
+  // Behaviour flags with no dashboard route: before they were forwarded, a value set in .env simply
+  // never reached the container. They are blank-forwarded like everything else here so the forward
+  // itself cannot pin them off.
+  'WEBHOOK_CONTACT_DETAILS',
+  'BAILEYS_MARK_ONLINE_ON_CONNECT',
+  'BAILEYS_SYNC_FULL_HISTORY',
+  'ALLOW_UNSIGNED_INGRESS',
+  'STORE_EPHEMERAL_MESSAGES',
+  'RESOLVE_LID_TO_PHONE',
+  'SIMULATE_TYPING',
+  'MCP_ENABLED',
+  'SEARCH_ENABLED',
+  'SERVE_DASHBOARD',
+  'CACHE_ENABLED',
+  'DATABASE_LOGGING',
+  'MAIN_DATABASE_SYNCHRONIZE',
   // Redis selection + connection details (#488)
   'REDIS_ENABLED',
   'REDIS_HOST',
@@ -142,4 +167,36 @@ export function recordOsEnvKeys(env: NodeJS.ProcessEnv = process.env): void {
  */
 export function isOsProvidedEnv(key: string): boolean {
   return osEnvKeys === null || osEnvKeys.has(key);
+}
+
+/**
+ * Keys already present when `data/.env.generated` is about to be merged — i.e. supplied by the host
+ * OR by the project `.env`, both of which load with `override: false` and therefore win over the
+ * dashboard-saved file for good.
+ *
+ * Distinct from `osEnvKeys` on purpose. That snapshot answers "may this value win over the file being
+ * WRITTEN?" for the save-config guard, where only a host value counts. This one answers "can the
+ * dashboard change this setting at all?", and there a project `.env` pins exactly as hard as an
+ * orchestrator variable does.
+ */
+let pinnedEnvKeys: Set<string> | null = null;
+
+/** Snapshot the shadowing layers. Called by load-env immediately before `data/.env.generated` loads. */
+export function recordPinnedEnvKeys(env: NodeJS.ProcessEnv = process.env): void {
+  pinnedEnvKeys = new Set(Object.keys(env));
+}
+
+/**
+ * True when `key` is supplied by a layer above `data/.env.generated`, so saving it from the dashboard
+ * cannot take effect until that layer is changed.
+ *
+ * Defaults to FALSE with no snapshot taken (a unit test that never boots), the opposite of
+ * `isOsProvidedEnv`. Each default is the safe one for its caller: the save guard must assume an
+ * override it cannot see, while this drives a user-facing warning that must never be invented.
+ *
+ * Note `clearBlankEnv` runs BEFORE the snapshot, so a blank compose forward (`- KEY=${KEY:-}` with
+ * nothing set) is already gone and correctly does not count as a pin.
+ */
+export function isEnvPinned(key: string): boolean {
+  return pinnedEnvKeys !== null && pinnedEnvKeys.has(key);
 }

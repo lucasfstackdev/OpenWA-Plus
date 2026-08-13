@@ -131,6 +131,7 @@ RUN apt-get install -y ... curl ...
 ### Issue: Container Won't Start
 
 **Symptoms:**
+
 - `docker compose up` fails
 - Container exits immediately
 - "Port already in use" error
@@ -163,8 +164,9 @@ docker compose up -d --build   # `docker compose pull` never updates it
 ### Issue: Dashboard Renders a Blank White Screen
 
 **Symptoms:**
+
 - The API is healthy (`curl http://<host>:2785/api/health` returns `200`) but the dashboard is blank
-- The startup log says `🖥️ Dashboard: serving bundled UI at …` — the UI *is* being served
+- The startup log says `🖥️ Dashboard: serving bundled UI at …` — the UI _is_ being served
 - The browser console shows script-loading errors; DevTools → Network shows the `/assets/*.js`
   requests going to `https://` even though you opened the page over `http://`
 - You reach the instance directly over plain HTTP (a host:port allocation, a private network, a
@@ -196,6 +198,7 @@ setting. If you are behind a TLS proxy, ignore that warning — the directive is
 ### Issue: Session Won't Connect
 
 **Symptoms:**
+
 - QR code generated but session stays `initializing`
 - Session ends in `failed` (with a `lastError`) after scanning the QR
 - Session stuck at `qr_ready` or `authenticating` and never reaches `ready`
@@ -219,13 +222,13 @@ docker compose exec openwa-api ls -la /app/data/baileys/<name>/            # bai
 
 **Solutions:**
 
-| Cause | Solution |
-|-------|----------|
-| Expired QR | Generate new QR (valid 60 seconds) |
-| Auth folder corrupted | Delete and rescan |
-| Browser crash | Restart container |
-| Network issues | Check firewall/proxy |
-| WhatsApp blocked | Set a per-session proxy (`proxyUrl`) |
+| Cause                 | Solution                             |
+| --------------------- | ------------------------------------ |
+| Expired QR            | Generate new QR (valid 60 seconds)   |
+| Auth folder corrupted | Delete and rescan                    |
+| Browser crash         | Restart container                    |
+| Network issues        | Check firewall/proxy                 |
+| WhatsApp blocked      | Set a per-session proxy (`proxyUrl`) |
 
 ```bash
 # Clear auth and restart (the profile dir carries the session NAME, not its UUID id).
@@ -244,12 +247,13 @@ docker compose restart openwa-api
 
 Proxy egress (if WhatsApp is blocked on your network) is configured **per session** via the
 `proxyUrl`/`proxyType` fields on `POST /api/sessions` — it is **not** an environment variable, and an
-unreachable proxy silently blocks the WhatsApp WebSocket (see the *No QR code appears, or `/start`
-returns `504`* entry below).
+unreachable proxy silently blocks the WhatsApp WebSocket (see the _No QR code appears, or `/start`
+returns `504`_ entry below).
 
 ### Issue: No QR code appears, or `POST /api/sessions/:id/start` returns `504`
 
 **Symptoms:**
+
 - `POST /api/sessions/:id/start` returns `504 Gateway Timeout`
   (`WhatsApp Web authentication timed out...`)
 - No QR code is ever produced — `GET /api/sessions/:id/qr` never has one
@@ -281,8 +285,8 @@ curl -X POST "$BASE/api/sessions" -H "X-API-Key: $API_KEY" -H "Content-Type: app
 stuck. Often seen on ARM64 (e.g. Raspberry Pi) after upgrading to v0.2.x.
 
 **Cause:** whatsapp-web.js auto-selects a WhatsApp Web client version, and an incompatible version
-stalls the post-link sync. (If you also see `chrome_crashpad_handler: --database is required` *and the
-session never starts at all*, that is a different problem — see "Session fails to launch …" below.)
+stalls the post-link sync. (If you also see `chrome_crashpad_handler: --database is required` _and the
+session never starts at all_, that is a different problem — see "Session fails to launch …" below.)
 
 **Fix:** OpenWA reconciles a missed `ready` event when WhatsApp Web is connected, the injected
 runtime is available, and whatsapp-web.js has populated the linked account identity. If your
@@ -290,12 +294,14 @@ environment still hits a WA-Web compatibility hang, pin a known-good WA-Web vers
 `WWEBJS_WEB_VERSION`:
 
 ```bash
-# Optional workaround:
-WWEBJS_WEB_VERSION=2.3000.1040641150-alpha
+# Optional workaround — substitute a build that the registry currently serves:
+WWEBJS_WEB_VERSION=<a build from that registry's html/ folder>
 ```
 
-Restart the container after changing it. Browse newer versions at
-[wppconnect-team/wa-version](https://github.com/wppconnect-team/wa-version) (the `html/` folder). With
+Restart the container after changing it. Pick the build from
+[wppconnect-team/wa-version](https://github.com/wppconnect-team/wa-version) (the `html/` folder) — a
+build the registry no longer serves is fetched, missed, and silently ignored, leaving you on the
+default behaviour rather than the pin you asked for. With
 `WWEBJS_WEB_VERSION` unset, `latest`, or `auto` (the default), OpenWA auto-resolves a settled build
 from that registry and pins its HTML — note this HTML is fetched from a third-party repository and
 executed inside the `web.whatsapp.com` origin without an integrity check. Set
@@ -365,22 +371,23 @@ Failed to launch the browser process:  Code: null
 often accompanied by a wall of `ERROR:dbus/bus.cc` / `crashpad ... /sys/devices/system/cpu/...` lines.
 **Those dbus/crashpad lines are non-fatal noise** that headless Chromium always prints inside a container —
 ignore them. The actual signal is `Code: null`, which means the browser process was killed during startup
-before it could report an exit code. The cause is *not* in the log — it's a host/container resource limit,
+before it could report an exit code. The cause is _not_ in the log — it's a host/container resource limit,
 and there are three distinct ones. Diagnose which one before changing anything:
 
 **Cause A — per-container PID limit hit (most common under multi-session).**
 whatsapp-web.js runs a full Chromium instance per session, and Chromium is multi-process (browser + renderer
-+ GPU + zygote + utilities); WhatsApp Web is itself process-heavy (service workers, iframes). A handful of
-concurrent sessions can approach the container's `pids_limit`, and the next session's Chromium gets killed
-mid-spawn when a `fork()` returns `EAGAIN`. This is silent in the log.
 
-*Diagnose:* watch the PIDS column while you click **Start**:
+- GPU + zygote + utilities); WhatsApp Web is itself process-heavy (service workers, iframes). A handful of
+  concurrent sessions can approach the container's `pids_limit`, and the next session's Chromium gets killed
+  mid-spawn when a `fork()` returns `EAGAIN`. This is silent in the log.
+
+_Diagnose:_ watch the PIDS column while you click **Start**:
 
 ```bash
 docker stats openwa-api   # watch the PIDS column — does it climb toward the limit right before the failure?
 ```
 
-*Fix:* raise the ceiling. The bundled `docker-compose.yml` exposes it as `OPENWA_PIDS_LIMIT` (default `2048`,
+_Fix:_ raise the ceiling. The bundled `docker-compose.yml` exposes it as `OPENWA_PIDS_LIMIT` (default `2048`,
 which fits ~8-10 sessions with startup-spike headroom):
 
 ```bash
@@ -394,14 +401,14 @@ Do **not** set `-1` (unlimited) — the PID ceiling is a fork-bomb guard and sho
 The container's `mem_limit` (or the host VM, e.g. Docker Desktop on macOS/Windows) ran out of RAM while
 Chromium was starting. The OOM killer sends `SIGKILL`, which Puppeteer reports as `Code: null`.
 
-*Diagnose:* check the host kernel log for an OOM kill:
+_Diagnose:_ check the host kernel log for an OOM kill:
 
 ```bash
 dmesg -T | grep -i "killed process"          # Linux host
 # Docker Desktop: check the VM via the app, or nudge OPENWA_MEM_LIMIT up and retry
 ```
 
-*Fix:* raise the ceiling (`OPENWA_MEM_LIMIT=4g` in your `.env`, or Docker Desktop → Settings → Resources →
+_Fix:_ raise the ceiling (`OPENWA_MEM_LIMIT=4g` in your `.env`, or Docker Desktop → Settings → Resources →
 Memory for the VM).
 
 **Cause C — the XDG/crashpad home-dir crash.**
@@ -411,8 +418,8 @@ immediately above this one for the fix. The bundled image already handles this; 
 custom container that drops the `XDG_CONFIG_HOME` / `XDG_CACHE_HOME` setup or the writable `/tmp` tmpfs.
 
 **Cause D — Debian 12 OS Chromium SIGTRAP in non-root Pods.**
-If `Code: null` happens on Kubernetes, and the host kernel logs or `dmesg` shows `Trace/breakpoint trap (core dumped)` with exit code 133, the underlying Debian 12 OS `chromium` package has crashed due to strict non-root or seccomp constraints (even with `--no-zygote` or `Unconfined` seccomp). 
-*Fix:* On amd64, do not use the `chromium` package from Debian's `apt` — it SIGTRAPs under strict non-root/seccomp. Instead, download Chrome for Testing via Puppeteer during the Docker build (`./node_modules/.bin/puppeteer browsers install 'chrome@146.0.7680.31'`) and point `PUPPETEER_EXECUTABLE_PATH` to it. (Chrome for Testing has no linux-arm64 build, so arm64 keeps Debian's `chromium`, which ships a native arm64 binary.) The official `Dockerfile` implements this mixed approach.
+If `Code: null` happens on Kubernetes, and the host kernel logs or `dmesg` shows `Trace/breakpoint trap (core dumped)` with exit code 133, the underlying Debian 12 OS `chromium` package has crashed due to strict non-root or seccomp constraints (even with `--no-zygote` or `Unconfined` seccomp).
+_Fix:_ On amd64, do not use the `chromium` package from Debian's `apt` — it SIGTRAPs under strict non-root/seccomp. Instead, download Chrome for Testing via Puppeteer during the Docker build (`./node_modules/.bin/puppeteer browsers install 'chrome@146.0.7680.31'`) and point `PUPPETEER_EXECUTABLE_PATH` to it. (Chrome for Testing has no linux-arm64 build, so arm64 keeps Debian's `chromium`, which ships a native arm64 binary.) The official `Dockerfile` implements this mixed approach.
 
 **Quick triage:** run `docker stats openwa-api`, click **Start**, and watch which resource spikes toward its
 limit the instant before the failure — that tells you A vs B. If neither moves and you see the crashpad
@@ -438,7 +445,8 @@ flavours; loading the stale profile destroys the page context during `Client.inj
 trigger today is the **v0.8.12** amd64 switch from Debian's `chromium` package to Chrome for Testing
 (#663), but the same symptom can follow any future change to the bundled browser binary. The error
 reads like a Puppeteer bug and gives no hint that the profile is the cause — the adapter now logs an
-advisory when it detects this error.
+advisory when it detects this error, and the session's `lastError` (the message the dashboard shows on
+the session card) carries a short form of it, so the pointer survives without reading the container log.
 
 **Fix:** delete the affected session's profile dir and start the session again to scan a new QR. The
 profile cannot be salvaged — clearing only the cache subdirs (`Cache`, `GPUCache`, `Code Cache`, …) is
@@ -503,7 +511,11 @@ once, so the session stops instead of being silently unlinked by WhatsApp about 
 > a container stops Chromium launching at all). If your deployment does get a
 > localised modal, it is **not** auto-dismissed and the session never reaches `action_required` —
 > instead it links normally, then drops to `disconnected` with reason `LOGOUT` a few minutes later and
-> the device disappears from the phone's Linked devices list. Because that path wipes the stored
+> the device disappears from the phone's Linked devices list. That miss is no longer silent: when the
+> watcher finds a visible dialog it cannot match, it logs a warning (`action:
+onboarding_dialog_unrecognized`) carrying the dialog's heading and button labels — the label to add
+> via `WWEBJS_ONBOARDING_CONTINUE_LABELS`, and the heading worth reporting — minutes before the unlink
+> would happen. Because that path wipes the stored
 > credentials, the automatic reconnect comes back with a fresh QR on its own, so the session is
 > usually already sitting at `qr_ready` rather than needing a manual start. Acknowledge the modal once
 > in a browser signed in as that account, then scan the QR. It does not recur — the modal is shown
@@ -525,6 +537,7 @@ same stop → start clears it.
 ### Issue: Frequent Disconnections
 
 **Symptoms:**
+
 - Session disconnects every few hours
 - `disconnected` status in logs
 - Need to rescan QR frequently
@@ -565,14 +578,15 @@ default 5000). `maxReconnectAttempts` is clamped to 0–20 — `0` disables auto
 leaving it unset means unlimited retries with the delay parking at a 1-hour cap. Subscribe to the
 `session.reconnect_loop` webhook to be alerted on every 5th consecutive attempt.
 
-On a slow host, raise the first-boot init wait with `WWEBJS_AUTH_TIMEOUT_MS` (see *QR generation
-times out on slow first boot* above).
+On a slow host, raise the first-boot init wait with `WWEBJS_AUTH_TIMEOUT_MS` (see _QR generation
+times out on slow first boot_ above).
 
 ## 12.4 Messaging Issues
 
 ### Issue: Messages Not Sending
 
 **Symptoms:**
+
 - API returns 200 but message not delivered
 - "Message send failed" errors
 - Messages stuck in queue
@@ -593,13 +607,13 @@ curl -H "X-API-Key: $API_KEY" \
 
 **Common Causes:**
 
-| Cause | Symptom | Solution |
-|-------|---------|----------|
-| Invalid phone number | 400 error | Format: `628123456789@c.us` |
-| Rate limited | 429 error | Reduce sending rate |
-| Session disconnected | 503 error | Reconnect session |
-| Media too large | 413 error | Compress or reduce size |
-| Number not on WhatsApp | Message fails silently | Verify number first |
+| Cause                  | Symptom                | Solution                    |
+| ---------------------- | ---------------------- | --------------------------- |
+| Invalid phone number   | 400 error              | Format: `628123456789@c.us` |
+| Rate limited           | 429 error              | Reduce sending rate         |
+| Session disconnected   | 503 error              | Reconnect session           |
+| Media too large        | 413 error              | Compress or reduce size     |
+| Number not on WhatsApp | Message fails silently | Verify number first         |
 
 **Phone Number Validation:**
 
@@ -621,7 +635,7 @@ curl -H "X-API-Key: $API_KEY" \
 
 **Symptoms:**
 
-- `POST /api/sessions/{id}/messages/send-text` returns `{"statusCode":500,"message":"Internal server error"}` — but the message *is* delivered
+- `POST /api/sessions/{id}/messages/send-text` returns `{"statusCode":500,"message":"Internal server error"}` — but the message _is_ delivered
 - Logs show `the engine returned no message for this send, so it may not have been delivered`
 - Unrelated operations fail with the minified error `r: r`: `GET /api/sessions/{id}/chats`, media downloads, typing indicators
 - Startup logs may contain `The installed whatsapp-web.js is missing the message-id backport…`
@@ -654,6 +668,7 @@ rm -rf node_modules/whatsapp-web.js && npm ci
 ### Issue: Media Upload Fails
 
 **Symptoms:**
+
 - "File too large" error
 - "Unsupported media type" error
 - Upload timeout
@@ -668,6 +683,10 @@ MEDIA_DOWNLOAD_MAX_BYTES=52428800
 # Max request body — base64 media rides inside the JSON body, so raise this too.
 # Default 25mb.
 BODY_SIZE_LIMIT=25mb
+
+# Note: send the body uncompressed. A request carrying Content-Encoding: gzip (or deflate/br)
+# is refused with 415 — the aggregate in-flight cap counts bytes on the wire, so a compressed
+# body would be admitted small and then inflated past the memory that cap exists to bound.
 
 # Supported formats
 # Images: jpg, jpeg, png, gif, webp
@@ -692,6 +711,7 @@ curl -X POST http://localhost:2785/api/sessions/{id}/messages/send-image \
 ### Issue: Webhook Not Receiving Messages
 
 **Symptoms:**
+
 - Messages received but webhook not triggered
 - Webhook URL returns errors
 - Duplicate webhook calls
@@ -699,11 +719,20 @@ curl -X POST http://localhost:2785/api/sessions/{id}/messages/send-image \
 **Diagnostic:**
 
 ```bash
-# Check webhook configuration
+# Check webhook configuration — `active` must be true, `events` must list the event (or "*"),
+# and `filters` must not exclude it. `lastTriggeredAt` stays null until a real 2xx delivery:
+# the Test button never sets it, so a green Test proves nothing about real events.
 curl -H "X-API-Key: $API_KEY" \
   http://localhost:2785/api/sessions/{sessionId}/webhooks
 
-# No webhook-delivery log API — check the server logs / audit trail instead
+# Abandoned deliveries, most recent first: those that exhausted every retry, plus those never
+# attempted at all (recorded with `attempts: 0`). Requires an ADMIN key — an OPERATOR key gets
+# a 403, which reads like the endpoint does not exist. Rows older than
+# WEBHOOK_FAILURE_RETENTION_DAYS (default 90) are pruned.
+curl -H "X-API-Key: $ADMIN_API_KEY" \
+  "http://localhost:2785/api/webhooks/delivery-failures?sessionId={sessionId}&limit=20"
+
+# Attempts still in flight (not yet exhausted) appear only in the server logs:
 docker compose logs openwa-api 2>&1 | grep -i webhook
 
 # Test webhook endpoint
@@ -713,6 +742,12 @@ curl -X POST http://your-webhook-url \
 ```
 
 **Solutions:**
+
+Read the two lists together before changing anything. A delivery-failure row carrying an HTTP
+`lastStatusCode` means the gateway delivered and your receiver rejected it — fix the receiver. An
+empty list with `lastTriggeredAt` still null means nothing has ever been delivered and nothing has
+permanently failed: the event either never matched this webhook (`active`, `events`, `filters`) or
+was never emitted for the session at all.
 
 Webhooks are rows created through the API — there is no webhook config file:
 
@@ -737,11 +772,41 @@ WEBHOOK_TIMEOUT=10000      # per-attempt HTTP timeout in ms (default 10000)
 WEBHOOK_RETRY_DELAY=5000   # base retry backoff in ms (default 5000)
 ```
 
+### Issue: An inbound sender arrives as an `@lid` id instead of a phone number
+
+**Symptoms:**
+
+- `message.received` carries `from` (or `author`, in a group) as `162878178984075@lid` rather than `628123456789@c.us`
+- The number cannot be matched against your own contact records, and replies have to be addressed by the `@lid` id
+- `contact.number` on the payload repeats the lid digits, so it is not the phone number either
+
+**Cause:** WhatsApp identifies some accounts by a privacy id (`@lid`) instead of their phone number,
+and the message itself carries no phone number to read. Mapping one back costs a lookup against the
+engine, so the gateway does not do it on every message unless you ask for it.
+
+**Solution:**
+
+```bash
+# Resolve a single id on demand — works whether or not the flag below is set
+curl -H "X-API-Key: $API_KEY" \
+  http://localhost:2785/api/sessions/{sessionId}/contacts/{contactId}/phone
+
+# Or have every inbound message carry it: adds `senderPhone` to the message.received webhook
+# and the websocket event. Set it in the `.env` next to docker-compose.yml (both compose files
+# already forward the variable), then restart the process — an env change is not picked up by a
+# session reload.
+RESOLVE_LID_TO_PHONE=true
+```
+
+`senderPhone` is `null` when the engine cannot map the id — an `@lid` the account has never seen has
+no mapping to return. Both engines support the lookup.
+
 ## 12.5 Performance Issues
 
 ### Issue: High Memory Usage
 
 **Symptoms:**
+
 - Container using > 1GB RAM per session
 - OOM (Out of Memory) kills
 - Slow response times
@@ -775,15 +840,16 @@ services:
 
 **Memory Optimization Tips:**
 
-| Optimization | Impact | Trade-off |
-|--------------|--------|-----------|
-| Reduce message history | -20% RAM | Less searchable history |
-| Headless Chrome flags | -15% RAM (wwebjs only) | None |
-| Limit concurrent sessions | Linear | Fewer sessions |
+| Optimization              | Impact                 | Trade-off               |
+| ------------------------- | ---------------------- | ----------------------- |
+| Reduce message history    | -20% RAM               | Less searchable history |
+| Headless Chrome flags     | -15% RAM (wwebjs only) | None                    |
+| Limit concurrent sessions | Linear                 | Fewer sessions          |
 
 ### Issue: Slow API Response
 
 **Symptoms:**
+
 - API takes > 1 second to respond
 - Timeout errors
 - High latency for simple operations
@@ -834,6 +900,7 @@ REDIS_PORT=6379
 ### Issue: Database Locked (SQLite)
 
 **Symptoms:**
+
 - "SQLITE_BUSY" errors
 - "database is locked" messages
 - Write operations failing
@@ -871,6 +938,7 @@ flowchart TD
 ### Issue: Database Migration Failed
 
 **Symptoms:**
+
 - "Migration failed" errors
 - Schema mismatch
 - Missing tables
@@ -899,6 +967,7 @@ npm run migration:run:main
 ### Issue: Volume Permissions
 
 **Symptoms:**
+
 - "Permission denied" errors
 - Can't write to data directory
 - Auth files not persisting
@@ -922,6 +991,7 @@ services:
 ### Issue: Container Networking
 
 **Symptoms:**
+
 - Can't connect to database container
 - Webhook calls fail from container
 - "Connection refused" errors
@@ -935,7 +1005,7 @@ services:
     networks:
       - openwa-network
     extra_hosts:
-      - "host.docker.internal:host-gateway"  # Access host from container
+      - 'host.docker.internal:host-gateway' # Access host from container
 
   postgres:
     networks:
@@ -957,25 +1027,39 @@ docker exec openwa-api curl http://host.docker.internal:8080
 ### General Questions
 
 **Q: Is OpenWA safe to use?**
+
 > A: OpenWA uses unofficial WhatsApp Web API. While we implement best practices to avoid detection, there's inherent risk of account restrictions. We recommend:
+>
 > - Use dedicated phone number (not personal)
 > - Don't send spam or bulk unsolicited messages
 > - Follow WhatsApp's Terms of Service
 > - Implement rate limiting
 
 **Q: How many sessions can I run?**
+
 > A: Depends on your server resources and the engine in use. With the default `whatsapp-web.js` engine (Chromium-based), each session uses ~300-500MB RAM:
+>
 > - 2GB RAM: 3-5 sessions
 > - 4GB RAM: 8-10 sessions
 > - 8GB RAM: 15-20 sessions
 >
 > With `ENGINE_TYPE=baileys` (browser-free), RAM per session is significantly lower — you can run more sessions on the same hardware. Exact figures depend on message volume and group membership.
 
+**Q: Can I run 10+ sessions in one container? Will they get banned for sharing one IP?**
+
+> A: Yes — there is no hard session limit; the practical ceiling is RAM/CPU (see the table above). Sharing one IP across sessions is not itself a ban trigger: carrier NAT already puts hundreds of ordinary users on a single IP, so WhatsApp cannot treat a shared IP as a violation. Ten sessions on one residential IP behave like ten phones on one home WiFi. What actually matters:
+>
+> - **IP reputation** — cheap datacenter IPs are flagged more aggressively than residential ones. A residential proxy (per-session, via the proxy settings) can help; it is not a license to spam.
+> - **Sending behavior** — bans follow message patterns (volume, identical templates, cold reachouts), not session count. See "How to avoid getting banned?" below.
+
 **Q: Can I use WhatsApp Business account?**
+
 > A: Yes, OpenWA works with both personal and WhatsApp Business accounts. Note that WhatsApp Business API (official Meta API) is different and not supported.
 
 **Q: How to avoid getting banned?**
+
 > Best practices:
+>
 > - Don't send > 200 messages/day for new numbers
 > - Gradually increase volume
 > - Avoid identical messages to multiple recipients
@@ -985,10 +1069,11 @@ docker exec openwa-api curl http://host.docker.internal:8080
 ### Technical Questions
 
 **Q: How to send messages to groups?**
+
 ```bash
 # Get group list
 curl -H "X-API-Key: $API_KEY" \
-  http://localhost:2785/api/sessions/{id}/groups
+  http://localhost:2785/api/sessions/{sessionId}/groups
 
 # Send to group
 curl -X POST http://localhost:2785/api/sessions/{id}/messages/send-text \
@@ -1001,6 +1086,7 @@ curl -X POST http://localhost:2785/api/sessions/{id}/messages/send-text \
 ```
 
 **Q: How to handle message replies?**
+
 ```bash
 # Reply to specific message
 curl -X POST http://localhost:2785/api/sessions/{id}/messages/reply \
@@ -1014,13 +1100,16 @@ curl -X POST http://localhost:2785/api/sessions/{id}/messages/reply \
 ```
 
 **Q: How to use with n8n?**
+
 > See [n8n Integration Guide](./22-n8n-integration.md). Quick setup:
+>
 > 1. Add HTTP Request node
 > 2. Set URL: `http://openwa:2785/api/sessions/{id}/messages/send-text`
 > 3. Add header: `X-API-Key: your-key`
 > 4. Configure webhook trigger for incoming messages
 
 **Q: How to run behind reverse proxy (nginx)?**
+
 ```nginx
 # nginx.conf
 server {
@@ -1088,6 +1177,7 @@ entryPoints:
 Remember OpenWA is **single-port**: the Dashboard, REST API, and Socket.IO all share `:2785` behind one router, so a choked upstream takes all three down at once. A Dashboard stuck on "Connecting…" while `localhost` is healthy is the proxy hop, not the app.
 
 **Q: How to backup sessions automatically?**
+
 ```bash
 # Add to crontab, for example: 0 */6 * * * cd /path/to/openwa && ./scripts/backup.sh
 BACKUP_DIR=/backups/openwa ./scripts/backup.sh
@@ -1100,42 +1190,45 @@ retention/encryption to completed archives externally; see the [backup and resto
 ### Webhook Questions
 
 **Q: What events can I subscribe to?**
+
 ```yaml
 available_events:
   # Messages
-  - message.received     # New incoming message
-  - message.sent         # Message sent
-  - message.ack          # Message status update (sent, delivered, read)
-  - message.failed       # Receipt resolved to failed
-  - message.revoked      # Message deleted
-  - message.reaction     # Reaction added, changed, or removed
-  - message.edited       # Message body or media caption edited
+  - message.received # New incoming message
+  - message.sent # Message sent
+  - message.ack # Message status update (sent, delivered, read)
+  - message.failed # Receipt resolved to failed
+  - message.revoked # Message deleted
+  - message.reaction # Reaction added, changed, or removed
+  - message.edited # Message body or media caption edited
 
   # Status
-  - status.received      # A contact posted a status/story (opt-in: must be listed explicitly or via "*")
+  - status.received # A contact posted a status/story (opt-in: must be listed explicitly or via "*")
 
   # Session
-  - session.status       # Session status change
-  - session.qr           # New QR code generated
-  - session.authenticated  # Session authenticated
-  - session.disconnected   # Session disconnected
+  - session.status # Session status change
+  - session.qr # New QR code generated
+  - session.authenticated # Session authenticated
+  - session.disconnected # Session disconnected
   - session.reconnect_loop # Every 5th consecutive reconnect attempt (payload: sessionId, attempts, nextDelayMs)
-  - session.restriction   # WhatsApp restricted the account, or lifted it (payload: sessionId, active, kind, code, expiresAt)
-  - presence.update       # A subscribed chat's presence changed (payload: sessionId, chatId, participants, groupOnlineCount)
-  - call.accepted         # A ringing call was answered (Baileys only; payload: sessionId, callId, from, outcome, isVideo, isGroup, timestamp)
-  - call.rejected         # A ringing call was declined (Baileys only)
-  - call.missed           # A ringing call was never picked up (Baileys only)
+  - session.restriction # WhatsApp restricted the account, or lifted it (payload: sessionId, active, kind, code, expiresAt)
+  - presence.update # A subscribed chat's presence changed (payload: sessionId, chatId, participants, groupOnlineCount)
+  - call.accepted # A ringing call was answered (Baileys only; payload: sessionId, callId, from, outcome, isVideo, isGroup, timestamp)
+  - call.rejected # A ringing call was declined (Baileys only)
+  - call.missed # A ringing call was never picked up (Baileys only)
 
   # Groups
-  - group.join           # Participant(s) added/joined
-  - group.leave          # Participant(s) left/removed
-  - group.update         # Group subject/description/announce/locked changed
+  - group.join # Participant(s) added/joined
+  - group.leave # Participant(s) left/removed
+  - group.update # Group subject/description/announce/locked changed
+  - group.join_request # Someone asked to join a group this session administers
 
   # Calls
-  - call.received        # Incoming call ringing (payload: callId, from, isVideo, isGroup, timestamp)
+  - call.received # Incoming call ringing (payload: callId, from, isVideo, isGroup, timestamp)
 ```
 
 **Q: Webhook payload format?**
+
 ```json
 {
   "event": "message.received",
@@ -1162,17 +1255,17 @@ available_events:
 
 ### HTTP Error Codes
 
-| Code | Meaning | Common Cause | Solution |
-|------|---------|--------------|----------|
-| 400 | Bad Request | Invalid parameters | Check request body/params |
-| 401 | Unauthorized | Missing/invalid API key | Add X-API-Key header |
-| 403 | Forbidden | Insufficient permissions | Check API key permissions |
-| 404 | Not Found | Invalid session/endpoint | Verify session exists |
-| 409 | Conflict | Session already exists | Use different session ID |
-| 413 | Payload Too Large | File too large | Reduce file size |
-| 429 | Too Many Requests | Rate limited | Reduce request rate |
-| 500 | Internal Error | Server error | Check logs |
-| 503 | Service Unavailable | Session disconnected | Reconnect session |
+| Code | Meaning             | Common Cause             | Solution                  |
+| ---- | ------------------- | ------------------------ | ------------------------- |
+| 400  | Bad Request         | Invalid parameters       | Check request body/params |
+| 401  | Unauthorized        | Missing/invalid API key  | Add X-API-Key header      |
+| 403  | Forbidden           | Insufficient permissions | Check API key permissions |
+| 404  | Not Found           | Invalid session/endpoint | Verify session exists     |
+| 409  | Conflict            | Session already exists   | Use different session ID  |
+| 413  | Payload Too Large   | File too large           | Reduce file size          |
+| 429  | Too Many Requests   | Rate limited             | Reduce request rate       |
+| 500  | Internal Error      | Server error             | Check logs                |
+| 503  | Service Unavailable | Session disconnected     | Reconnect session         |
 
 ### Error Body Shape
 
@@ -1202,6 +1295,7 @@ When creating GitHub issue, include:
 
 ```markdown
 ## Environment
+
 - OpenWA version: x.x.x
 - Docker version: x.x.x
 - OS: Ubuntu 22.04 / macOS / Windows
@@ -1209,28 +1303,35 @@ When creating GitHub issue, include:
 - Sessions count: X
 
 ## Issue Description
+
 [Clear description of the problem]
 
 ## Steps to Reproduce
+
 1. Step one
 2. Step two
 3. ...
 
 ## Expected Behavior
+
 [What should happen]
 
 ## Actual Behavior
+
 [What actually happens]
 
 ## Logs
 ```
+
 [Paste relevant logs here]
-```
+
+````
 
 ## Configuration
 ```yaml
 # Sanitized docker-compose.yml or .env
-```
+````
+
 ```
 
 ### Community Resources
@@ -1246,3 +1347,4 @@ When creating GitHub issue, include:
 [← 11 - Operational Runbooks](./11-operational-runbooks.md) · [Documentation Index](./README.md) · [Next: 13 - Horizontal Scaling Guide →](./13-horizontal-scaling.md)
 
 </div>
+```

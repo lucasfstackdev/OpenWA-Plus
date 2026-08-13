@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException, NotFoundException, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { QueryDeepPartialEntity } from 'typeorm';
 import { SessionService } from '../session/session.service';
 import { EngineRegistry } from '../../engine/engine-registry.service';
@@ -35,6 +35,72 @@ export interface GetMessagesOptions {
 
 /** Default cap on a rendered template's final text; overridable via TEMPLATE_RENDER_MAX_CHARS. */
 export const DEFAULT_TEMPLATE_RENDER_MAX_CHARS = 64 * 1024;
+
+/**
+ * Aggregate budget for the inline base64 media ONE message-list response may carry, counted in the
+ * encoded bytes that actually land in the JSON body. Override with
+ * MESSAGE_LIST_INLINE_MEDIA_BUDGET_BYTES; 0 omits every payload.
+ *
+ * The row count was already clamped to 1..100, but a row is not a bounded object: `metadata.media.data`
+ * holds the whole base64 payload, so a hundred media rows serialise to hundreds of megabytes — past
+ * V8's string ceiling the read fails outright, and the dashboard requests the maximum page size with
+ * no way to ask for less. Mirrors the export path's budget rather than inventing a second policy.
+ *
+ * NOT a hard ceiling on the response. The newest payload is let through whatever its size (see
+ * spendInlineMediaBudget), so the real bound is `max(budget, one payload)` — and one payload is
+ * bounded upstream by `capInboundMedia` at MEDIA_DOWNLOAD_MAX_BYTES (50 MiB by default, ~68 MiB once
+ * base64-encoded). That is well inside V8's string ceiling and is the point: the alternative is a
+ * large photo no client can ever read back. Raising MEDIA_DOWNLOAD_MAX_BYTES raises this too.
+ */
+export const DEFAULT_MESSAGE_LIST_INLINE_MEDIA_BUDGET_BYTES = 8 * 1024 * 1024;
+
+export function resolveMessageListInlineMediaBudgetBytes(): number {
+  const parsed = Number.parseInt(process.env.MESSAGE_LIST_INLINE_MEDIA_BUDGET_BYTES ?? '', 10);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : DEFAULT_MESSAGE_LIST_INLINE_MEDIA_BUDGET_BYTES;
+}
+
+/** `metadata.media.data` holds `base64 || url`, so a pointer must never be mistaken for a payload. */
+const MEDIA_URL_POINTER = /^https?:\/\//i;
+
+/**
+ * Spend the budget over an already-ordered (newest-first) page, replacing each payload past it with
+ * the engine's own `{ omitted: true, sizeBytes }` marker — the same shape `capInboundMedia` writes
+ * when inbound media is skipped on the way in, so a trimmed row is not a new shape consumers must
+ * learn. Mutates and returns the rows.
+ *
+ * A budget, not a blanket strip: the recent media a caller is most likely reading still arrives
+ * inline, and anything dropped remains fetchable from GET /:chatId/:messageId/media.
+ */
+export function spendInlineMediaBudget(messages: Message[], budgetBytes: number): Message[] {
+  let spent = 0;
+  for (const message of messages) {
+    const metadata = message.metadata as Record<string, unknown> | null | undefined;
+    if (!metadata || typeof metadata !== 'object') continue;
+    const media = metadata.media as { data?: unknown; sizeBytes?: number } | null | undefined;
+    if (!media || typeof media.data !== 'string' || MEDIA_URL_POINTER.test(media.data)) continue;
+
+    const encoded = Buffer.byteLength(media.data, 'utf8');
+    // The newest payload is always let through when inlining is enabled at all. Without this an
+    // item larger than the whole budget was omitted even as the ONLY media on the page, so a single
+    // large photo or video — well inside the bytes the gateway stores inline — could never be read
+    // back through this route: the dashboard thread has no other media source and caches with
+    // staleTime: Infinity, leaving a permanent placeholder for media WhatsApp displays.
+    // A budget of 0 means "do not inline", not "a very small budget", so it grants no allowance.
+    const allowanceApplies = spent === 0 && budgetBytes > 0;
+    if (spent + encoded <= budgetBytes || allowanceApplies) {
+      spent += encoded;
+      continue;
+    }
+    const { data, ...withoutPayload } = media;
+    metadata.media = {
+      ...withoutPayload,
+      omitted: true,
+      // Decoded bytes, matching what capInboundMedia reports — the caller asked how big it WAS.
+      sizeBytes: media.sizeBytes ?? Buffer.byteLength(data, 'base64'),
+    };
+  }
+  return messages;
+}
 
 /** Pin window applied when the caller does not choose one — WhatsApp's own default of 24h. */
 export const DEFAULT_PIN_DURATION_SECONDS = 86400;
@@ -112,8 +178,8 @@ export class MessageService {
     private readonly pacing: SendPacingService,
     @Optional()
     private readonly configService?: ConfigService,
-    // Optional so the existing standalone constructions keep working; absent means the archive
-    // read endpoint reports "nothing archived", which is also what a disabled archive reports.
+    // Optional so the existing standalone constructions keep working; absent (like a disabled
+    // archive) means the media read endpoint serves only the inline row copy, never archived files.
     @Optional()
     private readonly chatMediaArchive?: ChatMediaArchiveService,
     @Optional()
@@ -140,6 +206,7 @@ export class MessageService {
       chatId: finalDto.chatId,
       body: finalDto.text,
       type: 'text',
+      quotedMessageId: finalDto.quotedMessageId,
     });
 
     // Opt-in humanising "typing…" pause before the actual send (anti-automation signal).
@@ -151,11 +218,12 @@ export class MessageService {
       // nor a preview choice keeps its two-argument shape, and one with mentions alone keeps its
       // three — trailing `undefined`s would be harmless to the engines but would rewrite the call
       // shape of every existing send for no behavioural gain.
-      const { linkPreview, customLinkPreview } = finalDto;
-      if (linkPreview !== undefined || customLinkPreview) {
+      const { linkPreview, customLinkPreview, quotedMessageId } = finalDto;
+      if (linkPreview !== undefined || customLinkPreview || quotedMessageId) {
         result = await engine.sendTextMessage(finalDto.chatId, finalDto.text, finalDto.mentions, {
           ...(linkPreview === undefined ? {} : { linkPreview }),
           ...(customLinkPreview ? { customPreview: customLinkPreview } : {}),
+          ...(quotedMessageId ? { quotedMessageId } : {}),
         });
       } else if (finalDto.mentions?.length) {
         result = await engine.sendTextMessage(finalDto.chatId, finalDto.text, finalDto.mentions);
@@ -283,6 +351,7 @@ export class MessageService {
       chatId: finalDto.chatId,
       body: finalDto.caption || '',
       type: 'image',
+      quotedMessageId: finalDto.quotedMessageId,
       metadata: {
         media: { mimetype: finalDto.mimetype, filename: finalDto.filename, data: media.data },
       },
@@ -307,6 +376,7 @@ export class MessageService {
       chatId: finalDto.chatId,
       body: finalDto.caption || '',
       type: 'video',
+      quotedMessageId: finalDto.quotedMessageId,
       metadata: {
         media: { mimetype: finalDto.mimetype, filename: finalDto.filename, data: media.data },
       },
@@ -358,6 +428,7 @@ export class MessageService {
       metadata: {
         media: { mimetype: audioDto.mimetype, filename: finalDto.filename, data: media.data },
       },
+      quotedMessageId: finalDto.quotedMessageId,
     });
 
     let result: MessageResult;
@@ -379,6 +450,7 @@ export class MessageService {
       chatId: finalDto.chatId,
       body: finalDto.caption || finalDto.filename || '',
       type: 'document',
+      quotedMessageId: finalDto.quotedMessageId,
       metadata: {
         media: { mimetype: finalDto.mimetype, filename: finalDto.filename, data: media.data },
       },
@@ -441,7 +513,10 @@ export class MessageService {
     }
 
     const [messages, total] = await query.getManyAndCount();
-    return { messages, total };
+    // The 1..100 clamp above bounds the ROW COUNT, not the response: each row carries its inline
+    // base64 in metadata.media.data. Spent newest-first (the query orders createdAt DESC), so the
+    // most recently viewed media still arrives inline and the rest keeps its omitted marker.
+    return { messages: spendInlineMediaBudget(messages, resolveMessageListInlineMediaBudgetBytes()), total };
   }
 
   /**
@@ -482,7 +557,14 @@ export class MessageService {
 
   async sendLocation(
     sessionId: string,
-    dto: { chatId: string; latitude: number; longitude: number; description?: string; address?: string },
+    dto: {
+      chatId: string;
+      latitude: number;
+      longitude: number;
+      description?: string;
+      address?: string;
+      quotedMessageId?: string;
+    },
   ): Promise<MessageResponseDto> {
     const finalDto = await this.applySendingGate(sessionId, 'location', dto);
     const engine = this.getEngine(sessionId);
@@ -492,6 +574,7 @@ export class MessageService {
       chatId: finalDto.chatId,
       body: `📍 ${finalDto.description || 'Location'}`,
       type: 'location',
+      quotedMessageId: finalDto.quotedMessageId,
     });
 
     let result: MessageResult;
@@ -501,6 +584,7 @@ export class MessageService {
         longitude: finalDto.longitude,
         description: finalDto.description,
         address: finalDto.address,
+        quotedMessageId: finalDto.quotedMessageId,
       });
     } catch (error) {
       return this.failSend(sessionId, 'location', message, finalDto, error);
@@ -510,7 +594,7 @@ export class MessageService {
 
   async sendContact(
     sessionId: string,
-    dto: { chatId: string; contactName: string; contactNumber: string },
+    dto: { chatId: string; contactName: string; contactNumber: string; quotedMessageId?: string },
   ): Promise<MessageResponseDto> {
     const finalDto = await this.applySendingGate(sessionId, 'contact', dto);
     const engine = this.getEngine(sessionId);
@@ -520,6 +604,7 @@ export class MessageService {
       chatId: finalDto.chatId,
       body: `📇 ${finalDto.contactName}`,
       type: 'contact',
+      quotedMessageId: finalDto.quotedMessageId,
     });
 
     let result: MessageResult;
@@ -527,6 +612,7 @@ export class MessageService {
       result = await engine.sendContactMessage(finalDto.chatId, {
         name: finalDto.contactName,
         number: finalDto.contactNumber,
+        quotedMessageId: finalDto.quotedMessageId,
       });
     } catch (error) {
       return this.failSend(sessionId, 'contact', message, finalDto, error);
@@ -536,7 +622,7 @@ export class MessageService {
 
   async sendPoll(
     sessionId: string,
-    dto: { chatId: string; name: string; options: string[]; allowMultipleAnswers?: boolean },
+    dto: { chatId: string; name: string; options: string[]; allowMultipleAnswers?: boolean; quotedMessageId?: string },
   ): Promise<MessageResponseDto> {
     const finalDto = await this.applySendingGate(sessionId, 'poll', dto);
     const engine = this.getEngine(sessionId);
@@ -547,6 +633,7 @@ export class MessageService {
       chatId: finalDto.chatId,
       body: `📊 ${finalDto.name}`,
       type: 'poll',
+      quotedMessageId: finalDto.quotedMessageId,
     });
 
     let result: MessageResult;
@@ -555,6 +642,7 @@ export class MessageService {
         name: finalDto.name,
         options: finalDto.options,
         allowMultipleAnswers: finalDto.allowMultipleAnswers === true,
+        quotedMessageId: finalDto.quotedMessageId,
       });
     } catch (error) {
       return this.failSend(sessionId, 'poll', message, finalDto, error);
@@ -571,6 +659,7 @@ export class MessageService {
     const message = await this.saveOutgoingMessage(sessionId, {
       chatId: finalDto.chatId,
       type: 'sticker',
+      quotedMessageId: finalDto.quotedMessageId,
       metadata: {
         media: { mimetype: finalDto.mimetype, filename: finalDto.filename, data: media.data },
       },
@@ -663,6 +752,12 @@ export class MessageService {
    * Save outgoing message to database.
    * When called before sending, creates a record with PENDING status; bulk send reuses this after a
    * successful send (status SENT) so batch messages are persisted like single sends.
+   *
+   * A caller that already knows the engine id races the own-send echo on
+   * UNIQUE(sessionId, waMessageId) — only the bulk path does today, since every single send persists
+   * its PENDING row before the id exists. Losing that race merges onto the echo's row rather than
+   * failing, mirroring `persistSentState`: the echo carries only what the engine reported (for a
+   * Baileys API send, a media-less marker), so dropping this write would lose the media payload.
    */
   async saveOutgoingMessage(
     sessionId: string,
@@ -674,6 +769,14 @@ export class MessageService {
       timestamp?: number;
       status?: MessageStatus;
       metadata?: Record<string, unknown>;
+      /**
+       * Quoted id for a send that is a reply. Folded into `metadata.quotedMessage` here rather than
+       * by each sender so the nine send paths and `reply()` persist one shape — a row that quoted a
+       * message but records nothing is simply wrong history, and the dashboard reads this key to
+       * render the reply preview. The body is left empty: unlike `reply()`, the send paths do not
+       * look the quoted message up, and '' is already reply()'s own value when that lookup fails.
+       */
+      quotedMessageId?: string;
     },
   ): Promise<Message> {
     const session = await this.sessionService.findOne(sessionId);
@@ -694,9 +797,27 @@ export class MessageService {
       direction: MessageDirection.OUTGOING,
       timestamp: data.timestamp,
       status: data.status ?? MessageStatus.PENDING,
-      metadata: data.metadata,
+      metadata: data.quotedMessageId
+        ? { ...data.metadata, quotedMessage: { id: data.quotedMessageId, body: '' } }
+        : data.metadata,
     });
-    const saved = await this.messageRepository.save(message);
+    const saved = await this.messageRepository.save(message).catch(async (err: unknown) => {
+      const waMessageId = message.waMessageId;
+      if (!waMessageId || !isUniqueConstraintError(err)) throw err;
+      const patch: QueryDeepPartialEntity<Message> = {
+        status: message.status,
+        timestamp: message.timestamp,
+      };
+      // Only when this write actually carries metadata worth merging: a text item must not blank
+      // the echo's, and a URL pointer must not replace bytes the engine already downloaded.
+      if (message.metadata && !isUrlPointerMetadata(message.metadata)) {
+        patch.metadata = message.metadata as QueryDeepPartialEntity<Record<string, unknown>>;
+      }
+      await this.messageRepository.update({ sessionId, waMessageId }, patch);
+      const surviving = await this.messageRepository.findOne({ where: { sessionId, waMessageId } });
+      if (!surviving) throw err;
+      return surviving;
+    });
     this.emitPersisted(sessionId, saved);
     return saved;
   }
@@ -707,10 +828,23 @@ export class MessageService {
   // transition (SENT / FAILED / merge) — so a provider's copy never stays stuck at PENDING (#906).
   // The payload is a shallow snapshot: the same entity instance is mutated as the send progresses
   // (PENDING → SENT/FAILED), and fire-and-forget execution must still see the state at emission time.
+  //
+  // Outbound archiving rides the same chokepoint rather than a call at each of the four persist
+  // sites: every terminal state of an outbound row passes here. Gated on SENT because a PENDING row
+  // may still be deleted by the dedup merge or rewritten by the pending reaper, and a FAILED one has
+  // had its payload stripped — archiving either would strand a file the row never points at.
   private emitPersisted(sessionId: string, message: Message): void {
     void this.hookManager
       .execute('message:persisted', { sessionId, message: { ...message } }, { sessionId, source: 'MessageService' })
       .catch(() => undefined);
+    if (message.status === MessageStatus.SENT && this.archiveOutboundEnabled) {
+      void this.chatMediaArchive?.archive(message).catch(() => undefined);
+    }
+  }
+
+  /** Whether media this account sent is archived too — a sub-flag of the archive itself. */
+  private get archiveOutboundEnabled(): boolean {
+    return this.configService?.get<boolean>('chatMedia.archiveOutbound', false) === true;
   }
 
   /**
@@ -752,9 +886,10 @@ export class MessageService {
     } catch (persistError) {
       if (result.id && isUniqueConstraintError(persistError)) {
         // The engine's own-send echo (onMessageCreate) won the race and already persisted a row with
-        // this waMessageId. That row carries only a media-less marker — merge our SENT state AND our
-        // metadata (the actual media payload) onto it BEFORE dropping this redundant PENDING row, or
-        // the payload-bearing row is the one that gets deleted and the media is gone after a reload.
+        // this waMessageId. That row carries only what the engine reported — for a Baileys API send,
+        // a media-less marker — so merge our SENT state AND our metadata (the actual media payload)
+        // onto it BEFORE dropping this redundant PENDING row, or the payload-bearing row is the one
+        // that gets deleted and the media is gone after a reload.
         // Best-effort throughout: the send itself already succeeded.
         this.logger.debug(
           `Send echo already persisted ${result.id}; merging state and dropping the redundant pending row`,
@@ -763,7 +898,7 @@ export class MessageService {
           },
         );
         const patch: QueryDeepPartialEntity<Message> = { status: MessageStatus.SENT, timestamp: result.timestamp };
-        if (message.metadata) {
+        if (message.metadata && !isUrlPointerMetadata(message.metadata)) {
           patch.metadata = message.metadata as QueryDeepPartialEntity<Record<string, unknown>>;
         }
         await this.messageRepository
@@ -809,7 +944,13 @@ export class MessageService {
   }
 
   /**
-   * Read a message's archived media back out of the file store.
+   * Read a message's media: the archived file when one exists, else the inline copy persisted on
+   * the message row. The fallback is what makes media sent BY the account retrievable here — the
+   * archive is written only on the inbound path, but outbound rows carry the payload inline: the
+   * REST send persists it, wwjs downloads it for the own-send echo, and Baileys downloads it for
+   * phone-composed fromMe messages (the Baileys API-send echo alone carries only a marker, which
+   * the REST-persisted copy covers) — #1165. It also serves an inbound message whose archived file
+   * was purged by retention while the inline copy lives on.
    *
    * Unlike status media (only ever an image or video), chat media includes documents a sender chose
    * the type of — so the declared mimetype is echoed back only when it is inert, and the caller
@@ -821,21 +962,42 @@ export class MessageService {
     chatId: string,
     messageId: string,
   ): Promise<{ buffer: Buffer; mimetype: string }> {
-    const media = await this.chatMediaArchive?.getMedia(sessionId, chatId, messageId);
-    if (!media || !this.storageService) {
-      throw new NotFoundException('No archived media for this message');
-    }
-    try {
-      const buffer = await this.storageService.getFile(media.path);
-      return { buffer, mimetype: inertMimetype(media.mimetype) };
-    } catch (error) {
-      // The row outlived its file: the retention purge (or a concurrent delete) removed it between
-      // the DB read and this read. That's "gone", not a server fault — surface a 404.
-      if (isMissingObjectError(error)) {
-        throw new NotFoundException('No archived media for this message');
+    const chatIds = this.resolveJidCandidates(chatId);
+    const media = await this.chatMediaArchive?.getMedia(sessionId, chatIds, messageId);
+    if (media && this.storageService) {
+      try {
+        return { buffer: await this.storageService.getFile(media.path), mimetype: inertMimetype(media.mimetype) };
+      } catch (error) {
+        // The row outlived its file: the retention purge (or a concurrent delete) removed it
+        // between the DB read and this read. Not a server fault — try the inline copy instead.
+        if (!isMissingObjectError(error)) {
+          throw error;
+        }
       }
-      throw error;
     }
+
+    // Match across dialects like getMessages does: an outbound row stores the caller's literal
+    // chatId (REST persist) or the engine-neutral form (own-send echo) depending on which writer
+    // won the persist race, so a literal match would 404 on half the rows this fallback exists for.
+    const row = await this.messageRepository.findOne({
+      where: { sessionId, chatId: In(chatIds), waMessageId: messageId },
+    });
+    const inline = (row?.metadata as { media?: { data?: unknown; mimetype?: unknown; omitted?: unknown } })?.media;
+    if (
+      !inline ||
+      inline.omitted ||
+      typeof inline.data !== 'string' ||
+      !inline.data ||
+      typeof inline.mimetype !== 'string' ||
+      !inline.mimetype ||
+      // A URL-based send persists the URL STRING as `data` (buildMediaInput: `data: base64 ||
+      // dto.url!`) — the bytes were fetched at send time and never stored. Decoding the URL as
+      // base64 would serve garbage, so report it as absent. Same discriminator as the send path.
+      /^https?:\/\//i.test(inline.data)
+    ) {
+      throw new NotFoundException('No media stored for this message');
+    }
+    return { buffer: Buffer.from(inline.data, 'base64'), mimetype: inertMimetype(inline.mimetype) };
   }
 
   /** Maximum messages a single getChatHistory call may request from the engine. */
@@ -1020,6 +1182,7 @@ export class MessageService {
       filename: dto.filename,
       caption: dto.caption,
       mentions: dto.mentions,
+      quotedMessageId: dto.quotedMessageId,
     };
   }
 }

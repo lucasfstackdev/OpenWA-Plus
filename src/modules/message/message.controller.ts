@@ -1,9 +1,23 @@
 import { Controller, Post, Get, Param, Body, Query, Res, HttpCode, HttpStatus, StreamableFile } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { MessageService } from './message.service';
 import { BulkMessageService } from './bulk-message.service';
-import { SendTextMessageDto, SendMediaMessageDto, SendAudioMessageDto, MessageResponseDto } from './dto';
+import {
+  SendTextMessageDto,
+  SendMediaMessageDto,
+  SendAudioMessageDto,
+  MessageResponseDto,
+  SEND_TEXT_BODY_EXAMPLES,
+  SEND_IMAGE_BODY_EXAMPLES,
+  SEND_VIDEO_BODY_EXAMPLES,
+  SEND_AUDIO_BODY_EXAMPLES,
+  SEND_DOCUMENT_BODY_EXAMPLES,
+  SEND_STICKER_BODY_EXAMPLES,
+  SEND_LOCATION_BODY_EXAMPLES,
+  SEND_CONTACT_BODY_EXAMPLES,
+  SEND_POLL_BODY_EXAMPLES,
+} from './dto';
 import { SendTemplateMessageDto } from './dto/send-template.dto';
 import { SendBulkMessageDto, BulkMessageResponseDto } from './dto/bulk-message.dto';
 import {
@@ -22,6 +36,14 @@ import {
 } from './dto/message-actions.dto';
 import { RequireRole } from '../auth/decorators/auth.decorators';
 import { ApiKeyRole } from '../auth/entities/api-key.entity';
+import {
+  CHANNEL_MEDIA_501,
+  CUSTOM_LINK_PREVIEW_501,
+  ENGINE_NOT_READY_409,
+  ENGINE_NOT_SUPPORTED_501,
+  MESSAGE_NOT_FOUND_404,
+  RECIPIENT_UNREACHABLE_400,
+} from '../../common/openapi/engine-status-responses';
 
 @ApiTags('messages')
 @Controller('sessions/:sessionId/messages')
@@ -66,6 +88,9 @@ export class MessageController {
   @RequireRole(ApiKeyRole.OPERATOR)
   @ApiOperation({ summary: 'Send a text message' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  // Without an explicit example Swagger UI samples the body from EVERY property, which pairs
+  // `linkPreview: false` with a `customLinkPreview` — the combination sendText rejects (#1068).
+  @ApiBody({ type: SendTextMessageDto, examples: SEND_TEXT_BODY_EXAMPLES })
   @ApiResponse({
     status: 201,
     description: 'Message sent',
@@ -76,6 +101,8 @@ export class MessageController {
     description: 'Session not active or invalid request',
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 501, description: CUSTOM_LINK_PREVIEW_501 })
   async sendText(@Param('sessionId') sessionId: string, @Body() dto: SendTextMessageDto): Promise<MessageResponseDto> {
     return this.messageService.sendText(sessionId, dto);
   }
@@ -94,6 +121,7 @@ export class MessageController {
     description: 'Session not active or invalid request',
   })
   @ApiResponse({ status: 404, description: 'Session or template not found' })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
   async sendTemplate(
     @Param('sessionId') sessionId: string,
     @Body() dto: SendTemplateMessageDto,
@@ -105,6 +133,9 @@ export class MessageController {
   @RequireRole(ApiKeyRole.OPERATOR)
   @ApiOperation({ summary: 'Send an image message' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  // Without an explicit example Swagger UI samples `url` AND `base64` into the body, and base64 wins
+  // in buildMediaInput — so Execute uploaded the literal string "string" instead of the URL (#1068).
+  @ApiBody({ type: SendMediaMessageDto, examples: SEND_IMAGE_BODY_EXAMPLES })
   @ApiResponse({
     status: 201,
     description: 'Image sent',
@@ -114,6 +145,8 @@ export class MessageController {
     status: 400,
     description: 'Session not active or invalid request',
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 501, description: CHANNEL_MEDIA_501 })
   async sendImage(
     @Param('sessionId') sessionId: string,
     @Body() dto: SendMediaMessageDto,
@@ -125,6 +158,7 @@ export class MessageController {
   @RequireRole(ApiKeyRole.OPERATOR)
   @ApiOperation({ summary: 'Send a video message' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiBody({ type: SendMediaMessageDto, examples: SEND_VIDEO_BODY_EXAMPLES })
   @ApiResponse({
     status: 201,
     description: 'Video sent',
@@ -134,6 +168,8 @@ export class MessageController {
     status: 400,
     description: 'Session not active or invalid request',
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 501, description: CHANNEL_MEDIA_501 })
   async sendVideo(
     @Param('sessionId') sessionId: string,
     @Body() dto: SendMediaMessageDto,
@@ -145,6 +181,7 @@ export class MessageController {
   @RequireRole(ApiKeyRole.OPERATOR)
   @ApiOperation({ summary: 'Send an audio/voice message' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiBody({ type: SendAudioMessageDto, examples: SEND_AUDIO_BODY_EXAMPLES })
   @ApiResponse({
     status: 201,
     description: 'Audio sent',
@@ -154,6 +191,8 @@ export class MessageController {
     status: 400,
     description: 'Session not active or invalid request',
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 501, description: CHANNEL_MEDIA_501 })
   async sendAudio(
     @Param('sessionId') sessionId: string,
     @Body() dto: SendAudioMessageDto,
@@ -165,6 +204,7 @@ export class MessageController {
   @RequireRole(ApiKeyRole.OPERATOR)
   @ApiOperation({ summary: 'Send a document/file' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiBody({ type: SendMediaMessageDto, examples: SEND_DOCUMENT_BODY_EXAMPLES })
   @ApiResponse({
     status: 201,
     description: 'Document sent',
@@ -174,6 +214,8 @@ export class MessageController {
     status: 400,
     description: 'Session not active or invalid request',
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 501, description: CHANNEL_MEDIA_501 })
   async sendDocument(
     @Param('sessionId') sessionId: string,
     @Body() dto: SendMediaMessageDto,
@@ -187,11 +229,14 @@ export class MessageController {
   @RequireRole(ApiKeyRole.OPERATOR)
   @ApiOperation({ summary: 'Send a location message' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiBody({ type: SendLocationDto, examples: SEND_LOCATION_BODY_EXAMPLES })
   @ApiResponse({
     status: 201,
     description: 'Location sent',
     type: MessageResponseDto,
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 400, description: RECIPIENT_UNREACHABLE_400 })
   async sendLocation(@Param('sessionId') sessionId: string, @Body() dto: SendLocationDto): Promise<MessageResponseDto> {
     return this.messageService.sendLocation(sessionId, dto);
   }
@@ -200,11 +245,14 @@ export class MessageController {
   @RequireRole(ApiKeyRole.OPERATOR)
   @ApiOperation({ summary: 'Send a contact card message' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiBody({ type: SendContactDto, examples: SEND_CONTACT_BODY_EXAMPLES })
   @ApiResponse({
     status: 201,
     description: 'Contact sent',
     type: MessageResponseDto,
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 400, description: RECIPIENT_UNREACHABLE_400 })
   async sendContact(@Param('sessionId') sessionId: string, @Body() dto: SendContactDto): Promise<MessageResponseDto> {
     return this.messageService.sendContact(sessionId, dto);
   }
@@ -213,11 +261,15 @@ export class MessageController {
   @RequireRole(ApiKeyRole.OPERATOR)
   @ApiOperation({ summary: 'Send a sticker message' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiBody({ type: SendMediaMessageDto, examples: SEND_STICKER_BODY_EXAMPLES })
   @ApiResponse({
     status: 201,
     description: 'Sticker sent',
     type: MessageResponseDto,
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 400, description: RECIPIENT_UNREACHABLE_400 })
+  @ApiResponse({ status: 501, description: CHANNEL_MEDIA_501 })
   async sendSticker(
     @Param('sessionId') sessionId: string,
     @Body() dto: SendMediaMessageDto,
@@ -229,11 +281,14 @@ export class MessageController {
   @RequireRole(ApiKeyRole.OPERATOR)
   @ApiOperation({ summary: 'Send a native WhatsApp poll' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiBody({ type: SendPollDto, examples: SEND_POLL_BODY_EXAMPLES })
   @ApiResponse({
     status: 201,
     description: 'Poll sent',
     type: MessageResponseDto,
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 400, description: RECIPIENT_UNREACHABLE_400 })
   async sendPoll(@Param('sessionId') sessionId: string, @Body() dto: SendPollDto): Promise<MessageResponseDto> {
     return this.messageService.sendPoll(sessionId, dto);
   }
@@ -247,6 +302,9 @@ export class MessageController {
     description: 'Reply sent',
     type: MessageResponseDto,
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 400, description: RECIPIENT_UNREACHABLE_400 })
+  @ApiResponse({ status: 404, description: MESSAGE_NOT_FOUND_404 })
   async reply(@Param('sessionId') sessionId: string, @Body() dto: ReplyMessageDto): Promise<MessageResponseDto> {
     return this.messageService.reply(sessionId, dto);
   }
@@ -260,6 +318,9 @@ export class MessageController {
     description: 'Message forwarded',
     type: MessageResponseDto,
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 400, description: RECIPIENT_UNREACHABLE_400 })
+  @ApiResponse({ status: 404, description: MESSAGE_NOT_FOUND_404 })
   async forward(@Param('sessionId') sessionId: string, @Body() dto: ForwardMessageDto): Promise<MessageResponseDto> {
     return this.messageService.forward(sessionId, dto);
   }
@@ -279,6 +340,8 @@ export class MessageController {
     status: 400,
     description: 'Session not active or message not found',
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 404, description: MESSAGE_NOT_FOUND_404 })
   async react(@Param('sessionId') sessionId: string, @Body() dto: ReactMessageDto): Promise<{ success: boolean }> {
     await this.messageService.reactToMessage(sessionId, dto);
     return { success: true };
@@ -310,6 +373,8 @@ export class MessageController {
       'is ignored). Large/slow requests may increase WhatsApp rate-limiting risk; default false.',
   })
   @ApiResponse({ status: 200, description: 'Chat history (most recent messages)' })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 501, description: ENGINE_NOT_SUPPORTED_501 })
   async getChatHistory(
     @Param('sessionId') sessionId: string,
     @Param('chatId') chatId: string,
@@ -345,6 +410,9 @@ export class MessageController {
     status: 200,
     description: 'List of reactions with senders',
   })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 404, description: MESSAGE_NOT_FOUND_404 })
+  @ApiResponse({ status: 501, description: ENGINE_NOT_SUPPORTED_501 })
   async getReactions(
     @Param('sessionId') sessionId: string,
     @Param('chatId') chatId: string,
@@ -356,17 +424,23 @@ export class MessageController {
   // Three path segments, so it never collides with `:chatId/history` (two) regardless of
   // declaration order — Nest/Express match on segment count first.
   @Get(':chatId/:messageId/media')
-  @ApiOperation({ summary: 'Download a message’s archived media' })
+  @ApiOperation({ summary: 'Download a message’s stored media' })
   @ApiParam({ name: 'sessionId', description: 'Session ID' })
   @ApiParam({ name: 'chatId', description: 'Chat ID containing the message' })
   @ApiParam({ name: 'messageId', description: 'WhatsApp message ID whose media to download' })
-  @ApiResponse({ status: 200, description: 'The archived media bytes, served as an attachment.' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'The media bytes — the archived file when one exists, else the inline copy stored on the ' +
+      'message row (which is how media sent by this account is served) — as an attachment.',
+    content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } },
+  })
   @ApiResponse({
     status: 404,
     description:
-      'Nothing archived for this message — archiving was off when it arrived, the message carries no ' +
-      'media, the media was above the archive cap, retention has since cleared it, or the message ' +
-      'was sent BY this account (only inbound media is archived).',
+      'No stored media for this message — it carries no media, media download was disabled or the ' +
+      'payload was over the cap when it was stored (size-only marker), it was a URL-based API send ' +
+      '(those bytes are never stored), or the message is not in this gateway’s history.',
   })
   async getChatMedia(
     @Param('sessionId') sessionId: string,
@@ -401,6 +475,14 @@ export class MessageController {
     status: 400,
     description: 'Session not active or message not found',
   })
+  @ApiResponse({
+    status: 503,
+    description:
+      'WhatsApp did not answer within the request budget. The change may or may not have been applied — ' +
+      'the gateway stopped waiting for a confirmation that never came.',
+  })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
+  @ApiResponse({ status: 404, description: MESSAGE_NOT_FOUND_404 })
   async deleteMessage(
     @Param('sessionId') sessionId: string,
     @Body() dto: DeleteMessageDto,
@@ -418,6 +500,7 @@ export class MessageController {
   @ApiResponse({ status: 400, description: 'Session not active, or the target message is not a poll' })
   @ApiResponse({ status: 404, description: 'Poll not found in the chat’s recent history' })
   @ApiResponse({ status: 501, description: 'Not supported on the Baileys engine' })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
   async votePoll(@Param('sessionId') sessionId: string, @Body() dto: VotePollDto): Promise<{ success: boolean }> {
     return this.messageService.votePoll(sessionId, dto);
   }
@@ -436,6 +519,7 @@ export class MessageController {
   })
   @ApiResponse({ status: 403, description: 'The engine refused the pin — in a group only admins may pin' })
   @ApiResponse({ status: 404, description: 'Message not found in the chat' })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
   async pinMessage(@Param('sessionId') sessionId: string, @Body() dto: PinMessageDto): Promise<{ success: boolean }> {
     return this.messageService.pinMessage(sessionId, dto);
   }
@@ -449,6 +533,7 @@ export class MessageController {
   @ApiResponse({ status: 400, description: 'Session not active' })
   @ApiResponse({ status: 403, description: 'The engine refused the unpin — in a group only admins may unpin' })
   @ApiResponse({ status: 404, description: 'Message not found in the chat' })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
   async unpinMessage(
     @Param('sessionId') sessionId: string,
     @Body() dto: UnpinMessageDto,
@@ -469,6 +554,13 @@ export class MessageController {
   })
   @ApiResponse({ status: 400, description: 'Session not active' })
   @ApiResponse({ status: 404, description: 'Message not found in the chat' })
+  @ApiResponse({
+    status: 503,
+    description:
+      'WhatsApp did not answer within the request budget. The change may or may not have been applied — ' +
+      'the gateway stopped waiting for a confirmation that never came.',
+  })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
   async starMessage(@Param('sessionId') sessionId: string, @Body() dto: StarMessageDto): Promise<{ success: boolean }> {
     return this.messageService.starMessage(sessionId, dto);
   }
@@ -494,6 +586,7 @@ export class MessageController {
     description: 'The message was not sent by this account, or the engine refused the edit',
   })
   @ApiResponse({ status: 404, description: 'Message not found' })
+  @ApiResponse({ status: 409, description: ENGINE_NOT_READY_409 })
   async edit(@Param('sessionId') sessionId: string, @Body() dto: EditMessageDto): Promise<MessageResponseDto> {
     return this.messageService.editMessage(sessionId, dto);
   }
@@ -510,6 +603,9 @@ export class MessageController {
     description: 'Batch created and processing started',
     type: BulkMessageResponseDto,
   })
+  // No 409 here, unlike the single sends: the batch is queued and drained after this handler has
+  // already answered 202, so an engine that is not ready surfaces in the per-message results on
+  // GET /messages/batch/{batchId}, never as a status on this route. An absent engine is the 400 above.
   @ApiResponse({
     status: 400,
     description: 'Session not active or invalid request',

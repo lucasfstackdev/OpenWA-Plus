@@ -314,7 +314,9 @@
       "phone": "电话号码",
       "phoneNone": "未连接",
       "created": "创建时间",
-      "lastActive": "上次活跃"
+      "lastActive": "上次活跃",
+      "autoRejectCalls": "自动拒接来电",
+      "autoRejectCallsHint": "来电响铃后立即拒接。call.received webhook 仍会先行触发。下一通来电起生效，无需重启。"
     },
     "actions": {
       "view": "查看",
@@ -791,7 +793,8 @@
     "toasts": {
       "saveFailed": "保存失败"
     },
-    "envPinNote": "已由环境变量锁定 —— 此为当前运行值；在取消该变量之前，仪表盘的更改不会生效。",
+    "envPinNote": "已由环境变量 {{name}} 锁定 —— 此为当前运行值；在取消该变量之前，仪表盘的更改不会生效。",
+    "pendingRestartNote": "已保存，但尚未生效 —— 请重启服务器以应用此更改。",
     "migration": {
       "title": "请注意 —— 此操作将更改数据后端",
       "dbWarning": "新数据库将从空白状态开始。请立即（在仍使用旧数据库时）下载当前数据的备份，然后在重启后恢复。",
@@ -802,6 +805,8 @@
       "export": "导出数据",
       "import": "导入数据",
       "exportFailed": "无法导出数据",
+      "exportPartialTitle": "Backup is missing some media",
+      "exportPartial": "{{count}} attachment payload(s) exceeded the export media budget and were saved as placeholders. The messages restore; their media does not.",
       "importFailed": "无法导入数据",
       "importOk": "数据已导入",
       "importConfirm": "导入操作将用备份数据替换（REPLACE）当前所有数据（{{rows}} 行）。此操作无法撤销。是否继续？",

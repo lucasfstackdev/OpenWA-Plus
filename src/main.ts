@@ -10,7 +10,7 @@ import helmet from 'helmet';
 import { AppModule, DASHBOARD_DIST, dashboardServingEnabled, dashboardBuildPresent } from './app.module';
 import { ShutdownService } from './common/services/shutdown.service';
 import { LoggerService, LogLevel, createLogger } from './common/services/logger.service';
-import { createSwaggerConfig, exemptPublicOperations } from './config/swagger.config';
+import { createSwaggerConfig, dropUnexpressibleOperations, exemptPublicOperations } from './config/swagger.config';
 import { registerUncaughtExceptionMonitor, registerUnhandledRejectionHandler } from './config/process-error-monitor';
 import { runBootstrapOrExit } from './config/bootstrap-fatal';
 import { resolveStorageRoot } from './config/storage-root';
@@ -124,9 +124,16 @@ async function bootstrap() {
   // The `verify` callback stashes the EXACT bytes json() received on req.rawBody, byte-identical to
   // what a provider signed, so the @Public ingress controller can HMAC-verify over the raw body
   // (JSON.stringify(req.body) is NOT byte-identical). Cheap for every route; non-ingress routes ignore it.
+  // `inflate: false` is a backstop, not the guard: the budget middleware above already refuses a
+  // compressed body with 415 before a byte is read. It sits here so a future reordering of these
+  // parsers relative to that middleware cannot silently reopen the gap — an inflated body is
+  // charged to the budget at its compressed size and bounded by nothing. Every other parser in the
+  // process must carry the same flag for that argument to hold; the MCP route-level fallback
+  // (src/modules/mcp/mcp.server.ts) does.
   app.use(
     json({
       limit: bodyLimit,
+      inflate: false,
       verify: (req: Request & { rawBody?: Buffer }, _res, buf) => {
         req.rawBody = buf;
       },
@@ -136,6 +143,7 @@ async function bootstrap() {
     urlencoded({
       extended: true,
       limit: bodyLimit,
+      inflate: false,
       // Form-encoded webhook providers also sign the exact wire bytes. Use the same capture contract
       // as json(); other content types remain unsupported rather than installing a global catch-all.
       verify: (req: Request & { rawBody?: Buffer }, _res, buf) => {
@@ -315,6 +323,10 @@ async function bootstrap() {
   if (swaggerEnabled) {
     const config = createSwaggerConfig();
     const document = SwaggerModule.createDocument(app, config);
+    // Same two passes, in the same order, as scripts/export-openapi.ts. The document is produced in
+    // TWO places — here for the live /api/docs and there for the committed snapshot — and fixing only
+    // the snapshot leaves a running gateway serving a document that fails schema validation.
+    dropUnexpressibleOperations(document);
     exemptPublicOperations(document);
     SwaggerModule.setup('api/docs', app, document);
   }

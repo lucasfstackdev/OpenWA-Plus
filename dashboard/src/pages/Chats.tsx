@@ -23,6 +23,7 @@ import {
 import {
   applyMessageEdit,
   mergeDeliveryStatus,
+  mergeReactionSnapshot,
   findRevokedIndex,
   getMediaSrc,
   type ChatMessageView,
@@ -439,12 +440,15 @@ export function Chats() {
   );
 
   const handleIncomingMessageReaction = useCallback(
-    (event: { sessionId: string; messageId: string; reactions: Record<string, string> }) => {
+    (event: { sessionId: string; messageId: string; reactions?: Record<string, string> }) => {
       if (event.sessionId !== selectedSessionId) return;
 
       // Reactions update `metadata.reactions` while preserving `metadata.media` / `metadata.quotedMessage`,
       // so we must read the prior message and deep-merge — `updateMessage`'s shallow merge would clobber
       // the rest of metadata.
+      //
+      // The absent-vs-empty distinction on `reactions` is mergeReactionSnapshot's job; it is a named
+      // function so the behaviour is covered by a test, because nothing here is.
       const caches = queryClient.getQueriesData<ChatMessageView[]>({
         queryKey: ['messages', event.sessionId],
       });
@@ -456,7 +460,10 @@ export function Chats() {
         const next = list.slice();
         next[idx] = {
           ...target,
-          metadata: { ...(target.metadata || {}), reactions: event.reactions },
+          metadata: {
+            ...(target.metadata || {}),
+            reactions: mergeReactionSnapshot(target.metadata?.reactions, event.reactions),
+          },
         };
         queryClient.setQueryData(key, next);
       }
@@ -918,6 +925,7 @@ export function Chats() {
 
                 {/* Messages body (list, media, reactions, scroll-to-bottom) — components/chats/ChatThread. */}
                 <ChatThread
+                  sessionId={selectedSessionId}
                   activeChat={activeChat}
                   messages={messages}
                   loadingMessages={loadingMessages}

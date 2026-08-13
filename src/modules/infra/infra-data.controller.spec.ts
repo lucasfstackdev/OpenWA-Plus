@@ -22,7 +22,7 @@ jest.mock('fs', () => {
 
 import { DataSource, QueryFailedError } from 'typeorm';
 import { ConflictException } from '@nestjs/common';
-import { InfraDataController } from './infra-data.controller';
+import { InfraDataController, restoreSessionOwnership } from './infra-data.controller';
 import { Session, SessionStatus } from '../session/entities/session.entity';
 import { Webhook } from '../webhook/entities/webhook.entity';
 import { Message, MessageDirection, MessageStatus } from '../message/entities/message.entity';
@@ -38,6 +38,7 @@ import { IntegrationDeliveryFailure } from '../integration/entities/integration-
 import { StatusUpdate } from '../status-store/entities/status-update.entity';
 import { AutomationRule } from '../automation/entities/automation-rule.entity';
 import { AuditAction } from '../audit/entities/audit-log.entity';
+import { BadRequestException } from '@nestjs/common';
 
 describe('InfraDataController.importData round-trips export-data (no silent message/batch loss)', () => {
   let ds: DataSource;
@@ -87,6 +88,384 @@ describe('InfraDataController.importData round-trips export-data (no silent mess
         lastActiveAt: null,
       }),
     );
+
+  it('keeps the session ownership lease across a replace, and never takes it from the payload', async () => {
+    await seedSession('s1');
+    // Seeded far in the past ON PURPOSE, so the claim is unambiguously LAPSED whatever day the suite
+    // runs: a lapsed claim must survive verbatim, because shifting it would resurrect a dead node's
+    // hold on the session. (The previous fixture used a same-day stamp, so whether this exercised the
+    // lapsed or the live path depended on the wall clock.) The live path is covered below.
+    const claimedAt = new Date('2020-01-01T10:00:00.000Z');
+    const leaseExpiresAt = new Date('2020-01-01T10:05:00.000Z');
+    // A live claim held by THIS node, exactly as SessionOwnershipService would have written it.
+    await ds
+      .getRepository(Session)
+      .update({ id: 's1' }, { nodeId: 'node-a', claimedAt, leaseExpiresAt, nodeUrl: 'http://10.0.0.5:2785' });
+
+    // export-data does SELECT *, so the dump genuinely carries the ownership columns. Rewriting them
+    // to a FOREIGN node proves the restore ignores the payload: taking them from the backup would
+    // install another host's claim with a still-future lease and 409 every start until it lapsed.
+    const dump = await controller.exportData();
+    for (const row of dump.tables.sessions as unknown as Record<string, unknown>[]) {
+      row.nodeId = 'node-from-another-host';
+      row.nodeUrl = 'http://198.51.100.9:2785';
+      row.leaseExpiresAt = new Date('2099-01-01T00:00:00.000Z').toISOString();
+    }
+
+    const res = await controller.importData({ tables: dump.tables });
+    expect(res.warnings).toEqual([]);
+    expect(res.imported).toBe(true);
+
+    const restored = await ds.getRepository(Session).findOneByOrFail({ id: 's1' });
+    expect(restored.nodeId).toBe('node-a');
+    expect(restored.nodeUrl).toBe('http://10.0.0.5:2785');
+    expect(new Date(restored.claimedAt as unknown as string).toISOString()).toBe(claimedAt.toISOString());
+    expect(new Date(restored.leaseExpiresAt as unknown as string).toISOString()).toBe(leaseExpiresAt.toISOString());
+  });
+
+  it('carries LIVE claims forward by their remaining time, including a peer node’s', async () => {
+    await seedSession('s1');
+    await seedSession('s2');
+    const dump = await controller.exportData();
+
+    // Seeded AFTER the export on purpose: the sessions importer writes 12 columns and none of them is
+    // ownership, so the dump cannot carry these values — and stamping them here keeps the assertion
+    // margin free of the export's cost. That margin is consumed by the import preamble and the
+    // commit, NOT by the stall below: a late timer moves the committed lease and `Date.now()` by the
+    // same amount, so lengthening the sleep buys nothing.
+    const readAt = Date.now();
+    // Scaled down from the real 60s TTL so the test costs a second, not a minute — the transaction
+    // outliving the remaining time is the property under test, not the size of either number.
+    const remainingMs = 1_000;
+    await ds.getRepository(Session).update(
+      { id: 's1' },
+      {
+        nodeId: 'node-a',
+        claimedAt: new Date(readAt),
+        leaseExpiresAt: new Date(readAt + remainingMs),
+        nodeUrl: 'http://10.0.0.5:2785',
+      },
+    );
+    // A claim this node does NOT own. The import reads every row with a nodeId, so without the carry
+    // it commits a live peer's lease as expired — and `lapsedHeldByOthers` excludes only `nodeId =
+    // me`, so the importing node's own takeover sweep is what would then adopt a session whose engine
+    // never stopped on the peer.
+    await ds.getRepository(Session).update(
+      { id: 's2' },
+      {
+        nodeId: 'node-b',
+        claimedAt: new Date(readAt),
+        leaseExpiresAt: new Date(readAt + remainingMs * 2),
+        nodeUrl: 'http://10.0.0.9:2785',
+      },
+    );
+
+    // Hold the transaction open past the original expiry, the way a large restore does. Re-binding
+    // the stamp verbatim would then commit a lease this request already knows has expired: nodeId
+    // still names the live owner, so the row reads as an adoptable orphan to a peer's takeover sweep
+    // — a lapse manufactured by the restore, on a claim it observed live moments earlier.
+    const realCreate = ds.createQueryRunner.bind(ds);
+    let stalled = false;
+    jest.spyOn(ds, 'createQueryRunner').mockImplementation(() => {
+      const runner = realCreate();
+      const realQuery = runner.query.bind(runner) as (...args: unknown[]) => Promise<unknown>;
+      runner.query = (async (...args: unknown[]): Promise<unknown> => {
+        if (!stalled && typeof args[0] === 'string' && args[0].startsWith('DELETE FROM sessions')) {
+          stalled = true;
+          await new Promise(resolve => setTimeout(resolve, remainingMs * 1.5));
+        }
+        return realQuery(...args);
+      }) as typeof runner.query;
+      return runner;
+    });
+
+    const res = await controller.importData({ tables: dump.tables });
+    jest.restoreAllMocks();
+    expect(res.imported).toBe(true);
+
+    const own = await ds.getRepository(Session).findOneByOrFail({ id: 's1' });
+    const peer = await ds.getRepository(Session).findOneByOrFail({ id: 's2' });
+    const ownLease = new Date(own.leaseExpiresAt as unknown as string).getTime();
+    const peerLease = new Date(peer.leaseExpiresAt as unknown as string).getTime();
+
+    expect(own.nodeId).toBe('node-a');
+    expect(peer.nodeId).toBe('node-b');
+    // Both still in the future: they were live when read, so they must be live when written back.
+    expect(ownLease).toBeGreaterThan(Date.now());
+    expect(peerLease).toBeGreaterThan(Date.now());
+    // Carried, not renewed: each keeps its OWN remaining time rather than being reset to a full TTL,
+    // so the restore extends nobody's hold and the two do not collapse onto the same deadline.
+    expect(ownLease).toBeLessThanOrEqual(Date.now() + remainingMs);
+    expect(peerLease).toBeGreaterThan(ownLease);
+  });
+
+  it('holds the ownership loss-detection token for the whole transaction, and releases it', async () => {
+    await seedSession('s1');
+    const dump = await controller.exportData();
+
+    const events: string[] = [];
+    let held = 0;
+    const ownership = {
+      suspendLossDetection: () => {
+        held++;
+        events.push('suspend');
+        return () => {
+          held--;
+          events.push('release');
+        };
+      },
+      heldByOtherNodes: () => Promise.resolve([]),
+    };
+    // Observe from inside the transaction: the token must already be held by the time rows move.
+    const realCreate = ds.createQueryRunner.bind(ds);
+    jest.spyOn(ds, 'createQueryRunner').mockImplementation((...args: Parameters<typeof realCreate>) => {
+      const runner = realCreate(...args);
+      const realQuery = runner.query.bind(runner);
+      runner.query = ((...callArgs: Parameters<typeof realQuery>) => {
+        if (/DELETE FROM sessions/.test(callArgs[0])) events.push(`delete(held=${held})`);
+        return realQuery(...callArgs);
+      }) as typeof runner.query;
+      return runner;
+    });
+
+    const withOwnership = new InfraDataController(
+      cfg as never,
+      ds,
+      undefined,
+      undefined,
+      undefined,
+      ownership as never,
+    );
+    const res = await withOwnership.importData({ tables: dump.tables });
+    jest.restoreAllMocks();
+
+    expect(res.imported).toBe(true);
+    expect(events).toEqual(['suspend', 'delete(held=1)', 'release']);
+    expect(held).toBe(0);
+  });
+
+  it('refuses outright when another transaction already holds the connection, before deleting anything', async () => {
+    await seedSession('s1');
+    const dump = await controller.exportData();
+
+    // better-sqlite3 hands out a SINGLETON runner, so an import started while a session create or
+    // delete holds a transaction becomes a SAVEPOINT inside it: its commit issues RELEASE SAVEPOINT,
+    // not COMMIT. The result is genuinely indeterminate — the enclosing transaction may commit (the
+    // replace lands) or roll back (it vanishes) — so detecting it afterwards cannot produce a
+    // truthful answer, and by then every row is already deleted. Refuse before touching anything.
+    const outer = ds.createQueryRunner();
+    await outer.connect();
+    await outer.startTransaction();
+
+    const refusal = await controller.importData({ tables: dump.tables }).catch((e: unknown) => e);
+    expect((refusal as ConflictException).getStatus()).toBe(409);
+    // The dashboard decides whether to offer the destructive stop-orphans retry by matching this
+    // code positively, so which code this refusal carries is a cross-tier contract, not a detail.
+    expect((refusal as ConflictException).getResponse()).toMatchObject({ code: 'IMPORT_NESTED_TRANSACTION' });
+    // Asserted alongside the code because `message` is the field the dashboard renders when it
+    // withholds the retry — dropping it degrades the operator's toast to a bare "HTTP 409".
+    expect((refusal as ConflictException).message).toContain('Another database transaction');
+
+    // The decisive assertion: nothing was destroyed on the way to the refusal.
+    const survived = await ds.getRepository(Session).findOneBy({ id: 's1' });
+    expect(survived).not.toBeNull();
+
+    await outer.rollbackTransaction();
+    await outer.release();
+  });
+
+  it('runs normally once no other transaction holds the connection', async () => {
+    await seedSession('s1');
+    const dump = await controller.exportData();
+
+    const outer = ds.createQueryRunner();
+    await outer.connect();
+    await outer.startTransaction();
+    await outer.rollbackTransaction();
+    await outer.release();
+
+    await expect(controller.importData({ tables: dump.tables })).resolves.toMatchObject({ imported: true });
+  });
+
+  it('refuses a second concurrent import instead of letting two share one transaction', async () => {
+    await seedSession('s1');
+    const dump = await controller.exportData();
+
+    // Why this matters on the default dialect: BetterSqlite3Driver.createQueryRunner() returns a
+    // SINGLETON runner, so two overlapping imports share one transaction. The second startTransaction
+    // nests as SAVEPOINT, its commit issues RELEASE SAVEPOINT rather than COMMIT, and a rollback at
+    // depth 1 issues a full ROLLBACK — discarding a restore the other call already reported as
+    // imported:true.
+    //
+    // No gating needed to make this deterministic: the first call runs synchronously up to its first
+    // await, so the guard must be set before any await for the second call to see it. That ordering
+    // is the property under test as much as the 409 is.
+    const first = controller.importData({ tables: dump.tables });
+    const second = controller.importData({ tables: dump.tables });
+
+    const refusal = await second.catch((e: unknown) => e);
+    expect((refusal as ConflictException).getStatus()).toBe(409);
+    expect((refusal as ConflictException).getResponse()).toMatchObject({ code: 'IMPORT_ALREADY_RUNNING' });
+    expect((refusal as ConflictException).message).toContain('already running');
+    await expect(first).resolves.toMatchObject({ imported: true });
+  });
+
+  it('accepts an import again once the previous one has finished', async () => {
+    await seedSession('s1');
+    const dump = await controller.exportData();
+
+    await expect(controller.importData({ tables: dump.tables })).resolves.toMatchObject({ imported: true });
+    await expect(controller.importData({ tables: dump.tables })).resolves.toMatchObject({ imported: true });
+  });
+
+  it('releases the loss-detection token even when the transaction never opens', async () => {
+    await seedSession('s1');
+    const dump = await controller.exportData();
+
+    let held = 0;
+    const ownership = {
+      suspendLossDetection: () => {
+        held++;
+        return () => {
+          held--;
+        };
+      },
+      heldByOtherNodes: () => Promise.resolve([]),
+    };
+    // Stubbed rather than provoked: TypeORM nests a second startTransaction as SAVEPOINT, so no
+    // dialect here rejects it today. What is pinned is the STRUCTURE — the pre-body span sits
+    // outside the release, so any future throw there would strand the token, and a stranded token
+    // disables loss detection for the lifetime of the process, silently.
+    const realCreate = ds.createQueryRunner.bind(ds);
+    jest.spyOn(ds, 'createQueryRunner').mockImplementation((...args: Parameters<typeof realCreate>) => {
+      const runner = realCreate(...args);
+      runner.startTransaction = () => Promise.reject(new Error('cannot start a transaction within a transaction'));
+      return runner;
+    });
+
+    const withOwnership = new InfraDataController(
+      cfg as never,
+      ds,
+      undefined,
+      undefined,
+      undefined,
+      ownership as never,
+    );
+    await expect(withOwnership.importData({ tables: dump.tables })).rejects.toThrow('within a transaction');
+    jest.restoreAllMocks();
+
+    expect(held).toBe(0);
+  });
+
+  it('releases the loss-detection token even when the query runner cannot be created', async () => {
+    await seedSession('s1');
+    const dump = await controller.exportData();
+
+    let held = 0;
+    const ownership = {
+      suspendLossDetection: () => {
+        held++;
+        return () => {
+          held--;
+        };
+      },
+      heldByOtherNodes: () => Promise.resolve([]),
+    };
+    jest.spyOn(ds, 'createQueryRunner').mockImplementation(() => {
+      throw new Error('no connection available');
+    });
+
+    const withOwnership = new InfraDataController(
+      cfg as never,
+      ds,
+      undefined,
+      undefined,
+      undefined,
+      ownership as never,
+    );
+    await expect(withOwnership.importData({ tables: dump.tables })).rejects.toThrow('no connection available');
+    jest.restoreAllMocks();
+
+    expect(held).toBe(0);
+  });
+
+  it('does not suspend loss detection on a dialect where each query runner has its own connection', async () => {
+    await seedSession('s1');
+    const dump = await controller.exportData();
+
+    let suspends = 0;
+    const ownership = {
+      suspendLossDetection: () => {
+        suspends++;
+        return () => {};
+      },
+      heldByOtherNodes: () => Promise.resolve([]),
+    };
+    // Postgres hands every runner a dedicated pooled client, so the heartbeat cannot see the
+    // import's uncommitted DELETE. Suspending there would disable genuine loss detection in exactly
+    // the multi-node deployment that depends on it.
+    // Only the pre-transaction suspend decision is under test. Flipping the type also switches off
+    // the SQLite `$N`→`?` rewrite, so the import itself is expected to fail — that failure is not
+    // what this asserts, and the .catch() below is deliberate rather than defensive.
+    const realOptions = ds.options;
+    Object.defineProperty(ds, 'options', { value: { ...realOptions, type: 'postgres' }, configurable: true });
+
+    const withOwnership = new InfraDataController(
+      cfg as never,
+      ds,
+      undefined,
+      undefined,
+      undefined,
+      ownership as never,
+    );
+    await withOwnership.importData({ tables: dump.tables }).catch(() => undefined);
+    Object.defineProperty(ds, 'options', { value: realOptions, configurable: true });
+
+    expect(suspends).toBe(0);
+  });
+
+  it('rolls the whole import back when ownership cannot be re-applied, instead of reporting success', async () => {
+    await seedSession('s1');
+    await ds.getRepository(Session).update({ id: 's1' }, { nodeId: 'node-a', nodeUrl: 'http://10.0.0.5:2785' });
+    const dump = await controller.exportData();
+
+    // Fail only the ownership UPDATE, leaving every other statement alone. On PostgreSQL a failed
+    // statement aborts the transaction, so a caller that degraded this to a notice and committed
+    // anyway would have the COMMIT execute as a ROLLBACK and still answer imported:true.
+    const realCreate = ds.createQueryRunner.bind(ds);
+    jest.spyOn(ds, 'createQueryRunner').mockImplementation((...args: Parameters<typeof realCreate>) => {
+      const runner = realCreate(...args);
+      const realQuery = runner.query.bind(runner);
+      // Pass EVERY argument through: TypeORM's query builder calls query(sql, params,
+      // useStructuredResult) and silently misreads a raw array when the third is dropped.
+      runner.query = ((...callArgs: Parameters<typeof realQuery>) =>
+        /UPDATE sessions SET "nodeId"/.test(callArgs[0])
+          ? Promise.reject(new Error('ownership write failed'))
+          : realQuery(...callArgs)) as typeof runner.query;
+      return runner;
+    });
+
+    const res = await controller.importData({ tables: dump.tables });
+    jest.restoreAllMocks();
+
+    expect(res.imported).toBe(false);
+    expect(res.warnings.join(' ')).toContain('session ownership');
+    // The rollback must have restored the pre-import row, ownership and all.
+    const stored = await ds.getRepository(Session).findOneByOrFail({ id: 's1' });
+    expect(stored.nodeId).toBe('node-a');
+  });
+
+  it('leaves a session that had no claim unclaimed rather than inventing one', async () => {
+    await seedSession('s1');
+
+    const dump = await controller.exportData();
+    const res = await controller.importData({ tables: dump.tables });
+    expect(res.imported).toBe(true);
+
+    const restored = await ds.getRepository(Session).findOneByOrFail({ id: 's1' });
+    expect(restored.nodeId).toBeNull();
+    expect(restored.leaseExpiresAt).toBeNull();
+  });
 
   it('restores messages and message_batches faithfully — not silently to zero', async () => {
     await seedSession('s1');
@@ -148,6 +527,318 @@ describe('InfraDataController.importData round-trips export-data (no silent mess
     const b = await ds.getRepository(MessageBatch).findOneByOrFail({ id: 'b1' });
     expect(b.batchId).toBe('BATCH1');
     expect(b.status).toBe(BatchStatus.COMPLETED);
+  });
+
+  // The export is unbounded while the import rides the 25mb body limit, so inline base64 can produce
+  // a backup this gateway cannot restore. What bounds it is an aggregate budget, not a blanket strip:
+  // a small photo costs nothing and is the ONLY copy when the chat-media archive is off (the default),
+  // so dropping it would trade a 413 for silent data loss.
+  const withBudget = async (bytes: number, run: () => Promise<void>): Promise<void> => {
+    const prev = process.env.EXPORT_INLINE_MEDIA_BUDGET_BYTES;
+    process.env.EXPORT_INLINE_MEDIA_BUDGET_BYTES = String(bytes);
+    try {
+      await run();
+    } finally {
+      if (prev === undefined) delete process.env.EXPORT_INLINE_MEDIA_BUDGET_BYTES;
+      else process.env.EXPORT_INLINE_MEDIA_BUDGET_BYTES = prev;
+    }
+  };
+
+  const exportedMeta = (
+    dump: Awaited<ReturnType<typeof controller.exportData>>,
+    id: string,
+  ): Record<string, unknown> => {
+    const row = dump.tables.messages.find(r => r.id === id);
+    return (typeof row?.metadata === 'string' ? JSON.parse(row.metadata) : row?.metadata) as Record<string, unknown>;
+  };
+
+  it('keeps inline media that fits the export budget — it is the only copy when the archive is off', async () => {
+    const base64 = Buffer.from('a small photo, three orders of magnitude under any limit').toString('base64');
+    await seedSession('s1');
+    await ds.getRepository(Message).save(
+      ds.getRepository(Message).create({
+        id: 'm-small',
+        sessionId: 's1',
+        waMessageId: 'WA-SMALL',
+        chatId: 'c1@s.whatsapp.net',
+        from: 'a@s.whatsapp.net',
+        to: 'b@s.whatsapp.net',
+        body: null as never,
+        type: 'image',
+        direction: MessageDirection.INCOMING,
+        timestamp: 1700000000,
+        metadata: { media: { mimetype: 'image/jpeg', data: base64 }, ack: 2 },
+        status: MessageStatus.DELIVERED,
+      }),
+    );
+
+    await withBudget(1_000_000, async () => {
+      const meta = exportedMeta(await controller.exportData(), 'm-small');
+      expect(meta.media).toEqual({ mimetype: 'image/jpeg', data: base64 });
+    });
+  });
+
+  it('never strips a URL-referenced payload — `data` holds either base64 OR a URL', async () => {
+    // message.service.ts persists `data: base64 || dto.url!`, and the URL form is the only one the
+    // Swagger examples offer. A URL is a pointer, not bytes: stripping it destroys the reference and
+    // reports a sizeBytes that is Buffer.byteLength of URL text read as base64 — the size of nothing.
+    const url = 'https://cdn.example.com/promo.png';
+    await seedSession('s1');
+    await ds.getRepository(Message).save(
+      ds.getRepository(Message).create({
+        id: 'm-url',
+        sessionId: 's1',
+        waMessageId: 'WA-URL',
+        chatId: 'c1@s.whatsapp.net',
+        from: 'a@s.whatsapp.net',
+        to: 'b@s.whatsapp.net',
+        body: null as never,
+        type: 'image',
+        direction: MessageDirection.OUTGOING,
+        timestamp: 1700000000,
+        metadata: { media: { mimetype: 'image/png', filename: 'promo.png', data: url } },
+        status: MessageStatus.SENT,
+      }),
+    );
+
+    // Budget of zero: everything strippable WOULD be stripped, so surviving proves the URL guard.
+    await withBudget(0, async () => {
+      const meta = exportedMeta(await controller.exportData(), 'm-url');
+      expect(meta.media).toEqual({ mimetype: 'image/png', filename: 'promo.png', data: url });
+    });
+  });
+
+  it('never strips a URL whose scheme is uppercase — both engines fetch it, so it is a pointer too', async () => {
+    // `@IsUrl()` accepts it and both adapters match the scheme case-insensitively (wwebjs-messaging.ts
+    // `isHttpUrl`, baileys-messaging.ts `resolveMediaBuffer`), so this URL sends successfully and the
+    // row is its only record. Classifying it as bytes destroys that reference for good.
+    const url = 'HTTPS://cdn.example.com/PROMO.png';
+    await seedSession('s1');
+    await ds.getRepository(Message).save(
+      ds.getRepository(Message).create({
+        id: 'm-url-upper',
+        sessionId: 's1',
+        waMessageId: 'WA-URL-UPPER',
+        chatId: 'c1@s.whatsapp.net',
+        from: 'a@s.whatsapp.net',
+        to: 'b@s.whatsapp.net',
+        body: null as never,
+        type: 'image',
+        direction: MessageDirection.OUTGOING,
+        timestamp: 1700000000,
+        metadata: { media: { mimetype: 'image/png', filename: 'promo.png', data: url } },
+        status: MessageStatus.SENT,
+      }),
+    );
+
+    await withBudget(0, async () => {
+      const meta = exportedMeta(await controller.exportData(), 'm-url-upper');
+      expect(meta.media).toEqual({ mimetype: 'image/png', filename: 'promo.png', data: url });
+    });
+  });
+
+  it('spends the export budget on the newest media first', async () => {
+    // `SELECT *` has no ORDER BY, so the rows arrive in rowid order on SQLite — oldest first, the
+    // exact inverse of what a backup wants. Both photos fit alone; only one fits the budget.
+    const olderPhoto = Buffer.from('o'.repeat(600)).toString('base64');
+    const newerPhoto = Buffer.from('n'.repeat(600)).toString('base64');
+    await seedSession('s1');
+    const seedPhoto = async (id: string, timestamp: number, data: string): Promise<void> => {
+      await ds.getRepository(Message).save(
+        ds.getRepository(Message).create({
+          id,
+          sessionId: 's1',
+          waMessageId: `WA-${id}`,
+          chatId: 'c1@s.whatsapp.net',
+          from: 'a@s.whatsapp.net',
+          to: 'b@s.whatsapp.net',
+          body: null as never,
+          type: 'image',
+          direction: MessageDirection.INCOMING,
+          timestamp,
+          metadata: { media: { mimetype: 'image/jpeg', data } },
+          status: MessageStatus.DELIVERED,
+        }),
+      );
+    };
+    // Inserted oldest-first, which is also how SQLite hands them back.
+    await seedPhoto('m-older', 1700000000, olderPhoto);
+    await seedPhoto('m-newer', 1800000000, newerPhoto);
+
+    await withBudget(Buffer.byteLength(newerPhoto, 'utf8'), async () => {
+      const dump = await controller.exportData();
+      expect(exportedMeta(dump, 'm-newer').media).toEqual({ mimetype: 'image/jpeg', data: newerPhoto });
+      expect(exportedMeta(dump, 'm-older').media).toMatchObject({ omitted: true });
+    });
+  });
+
+  it('does not 500 the export when a metadata column holds the JSON text `null`', async () => {
+    // The import accepts a hand-edited archive verbatim (table-importers.ts), so this row is
+    // reachable — and `JSON.parse('null')` returns null, whose `.media` read throws.
+    await seedSession('s1');
+    await ds.query(
+      `INSERT INTO messages (id, "sessionId", "waMessageId", "chatId", "from", "to", body, type, direction, timestamp, metadata, status, "createdAt")
+       VALUES ('m-null', 's1', 'WA-NULL', 'c1@s.whatsapp.net', 'a@x', 'b@x', 'hi', 'text', 'incoming', 1700000000, 'null', 'delivered', '2026-01-01T00:00:00.000Z')`,
+    );
+
+    await withBudget(0, async () => {
+      const dump = await controller.exportData();
+      expect(dump.tables.messages.find(r => r.id === 'm-null')?.metadata).toBe('null');
+    });
+  });
+
+  it('drops inline media past the export budget, leaving the omitted marker and the rest intact', async () => {
+    // The marker shape is the engine's own (capInboundMedia), so a restored row is indistinguishable
+    // from one whose media was skipped on the way in: the schema survives, only the pixels go.
+    const base64 = Buffer.from('not really a jpeg, but bytes all the same').toString('base64');
+    await seedSession('s1');
+    await ds.getRepository(Message).save(
+      ds.getRepository(Message).create({
+        id: 'm-media',
+        sessionId: 's1',
+        waMessageId: 'WA-MEDIA',
+        chatId: 'c1@s.whatsapp.net',
+        from: 'a@s.whatsapp.net',
+        to: 'b@s.whatsapp.net',
+        body: null as never,
+        type: 'image',
+        direction: MessageDirection.INCOMING,
+        timestamp: 1700000000,
+        metadata: { media: { mimetype: 'image/jpeg', filename: 'holiday.jpg', data: base64 }, ack: 2 },
+        status: MessageStatus.DELIVERED,
+      }),
+    );
+
+    let dump!: Awaited<ReturnType<typeof controller.exportData>>;
+    await withBudget(0, async () => {
+      dump = await controller.exportData();
+    });
+    const exported = dump.tables.messages.find(r => r.id === 'm-media');
+    const meta = exportedMeta(dump, 'm-media') as { media: Record<string, unknown>; ack: number };
+
+    expect(meta.media).not.toHaveProperty('data');
+    expect(meta.media).toEqual({
+      mimetype: 'image/jpeg',
+      filename: 'holiday.jpg',
+      omitted: true,
+      sizeBytes: Buffer.byteLength(base64, 'base64'),
+    });
+    // Everything else on the row, and everything else in metadata, is untouched.
+    expect(meta.ack).toBe(2);
+    expect(exported?.type).toBe('image');
+    expect(exported?.waMessageId).toBe('WA-MEDIA');
+
+    // The count is what tells a truncated backup from a complete one: the marker alone is
+    // indistinguishable from media that was never downloaded in the first place.
+    expect(dump.omittedInlineMedia).toEqual({ messages: 1, messageBatches: 0 });
+
+    // And the backup still restores.
+    const res = await controller.importData({ tables: dump.tables });
+    expect(res.imported).toBe(true);
+    const restored = await ds.getRepository(Message).findOneByOrFail({ id: 'm-media' });
+    expect(restored.metadata).toEqual({
+      media: {
+        mimetype: 'image/jpeg',
+        filename: 'holiday.jpg',
+        omitted: true,
+        sizeBytes: Buffer.byteLength(base64, 'base64'),
+      },
+      ack: 2,
+    });
+  });
+
+  it('drops base64 from a bulk batch past the budget but keeps its URL and descriptive fields', async () => {
+    // message_batches carries the whole outbound list, base64 included, for the WHOLE duration of a
+    // run — stripBatchMediaPayloads only fires on the four terminal transitions. So the export has to
+    // bound it too, or the 413 the messages strip was written for simply arrives by another route.
+    await seedSession('s1');
+    await ds.getRepository(MessageBatch).save(
+      ds.getRepository(MessageBatch).create({
+        id: 'b-media',
+        batchId: 'BATCH-MEDIA',
+        sessionId: 's1',
+        status: BatchStatus.PROCESSING,
+        messages: [
+          {
+            chatId: 'c1',
+            type: 'image',
+            content: { image: { base64: 'QUJDREVG', mimetype: 'image/png', caption: 'hi' } },
+          },
+          {
+            chatId: 'c2',
+            type: 'image',
+            content: { image: { url: 'https://cdn.example.com/x.png', mimetype: 'image/png' } },
+          },
+        ] as never,
+        options: null as never,
+        progress: null as never,
+        results: null as never,
+        currentIndex: 0,
+        startedAt: null,
+        completedAt: null,
+      }),
+    );
+
+    await withBudget(0, async () => {
+      const dump = await controller.exportData();
+      const row = dump.tables.messageBatches.find(r => r.id === 'b-media');
+      const msgs = (typeof row?.messages === 'string' ? JSON.parse(row.messages) : row?.messages) as Array<{
+        content: { image: Record<string, unknown> };
+      }>;
+      expect(msgs[0].content.image).not.toHaveProperty('base64');
+      expect(msgs[0].content.image).toMatchObject({ mimetype: 'image/png', caption: 'hi' });
+      expect(msgs[1].content.image).toEqual({ url: 'https://cdn.example.com/x.png', mimetype: 'image/png' });
+      // Attributed to the batches arm, not lumped in with messages — an operator restoring this needs
+      // to know WHICH history came back without its media.
+      expect(dump.omittedInlineMedia).toEqual({ messages: 0, messageBatches: 1 });
+    });
+  });
+
+  it('spends the export budget on the newest bulk batch first', async () => {
+    // Same defect the `messages` pass was fixed for: `SELECT *` has no ORDER BY, so on SQLite the
+    // batches arrive oldest-first and an exhausted budget keeps the stalest run's payloads.
+    const olderPayload = Buffer.from('o'.repeat(600)).toString('base64');
+    const newerPayload = Buffer.from('n'.repeat(600)).toString('base64');
+    await seedSession('s1');
+    const seedBatch = async (id: string, createdAt: string, base64: string): Promise<void> => {
+      await ds.getRepository(MessageBatch).save(
+        ds.getRepository(MessageBatch).create({
+          id,
+          batchId: `BATCH-${id}`,
+          sessionId: 's1',
+          status: BatchStatus.PROCESSING,
+          messages: [{ chatId: 'c1', type: 'image', content: { image: { base64, mimetype: 'image/png' } } }] as never,
+          options: null as never,
+          progress: null as never,
+          results: null as never,
+          currentIndex: 0,
+          startedAt: null,
+          completedAt: null,
+        }),
+      );
+      // `created_at` is a @CreateDateColumn, so it cannot be seeded through the entity.
+      await ds.query(`UPDATE message_batches SET created_at = ? WHERE id = ?`, [createdAt, id]);
+    };
+    // Inserted oldest-first, which is also how SQLite hands them back.
+    await seedBatch('b-older', '2026-01-01T00:00:00.000Z', olderPayload);
+    await seedBatch('b-newer', '2026-06-01T00:00:00.000Z', newerPayload);
+
+    const batchImage = (
+      dump: Awaited<ReturnType<typeof controller.exportData>>,
+      id: string,
+    ): Record<string, unknown> => {
+      const row = dump.tables.messageBatches.find(r => r.id === id);
+      const msgs = (typeof row?.messages === 'string' ? JSON.parse(row.messages) : row?.messages) as Array<{
+        content: { image: Record<string, unknown> };
+      }>;
+      return msgs[0].content.image;
+    };
+
+    await withBudget(Buffer.byteLength(newerPayload, 'utf8'), async () => {
+      const dump = await controller.exportData();
+      expect(batchImage(dump, 'b-newer')).toEqual({ base64: newerPayload, mimetype: 'image/png' });
+      expect(batchImage(dump, 'b-older')).not.toHaveProperty('base64');
+    });
   });
 
   it('round-trips plugin instances + integration delivery failures (Integration Fabric + DLQ)', async () => {
@@ -1013,6 +1704,11 @@ describe('InfraDataController.importData status_updates + runtime reconciliation
     expect(err).toBeInstanceOf(ConflictException);
     expect((err as ConflictException).getStatus()).toBe(409);
     expect((err as ConflictException).message).toContain('ghost');
+    // This is the ONLY refusal on this route whose documented retry (stopOrphans=true) is a real
+    // decision the operator can act on, and it is the only one the dashboard may offer a destructive
+    // retry for. It carries its own code so that identification is positive: an unrecognised code and
+    // a 409 that never reached this method both fail closed instead of opening the confirm.
+    expect((err as ConflictException).getResponse()).toMatchObject({ code: 'IMPORT_WOULD_ORPHAN_ENGINES' });
     expect(await ds.getRepository(Session).count()).toBe(1); // nothing deleted
 
     // With force: the restore proceeds and the response tells the operator a restart is required
@@ -1182,5 +1878,170 @@ describe('InfraDataController C002 audit trail (light-dependency handlers)', () 
     const calls = audit.logInfo.mock.calls as Array<[AuditAction, { metadata: { counts: { sessions: number } } }]>;
     expect(calls[0][0]).toBe(AuditAction.INFRA_DATA_EXPORTED);
     expect(calls[0][1].metadata.counts.sessions).toBe(0);
+  });
+});
+
+describe('restoreSessionOwnership', () => {
+  const claim = { id: 's1', nodeId: 'node-a', claimedAt: 'c', leaseExpiresAt: 'l', nodeUrl: 'u' };
+
+  it('propagates a failure instead of swallowing it, so the caller can roll the import back', async () => {
+    // Swallowing it would be worse than the bug: on PostgreSQL a failed statement aborts the
+    // transaction, so the COMMIT that followed would execute as a ROLLBACK and the endpoint would
+    // report a fully discarded import as a success.
+    await expect(
+      restoreSessionOwnership([claim], () => Promise.reject(new Error('db went away')), new Date()),
+    ).rejects.toThrow('db went away');
+  });
+
+  it('does nothing when there is no ownership to carry', async () => {
+    const calls: unknown[][] = [];
+    const insert = (_sql: string, params: unknown[]): Promise<unknown> => {
+      calls.push(params);
+      return Promise.resolve();
+    };
+
+    await restoreSessionOwnership(null, insert, new Date());
+    await restoreSessionOwnership([], insert, new Date());
+
+    expect(calls).toEqual([]);
+  });
+
+  it('binds the values it read, never values from the payload', async () => {
+    const bound: unknown[][] = [];
+    const statements: string[] = [];
+    const insert = (sql: string, params: unknown[]): Promise<unknown> => {
+      statements.push(sql);
+      bound.push(params);
+      return Promise.resolve();
+    };
+
+    await restoreSessionOwnership([claim], insert, new Date());
+
+    // 'l' is not a parseable deadline, so it is written back untouched: a value this function cannot
+    // interpret is not one it may rewrite.
+    expect(bound).toEqual([['node-a', 'c', 'l', 'u', 's1']]);
+    expect(statements[0]).toContain('UPDATE sessions SET "nodeId"');
+    expect(statements[0]).toContain('"claimedAt"');
+    expect(statements[0]).toContain('"leaseExpiresAt"');
+    expect(statements[0]).toContain('"nodeUrl"');
+  });
+
+  // The lease is a DEADLINE, and the transaction re-applying it can outlive what the deadline has
+  // left. These three cases pin which way each kind of claim moves.
+  const bindLease = async (leaseExpiresAt: unknown, readAt: Date, now: Date): Promise<unknown> => {
+    const bound: unknown[][] = [];
+    await restoreSessionOwnership(
+      [{ id: 's1', nodeId: 'node-a', claimedAt: 'c', leaseExpiresAt, nodeUrl: 'u' }],
+      (_sql, params) => {
+        bound.push(params);
+        return Promise.resolve();
+      },
+      readAt,
+      now,
+    );
+    return bound[0][2];
+  };
+
+  it('carries a live claim by its remaining time, so a long import cannot expire it', async () => {
+    const readAt = new Date('2026-08-06T10:00:00.000Z');
+    const commitAt = new Date('2026-08-06T10:02:00.000Z'); // a two-minute restore
+    // 30s left when read → 30s left when written, not an expiry two minutes in the past.
+    expect(await bindLease('2026-08-06T10:00:30.000Z', readAt, commitAt)).toBe('2026-08-06T10:02:30.000Z');
+  });
+
+  it('leaves an already-lapsed claim exactly where it was, so a dead node stays dead', async () => {
+    const readAt = new Date('2026-08-06T10:00:00.000Z');
+    const commitAt = new Date('2026-08-06T10:02:00.000Z');
+    // Shifting this one would resurrect a crashed peer's hold on the session.
+    expect(await bindLease('2026-08-06T09:59:00.000Z', readAt, commitAt)).toBe('2026-08-06T09:59:00.000Z');
+  });
+
+  it('refuses to carry text that is not the UTC form the writers emit', async () => {
+    const readAt = new Date('2026-08-06T10:00:00.000Z');
+    const commitAt = new Date('2026-08-06T10:02:00.000Z');
+    // `DateTransformer.to` and `leaseParam` both emit toISOString(), so a space-separated stamp can
+    // only come from somewhere that does not know this contract — e.g. a future migration DEFAULT of
+    // datetime('now'), the shape other columns in this repo already use. new Date() would read it as
+    // LOCAL time, and carrying it would write the host's UTC offset back into the column for good.
+    //
+    // Two days ahead, not seconds: parsed as local time this lands within ±14h of that instant, so it
+    // stays in the FUTURE under every timezone and would therefore be carried if the guard were gone.
+    // A near stamp would fall through to the already-lapsed branch on a positive-offset host and pass
+    // for the wrong reason — which is exactly what it did before this comment existed.
+    expect(await bindLease('2026-08-08 10:00:00', readAt, commitAt)).toBe('2026-08-08 10:00:00');
+  });
+
+  it('never carries a lease to an earlier instant than the one it read', async () => {
+    // A backward clock step between the read and the write-back. Without the clamp the carry would
+    // land before the original deadline — re-creating the expired-on-commit state it exists to avoid.
+    const readAt = new Date('2026-08-06T10:00:00.000Z');
+    const steppedBack = new Date('2026-08-06T09:58:00.000Z');
+    expect(await bindLease('2026-08-06T10:00:30.000Z', readAt, steppedBack)).toBe('2026-08-06T10:00:30.000Z');
+  });
+
+  it('falls back to the original value when the carry would overflow the Date range', async () => {
+    // A throw here would reach the caller's catch, which records a warning — and every claim after
+    // this row in the loop would silently never be re-applied.
+    const readAt = new Date('2026-08-06T10:00:00.000Z');
+    const commitAt = new Date('2026-08-06T10:02:00.000Z');
+    const nearMax = '+275760-09-13T00:00:00.000Z'; // the maximum representable Date
+    await expect(bindLease(nearMax, readAt, commitAt)).resolves.toBe(nearMax);
+  });
+
+  it('preserves the stored shape — Date in, Date out (Postgres); text in, text out (SQLite)', async () => {
+    const readAt = new Date('2026-08-06T10:00:00.000Z');
+    const commitAt = new Date('2026-08-06T10:02:00.000Z');
+    const asDate = await bindLease(new Date('2026-08-06T10:00:30.000Z'), readAt, commitAt);
+    expect(asDate).toBeInstanceOf(Date);
+    expect((asDate as Date).toISOString()).toBe('2026-08-06T10:02:30.000Z');
+    expect(typeof (await bindLease('2026-08-06T10:00:30.000Z', readAt, commitAt))).toBe('string');
+    expect(await bindLease(null, readAt, commitAt)).toBeNull();
+  });
+});
+
+/**
+ * `data.tables.sessions` was dereferenced with `.map()` before anything checked it was an array, so a
+ * hand-edited or truncated archive whose table value is a string (or an array of nulls) produced a
+ * TypeError — a 500 that tells the operator the server broke, when what actually happened is that
+ * their file is malformed. It fires before the transaction opens, so nothing was written; only the
+ * answer was wrong.
+ */
+describe('InfraDataController.importData rejects a malformed table value', () => {
+  const controller = () => new InfraDataController({ get: () => undefined } as never, {} as never);
+
+  it.each([
+    ['a string', 'not-an-array'],
+    ['a number', 7],
+    ['an object', { id: 'x' }],
+  ])('answers 400 when tables.sessions is %s', async (_label, value) => {
+    await expect(controller().importData({ tables: { sessions: value } } as never)).rejects.toThrow(
+      BadRequestException,
+    );
+  });
+
+  // Array.isArray alone let `[null]` through, and the RED comment above claimed this case was
+  // covered when it was not — the row then died on its first property read, the same 500 with a
+  // longer fuse.
+  it.each([
+    ['a null row', [null]],
+    ['a string row', ['nope']],
+    ['a nested array', [[]]],
+  ])('answers 400 for %s rather than dying on the first property read', async (_label, rows) => {
+    await expect(controller().importData({ tables: { sessions: rows } } as never)).rejects.toThrow(BadRequestException);
+  });
+
+  it('names the offending table so the operator can fix the file', async () => {
+    await expect(controller().importData({ tables: { messages: 'nope' } } as never)).rejects.toThrow(/messages/);
+  });
+
+  // Negative twin. It guards OVER-rejection, not deletion: a "must not reject" assertion can never
+  // fail when the guard is removed — that is what the four cases above are for. What it does catch is
+  // the guard hardening into refusing shapes the endpoint supports: an absent table (a partial
+  // archive) and an empty one (a table that legitimately has no rows).
+  it.each([
+    ['omits a table', { sessions: [{ id: 's1' }] }],
+    ['carries an empty table', { sessions: [], messages: [] }],
+  ])('does not reject an archive that %s', async (_label, tables) => {
+    await expect(controller().importData({ tables } as never)).rejects.not.toThrow(/must be an array/);
   });
 });

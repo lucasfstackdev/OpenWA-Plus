@@ -10,8 +10,10 @@ import {
   IsArray,
   ArrayMaxSize,
   IsBoolean,
+  Validate,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsMentionWidConstraint } from './is-mention-wid.validator';
 import { ToStrictBoolean } from '../../../common/utils/strict-boolean';
 
 const MENTIONS_DESCRIPTION =
@@ -20,6 +22,18 @@ const MENTIONS_DESCRIPTION =
 // Single source of truth for the text-body cap, shared with the agent-tool input schemas
 // (src/core/agent-tools/tools/message.tools.ts) so MCP and REST enforce the same limit.
 export const MESSAGE_TEXT_MAX_LENGTH = 4096;
+
+/**
+ * Shared wording for the quoted-send field (issue #1271). One constant rather than five copies so
+ * the two engine caveats — different id dialects, and Baileys' store requirement — cannot drift
+ * apart between the endpoints that all accept the same field.
+ */
+export const QUOTED_MESSAGE_ID_DESCRIPTION =
+  'Quote an earlier message, turning this send into a reply. The id is engine-specific: ' +
+  'whatsapp-web.js matches the serialized message id, Baileys matches the raw message key id and ' +
+  'can only quote a message it has already stored. An id that cannot be resolved fails the send ' +
+  'rather than delivering it unquoted.';
+export const QUOTED_MESSAGE_ID_EXAMPLE = 'true_628123456789@c.us_3EB0ABCD';
 
 export class CustomLinkPreviewDto {
   @ApiProperty({
@@ -73,6 +87,7 @@ export class SendTextMessageDto {
   @ArrayMaxSize(1024)
   @IsString({ each: true })
   @MaxLength(64, { each: true })
+  @Validate(IsMentionWidConstraint, { each: true })
   mentions?: string[];
 
   @ApiPropertyOptional({
@@ -102,7 +117,43 @@ export class SendTextMessageDto {
   @ValidateNested()
   @Type(() => CustomLinkPreviewDto)
   customLinkPreview?: CustomLinkPreviewDto;
+
+  @ApiPropertyOptional({
+    description: QUOTED_MESSAGE_ID_DESCRIPTION,
+    example: QUOTED_MESSAGE_ID_EXAMPLE,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  quotedMessageId?: string;
 }
+
+/**
+ * Request-body examples for `POST send-text`, applied with `@ApiBody` on the controller.
+ *
+ * Swagger UI does NOT pre-fill "Try it out" from the required properties — its sampler walks EVERY
+ * property in the schema, skipping only `deprecated`/`readOnly`/`writeOnly`. So an optional field is
+ * always present in the generated body; a property's `example` only decides the VALUE it is given,
+ * never whether it appears. Left to the sampler this endpoint offers `linkPreview: false` together
+ * with a `customLinkPreview` object — the one combination `MessageService.sendText` rejects outright
+ * — so every Try-it click returned `400 linkPreview: false cannot be combined with customLinkPreview`
+ * without the caller having typed anything (#1068). An explicit example overrides the sampler
+ * entirely, which is the only way to stop an optional property from reaching the default body.
+ *
+ * Keep every entry here a payload the API actually accepts: `send-message.dto.spec.ts` validates each
+ * one against the DTO and asserts it does not trip that guard, so a future field cannot silently
+ * reintroduce an unusable default.
+ */
+export const SEND_TEXT_BODY_EXAMPLES = {
+  minimal: {
+    summary: 'Plain text message',
+    value: { chatId: '628123456789@c.us', text: 'Hello from OpenWA!' },
+  },
+  withMentions: {
+    summary: 'Group message with an @mention (the text must carry the @<number> token)',
+    value: { chatId: '120363000000000000@g.us', text: 'Hello @62811', mentions: ['62811@c.us'] },
+  },
+};
 
 export class SendMediaMessageDto {
   @ApiProperty({
@@ -164,8 +215,78 @@ export class SendMediaMessageDto {
   @ArrayMaxSize(1024)
   @IsString({ each: true })
   @MaxLength(64, { each: true })
+  @Validate(IsMentionWidConstraint, { each: true })
   mentions?: string[];
+
+  @ApiPropertyOptional({
+    description: QUOTED_MESSAGE_ID_DESCRIPTION,
+    example: QUOTED_MESSAGE_ID_EXAMPLE,
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  quotedMessageId?: string;
 }
+
+/**
+ * Request-body examples for the media send routes, applied with `@ApiBody` on the controller.
+ *
+ * Same reason as the text route: Swagger UI's sampler emits EVERY property, so the generated body
+ * carried `url` AND `base64` together. `base64` has no `example`, so it arrived as the literal string
+ * `"string"` — and `MessageService.buildMediaInput` deliberately lets base64 win over url (a stale
+ * example url must never be fetched in place of real bytes), so pressing Execute uploaded four
+ * characters of garbage instead of the example image. An explicit example is the only way to keep an
+ * optional property out of the body.
+ *
+ * Only the URL form is offered, and every entry must be submittable as-is: a base64 example would
+ * need real bytes pasted in, which is the "click Execute, get an error" trap this exists to remove.
+ * `base64` and its `mimetype` requirement stay documented in the schema.
+ */
+const mediaBodyExample = (url: string, extra: Record<string, unknown> = {}) => ({
+  fromUrl: {
+    summary: 'Fetch the media from a URL',
+    value: { chatId: '628123456789@c.us', url, ...extra },
+  },
+});
+
+export const SEND_IMAGE_BODY_EXAMPLES = mediaBodyExample('https://example.com/image.jpg', {
+  caption: 'Check out this image!',
+});
+export const SEND_VIDEO_BODY_EXAMPLES = mediaBodyExample('https://example.com/video.mp4');
+export const SEND_AUDIO_BODY_EXAMPLES = mediaBodyExample('https://example.com/audio.ogg', { ptt: true });
+export const SEND_DOCUMENT_BODY_EXAMPLES = mediaBodyExample('https://example.com/report.pdf', {
+  filename: 'report.pdf',
+});
+export const SEND_STICKER_BODY_EXAMPLES = mediaBodyExample('https://example.com/sticker.webp');
+
+/**
+ * Request-body examples for the location, contact and poll routes.
+ *
+ * These three had no `@ApiBody` and were left to the schema sampler, which was harmless while every
+ * optional property was self-contained. `quotedMessageId` is not: the sampler emits EVERY property,
+ * so a Try-it body would carry a made-up message id, and the send path refuses an id it cannot
+ * resolve rather than delivering the message unquoted — turning every unedited Execute on these
+ * three routes into an error. Same failure #1068 fixed for the text and media routes, arriving by a
+ * different door, so the same remedy applies: pin an example that is submittable as-is.
+ */
+export const SEND_LOCATION_BODY_EXAMPLES = {
+  minimal: {
+    summary: 'Share a location',
+    value: { chatId: '628123456789@c.us', latitude: -6.2088, longitude: 106.8456, description: 'Jakarta' },
+  },
+};
+export const SEND_CONTACT_BODY_EXAMPLES = {
+  minimal: {
+    summary: 'Share a contact card',
+    value: { chatId: '628123456789@c.us', contactName: 'Alice', contactNumber: '628999888777' },
+  },
+};
+export const SEND_POLL_BODY_EXAMPLES = {
+  minimal: {
+    summary: 'Ask a single-choice poll',
+    value: { chatId: '120363000000000000@g.us', name: 'Where should we meet?', options: ['Park', 'Beach'] },
+  },
+};
 
 export class SendAudioMessageDto extends SendMediaMessageDto {
   @ApiPropertyOptional({
