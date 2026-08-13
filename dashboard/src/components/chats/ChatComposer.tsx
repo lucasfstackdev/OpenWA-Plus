@@ -33,13 +33,12 @@ export interface StagedAttachment {
    */
   recordedAudio?: boolean;
   /**
-   * Set only when the recorder actually produced an Ogg/Opus container, so send-audio delivers it as
-   * a WhatsApp voice note (PTT — mic bubble + waveform). Chromium/Edge only offer WebM for
-   * MediaRecorder, and sending THAT container with `ptt: true` makes the engine's voice-note
-   * processing (duration/waveform read from a container it does not expect) throw — surfacing to the
-   * dashboard as a bare 500. Rather than guess at a server-side fix blind, a WebM recording is sent
-   * as a plain audio attachment instead: still playable, just not the mic-bubble UI. Only a browser
-   * that actually recorded Ogg/Opus (Firefox) gets the real voice note.
+   * True for every mic recording, regardless of the container the browser produced (Ogg on Firefox,
+   * WebM elsewhere): `MessageService.sendAudio` transcodes anything non-native to Ogg/Opus
+   * server-side before it reaches the engine, so it is always safe to ask for a real WhatsApp voice
+   * note (PTT — mic bubble + waveform). A non-PTT audio attachment in that same Ogg/Opus container
+   * is known not to play back on iOS, so this must stay `true` for recordings rather than mirror the
+   * source container.
    */
   ptt?: boolean;
 }
@@ -156,15 +155,15 @@ function ChatComposer({
         const blob = new Blob(chunks, { type: blobType });
         const filename = `voice-${Date.now()}.${recordingFileExtension(blobType)}`;
         const file = new File([blob], filename, { type: blobType });
-        // See the `ptt` doc comment on StagedAttachment — only an actual Ogg/Opus recording is sent
-        // as a voice note; a WebM recording still uploads fine as a plain audio attachment.
-        const isOgg = blobType.toLowerCase().startsWith('audio/ogg');
 
         const reader = new FileReader();
         reader.onload = event => {
           const dataUrl = event.target?.result as string;
           const base64Data = dataUrl.split(',')[1];
-          setAttachment({ file, base64: base64Data, mimetype: blobType, filename, recordedAudio: true, ptt: isOgg });
+          // See the `ptt` doc comment on StagedAttachment — the server transcodes any non-native
+          // container to Ogg/Opus before sending, so every mic recording goes out as a real voice
+          // note regardless of what the browser recorded it as.
+          setAttachment({ file, base64: base64Data, mimetype: blobType, filename, recordedAudio: true, ptt: true });
           setPreviewUrl(URL.createObjectURL(blob));
         };
         reader.readAsDataURL(blob);

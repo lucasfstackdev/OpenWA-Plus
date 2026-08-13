@@ -14,8 +14,8 @@ interface StagedFile {
   filename: string;
   /** Set when this attachment came from the mic recorder (labels the preview as a voice message). */
   recordedAudio?: boolean;
-  /** Set only for an actual Ogg/Opus recording, so send-audio delivers it as a voice note (PTT). See
-   * the identical doc comment on ChatComposer's StagedAttachment for why WebM recordings don't. */
+  /** True for every mic recording; see the identical doc comment on ChatComposer's StagedAttachment
+   * for why this no longer depends on the recorded container. */
   ptt?: boolean;
 }
 
@@ -148,7 +148,6 @@ function NewChatModal({ sessionId, onClose, onChatCreated }: Props) {
         const blob = new Blob(chunks, { type: blobType });
         const filename = `voice-${Date.now()}.${recordingFileExtension(blobType)}`;
         const file = new File([blob], filename, { type: blobType });
-        const isOgg = blobType.toLowerCase().startsWith('audio/ogg');
 
         readSeq.current += 1; // supersedes any in-flight file-picker read
         const reader = new FileReader();
@@ -160,7 +159,7 @@ function NewChatModal({ sessionId, onClose, onChatCreated }: Props) {
             mimetype: blobType,
             filename,
             recordedAudio: true,
-            ptt: isOgg,
+            ptt: true,
           });
           setPreviewUrl(URL.createObjectURL(blob));
         };
