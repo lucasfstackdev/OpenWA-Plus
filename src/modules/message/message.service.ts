@@ -810,7 +810,7 @@ export class MessageService {
       };
       // Only when this write actually carries metadata worth merging: a text item must not blank
       // the echo's, and a URL pointer must not replace bytes the engine already downloaded.
-      if (message.metadata && !isUrlPointerMetadata(message.metadata)) {
+      if (message.metadata/* && !isUrlPointerMetadata(message.metadata)*/) {
         patch.metadata = message.metadata as QueryDeepPartialEntity<Record<string, unknown>>;
       }
       await this.messageRepository.update({ sessionId, waMessageId }, patch);
@@ -898,7 +898,7 @@ export class MessageService {
           },
         );
         const patch: QueryDeepPartialEntity<Message> = { status: MessageStatus.SENT, timestamp: result.timestamp };
-        if (message.metadata && !isUrlPointerMetadata(message.metadata)) {
+        if (message.metadata/* && !isUrlPointerMetadata(message.metadata)*/) {
           patch.metadata = message.metadata as QueryDeepPartialEntity<Record<string, unknown>>;
         }
         await this.messageRepository

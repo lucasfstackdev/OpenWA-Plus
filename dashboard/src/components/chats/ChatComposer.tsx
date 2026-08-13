@@ -5,7 +5,7 @@ import { Check, Loader2, Mic, Paperclip, Send, Smile, Trash2, X } from 'lucide-r
 import { messageApi, type Chat, type MessageType } from '../../services/api';
 import { mergeOrAppend, type ChatMessageView } from '../../utils/chatMessages';
 import { promoteChatWithSnippet } from '../../utils/chatList';
-import { buildMediaSendPayload, buildOptimisticMetadata, quotedIdOf } from '../../utils/composerSend';
+import { buildOptimisticMetadata, quotedIdOf } from '../../utils/composerSend';
 import { messagesQueryKey, useChatMessagesActions } from '../../hooks/useChatMessages';
 import { useRole } from '../../hooks/useRole';
 import { useToast } from '../../hooks/useToast';
