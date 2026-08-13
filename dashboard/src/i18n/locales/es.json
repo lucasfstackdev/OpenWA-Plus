@@ -104,6 +104,11 @@
     "messagePlaceholder": "Escribe un mensaje...",
     "noPermission": "No tienes permiso para enviar mensajes",
     "send": "Enviar",
+    "recordTitle": "Grabar mensaje de voz",
+    "cancelRecording": "Cancelar grabación",
+    "stopRecording": "Detener grabación",
+    "recording": "Grabando...",
+    "voiceMessage": "Mensaje de voz",
     "placeholderTitle": "Empieza a escribir",
     "placeholderDesc": "Selecciona un chat activo de la barra lateral izquierda para leer y enviar mensajes de WhatsApp.",
     "scrollToBottom": "Ir al más reciente",
@@ -151,13 +156,32 @@
       "subscribers": "{{count}} suscriptor",
       "subscribers_other": "{{count}} suscriptores"
     },
+    "newChat": {
+      "trigger": "Nueva conversación",
+      "title": "Iniciar nueva conversación",
+      "nameLabel": "Nombre del contacto (opcional)",
+      "namePlaceholder": "ej: Juan Pérez",
+      "phoneLabel": "Número de teléfono",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "Incluye el código de país, ej: +5520966505354",
+      "phoneInvalid": "Introduce un número de teléfono válido con el código de país",
+      "messageLabel": "Mensaje",
+      "attachmentLabel": "Adjunto (audio, documento, imagen, video)",
+      "submit": "Iniciar conversación",
+      "numberNotFound": "Este número no está en WhatsApp",
+      "contactSaveFailed": "No se pudo guardar el contacto, pero el mensaje se enviará de todos modos",
+      "created": "Conversación iniciada",
+      "createFailed": "No se pudo iniciar la conversación"
+    },
     "errors": {
       "loadSessions": "Error al cargar las sesiones",
       "loadChats": "Error al cargar los chats",
       "markRead": "Error al marcar el chat como leído",
       "send": "Error al enviar el mensaje",
       "react": "Error al reaccionar al mensaje",
-      "delete": "Error al eliminar el mensaje"
+      "delete": "Error al eliminar el mensaje",
+      "micUnsupported": "La grabación de audio no es compatible con este navegador",
+      "micPermission": "No se pudo acceder al micrófono"
     },
     "loadMessagesError": "No se pudieron cargar los mensajes. Revisa los registros del servidor."
   },

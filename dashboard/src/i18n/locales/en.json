@@ -104,6 +104,11 @@
     "messagePlaceholder": "Type a message...",
     "noPermission": "You do not have permission to send messages",
     "send": "Send",
+    "recordTitle": "Record voice message",
+    "cancelRecording": "Cancel recording",
+    "stopRecording": "Stop recording",
+    "recording": "Recording...",
+    "voiceMessage": "Voice message",
     "placeholderTitle": "Start messaging",
     "placeholderDesc": "Choose a conversation to read and reply.",
     "scrollToBottom": "Scroll to latest",
@@ -151,13 +156,32 @@
       "subscribers": "{{count}} subscriber",
       "subscribers_other": "{{count}} subscribers"
     },
+    "newChat": {
+      "trigger": "New conversation",
+      "title": "Start a new conversation",
+      "nameLabel": "Contact name (optional)",
+      "namePlaceholder": "e.g. John Smith",
+      "phoneLabel": "Phone number",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "Include the country code, e.g. +5520966505354",
+      "phoneInvalid": "Enter a valid phone number with country code",
+      "messageLabel": "Message",
+      "attachmentLabel": "Attachment (audio, document, image, video)",
+      "submit": "Start conversation",
+      "numberNotFound": "This number is not on WhatsApp",
+      "contactSaveFailed": "Could not save the contact, but the message will still be sent",
+      "created": "Conversation started",
+      "createFailed": "Could not start the conversation"
+    },
     "errors": {
       "loadSessions": "Failed to load sessions",
       "loadChats": "Failed to load chats",
       "markRead": "Failed to mark chat as read",
       "send": "Failed to send message",
       "react": "Failed to react to message",
-      "delete": "Failed to delete message"
+      "delete": "Failed to delete message",
+      "micUnsupported": "Audio recording is not supported in this browser",
+      "micPermission": "Could not access the microphone"
     },
     "loadMessagesError": "Couldn't load messages. Check the server logs."
   },

@@ -332,8 +332,8 @@ export interface SendMediaPayload {
   mimetype?: string;
   filename?: string;
   caption?: string;
-  /** Quote an earlier message, making the media send a reply. Omit for an ordinary send. */
-  quotedMessageId?: string;
+  /** Audio-only: send as a WhatsApp voice note (mic bubble + waveform) instead of a regular audio file. */
+  ptt?: boolean;
 }
 
 // Payloads below mirror the backend DTOs in src/modules/message/dto (raw bodies, no envelope).
@@ -889,6 +889,13 @@ export const contactApi = {
         .map(encodeURIComponent)
         .join(',')}`,
     ),
+  // Saves (or edits) an addressbook entry. Requires OPERATOR role server-side. `contactId` must be a
+  // phone-based id (e.g. `…@c.us`) — the backend rejects `@lid` privacy ids.
+  upsertContact: (sessionId: string, contactId: string, firstName: string, lastName?: string) =>
+    request<{ success: boolean; message: string }>(`/sessions/${sessionId}/contacts/${encodeURIComponent(contactId)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ firstName, lastName }),
+    }),
 };
 
 // =============================================================================

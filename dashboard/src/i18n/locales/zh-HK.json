@@ -104,6 +104,11 @@
     "messagePlaceholder": "輸入訊息...",
     "noPermission": "你沒有傳送訊息的權限",
     "send": "傳送",
+    "recordTitle": "錄製語音訊息",
+    "cancelRecording": "取消錄音",
+    "stopRecording": "停止錄音",
+    "recording": "錄音中...",
+    "voiceMessage": "語音訊息",
     "placeholderTitle": "開始聊天",
     "placeholderDesc": "從左側邊欄選擇一個活躍聊天，即可開始閱讀和傳送 WhatsApp 訊息。",
     "scrollToBottom": "捲動到最新",
@@ -151,13 +156,32 @@
       "subscribers": "{{count}} 位訂閱者",
       "subscribers_other": "{{count}} 位訂閱者"
     },
+    "newChat": {
+      "trigger": "新對話",
+      "title": "開始新對話",
+      "nameLabel": "聯絡人姓名（可選）",
+      "namePlaceholder": "例如：陳大文",
+      "phoneLabel": "電話號碼",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "請包含國家代碼，例如：+5520966505354",
+      "phoneInvalid": "請輸入包含國家代碼的有效電話號碼",
+      "messageLabel": "訊息",
+      "attachmentLabel": "附件（音訊、文件、圖片、影片）",
+      "submit": "開始對話",
+      "numberNotFound": "此號碼未在 WhatsApp 註冊",
+      "contactSaveFailed": "無法儲存聯絡人，但訊息仍會傳送",
+      "created": "對話已建立",
+      "createFailed": "無法開始對話"
+    },
     "errors": {
       "loadSessions": "載入工作階段失敗",
       "loadChats": "載入聊天失敗",
       "markRead": "將聊天標記為已讀失敗",
       "send": "傳送訊息失敗",
       "react": "回應訊息失敗",
-      "delete": "刪除訊息失敗"
+      "delete": "刪除訊息失敗",
+      "micUnsupported": "此瀏覽器不支援錄音功能",
+      "micPermission": "無法存取麥克風"
     },
     "loadMessagesError": "無法載入訊息。請檢查伺服器日誌。"
   },

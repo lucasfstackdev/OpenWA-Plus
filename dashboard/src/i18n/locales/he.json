@@ -106,6 +106,11 @@
     "messagePlaceholder": "הקלד הודעה...",
     "noPermission": "אין לך הרשאה לשלוח הודעות",
     "send": "שלח",
+    "recordTitle": "הקלטת הודעה קולית",
+    "cancelRecording": "ביטול ההקלטה",
+    "stopRecording": "עצירת ההקלטה",
+    "recording": "מקליט...",
+    "voiceMessage": "הודעה קולית",
     "placeholderTitle": "התחל לשלוח הודעות",
     "placeholderDesc": "בחר שיחה פעילה מהסרגל הצדדי כדי להתחיל לקרוא ולשלוח הודעות WhatsApp.",
     "scrollToBottom": "גלול לאחרון",
@@ -158,13 +163,32 @@
       "subscribers_two": "שני מנויים",
       "subscribers_many": "{{count}} מנויים"
     },
+    "newChat": {
+      "trigger": "שיחה חדשה",
+      "title": "התחלת שיחה חדשה",
+      "nameLabel": "שם איש הקשר (אופציונלי)",
+      "namePlaceholder": "לדוגמה: ישראל ישראלי",
+      "phoneLabel": "מספר טלפון",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "כלול קידומת מדינה, לדוגמה: +5520966505354",
+      "phoneInvalid": "הזן מספר טלפון תקין עם קידומת מדינה",
+      "messageLabel": "הודעה",
+      "attachmentLabel": "קובץ מצורף (שמע, מסמך, תמונה, וידאו)",
+      "submit": "התחל שיחה",
+      "numberNotFound": "מספר זה אינו רשום בוואטסאפ",
+      "contactSaveFailed": "לא ניתן היה לשמור את איש הקשר, אך ההודעה עדיין תישלח",
+      "created": "השיחה החלה",
+      "createFailed": "לא ניתן היה להתחיל את השיחה"
+    },
     "errors": {
       "loadSessions": "טעינת הסשנים נכשלה",
       "loadChats": "טעינת השיחות נכשלה",
       "markRead": "סימון השיחה כנקראה נכשל",
       "send": "שליחת ההודעה נכשלה",
       "react": "התגובה להודעה נכשלה",
-      "delete": "מחיקת ההודעה נכשלה"
+      "delete": "מחיקת ההודעה נכשלה",
+      "micUnsupported": "הקלטת שמע אינה נתמכת בדפדפן זה",
+      "micPermission": "לא ניתן היה לגשת למיקרופון"
     },
     "loadMessagesError": "לא ניתן לטעון את ההודעות. בדקו את יומני השרת."
   },

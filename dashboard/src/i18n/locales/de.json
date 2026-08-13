@@ -104,6 +104,11 @@
     "messagePlaceholder": "Nachricht eingeben...",
     "noPermission": "Du bist nicht berechtigt, Nachrichten zu senden",
     "send": "Senden",
+    "recordTitle": "Sprachnachricht aufnehmen",
+    "cancelRecording": "Aufnahme abbrechen",
+    "stopRecording": "Aufnahme beenden",
+    "recording": "Aufnahme läuft...",
+    "voiceMessage": "Sprachnachricht",
     "placeholderTitle": "Unterhaltung beginnen",
     "placeholderDesc": "Wähle eine Unterhaltung aus, um sie zu lesen und zu beantworten.",
     "scrollToBottom": "Zur neuesten Nachricht springen",
@@ -151,13 +156,32 @@
       "subscribers": "{{count}} Abonnent",
       "subscribers_other": "{{count}} Abonnenten"
     },
+    "newChat": {
+      "trigger": "Neue Unterhaltung",
+      "title": "Neue Unterhaltung starten",
+      "nameLabel": "Kontaktname (optional)",
+      "namePlaceholder": "z. B. Max Mustermann",
+      "phoneLabel": "Telefonnummer",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "Landesvorwahl einschließen, z. B. +5520966505354",
+      "phoneInvalid": "Geben Sie eine gültige Telefonnummer mit Landesvorwahl ein",
+      "messageLabel": "Nachricht",
+      "attachmentLabel": "Anhang (Audio, Dokument, Bild, Video)",
+      "submit": "Unterhaltung starten",
+      "numberNotFound": "Diese Nummer ist nicht bei WhatsApp registriert",
+      "contactSaveFailed": "Der Kontakt konnte nicht gespeichert werden, die Nachricht wird trotzdem gesendet",
+      "created": "Unterhaltung gestartet",
+      "createFailed": "Unterhaltung konnte nicht gestartet werden"
+    },
     "errors": {
       "loadSessions": "Sitzungen konnten nicht geladen werden",
       "loadChats": "Chats konnten nicht geladen werden",
       "markRead": "Chat konnte nicht als gelesen markiert werden",
       "send": "Nachricht konnte nicht gesendet werden",
       "react": "Reaktion auf die Nachricht fehlgeschlagen",
-      "delete": "Nachricht konnte nicht gelöscht werden"
+      "delete": "Nachricht konnte nicht gelöscht werden",
+      "micUnsupported": "Audioaufnahme wird in diesem Browser nicht unterstützt",
+      "micPermission": "Zugriff auf das Mikrofon nicht möglich"
     },
     "loadMessagesError": "Nachrichten konnten nicht geladen werden. Prüfe die Serverprotokolle."
   },

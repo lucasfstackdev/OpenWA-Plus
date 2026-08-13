@@ -104,6 +104,11 @@
     "messagePlaceholder": "메시지를 입력하세요...",
     "noPermission": "메시지를 보낼 권한이 없습니다",
     "send": "보내기",
+    "recordTitle": "음성 메시지 녹음",
+    "cancelRecording": "녹음 취소",
+    "stopRecording": "녹음 중지",
+    "recording": "녹음 중...",
+    "voiceMessage": "음성 메시지",
     "placeholderTitle": "대화 시작하기",
     "placeholderDesc": "읽고 답장할 대화를 선택하세요.",
     "scrollToBottom": "최신으로 이동",
@@ -151,13 +156,32 @@
       "subscribers": "구독자 {{count}}명",
       "subscribers_other": "구독자 {{count}}명"
     },
+    "newChat": {
+      "trigger": "새 대화",
+      "title": "새 대화 시작",
+      "nameLabel": "연락처 이름 (선택 사항)",
+      "namePlaceholder": "예: 홍길동",
+      "phoneLabel": "전화번호",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "국가 코드를 포함하세요, 예: +5520966505354",
+      "phoneInvalid": "국가 코드를 포함한 유효한 전화번호를 입력하세요",
+      "messageLabel": "메시지",
+      "attachmentLabel": "첨부 파일 (오디오, 문서, 이미지, 동영상)",
+      "submit": "대화 시작",
+      "numberNotFound": "이 번호는 WhatsApp에 등록되어 있지 않습니다",
+      "contactSaveFailed": "연락처를 저장하지 못했지만 메시지는 전송됩니다",
+      "created": "대화가 시작되었습니다",
+      "createFailed": "대화를 시작할 수 없습니다"
+    },
     "errors": {
       "loadSessions": "세션을 불러오지 못했습니다",
       "loadChats": "채팅을 불러오지 못했습니다",
       "markRead": "채팅을 읽음으로 표시하지 못했습니다",
       "send": "메시지를 보내지 못했습니다",
       "react": "메시지에 반응하지 못했습니다",
-      "delete": "메시지를 삭제하지 못했습니다"
+      "delete": "메시지를 삭제하지 못했습니다",
+      "micUnsupported": "이 브라우저에서는 오디오 녹음이 지원되지 않습니다",
+      "micPermission": "마이크에 접근할 수 없습니다"
     },
     "loadMessagesError": "메시지를 불러올 수 없습니다. 서버 로그를 확인하세요."
   },

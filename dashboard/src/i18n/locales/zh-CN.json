@@ -104,6 +104,11 @@
     "messagePlaceholder": "输入消息...",
     "noPermission": "你没有发送消息的权限",
     "send": "发送",
+    "recordTitle": "录制语音消息",
+    "cancelRecording": "取消录音",
+    "stopRecording": "停止录音",
+    "recording": "正在录音...",
+    "voiceMessage": "语音消息",
     "placeholderTitle": "开始聊天",
     "placeholderDesc": "从左侧边栏选择一个活跃聊天，即可开始阅读和发送 WhatsApp 消息。",
     "scrollToBottom": "滚动到最新",
@@ -151,13 +156,32 @@
       "subscribers": "{{count}} 位订阅者",
       "subscribers_other": "{{count}} 位订阅者"
     },
+    "newChat": {
+      "trigger": "新建对话",
+      "title": "发起新对话",
+      "nameLabel": "联系人姓名（可选）",
+      "namePlaceholder": "例如：张三",
+      "phoneLabel": "电话号码",
+      "phonePlaceholder": "+5520966505354",
+      "phoneHint": "请包含国家代码，例如：+5520966505354",
+      "phoneInvalid": "请输入包含国家代码的有效电话号码",
+      "messageLabel": "消息",
+      "attachmentLabel": "附件（音频、文档、图片、视频）",
+      "submit": "发起对话",
+      "numberNotFound": "该号码未注册 WhatsApp",
+      "contactSaveFailed": "无法保存联系人，但仍会发送消息",
+      "created": "对话已创建",
+      "createFailed": "无法发起对话"
+    },
     "errors": {
       "loadSessions": "加载会话失败",
       "loadChats": "加载聊天失败",
       "markRead": "将聊天标记为已读失败",
       "send": "发送消息失败",
       "react": "回应消息失败",
-      "delete": "删除消息失败"
+      "delete": "删除消息失败",
+      "micUnsupported": "此浏览器不支持录音功能",
+      "micPermission": "无法访问麦克风"
     },
     "loadMessagesError": "无法加载消息。请检查服务器日志。"
   },

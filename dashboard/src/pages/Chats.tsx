@@ -32,6 +32,7 @@ import {
 import { useWebSocket } from '../hooks/useWebSocket';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useToast } from '../hooks/useToast';
+import { useRole } from '../hooks/useRole';
 import { PageHeader } from '../components/PageHeader';
 import { GlobalSearch } from '../components/GlobalSearch';
 import { useChatMessages, useChatMessagesActions, messagesQueryKey } from '../hooks/useChatMessages';
@@ -48,6 +49,7 @@ import ChatThread from '../components/chats/ChatThread';
 import ChatComposer, { type StagedAttachment } from '../components/chats/ChatComposer';
 import StatusMedia from '../components/chats/StatusMedia';
 import StatusComposeModal from '../components/chats/StatusComposeModal';
+import NewChatModal from '../components/chats/NewChatModal';
 import './Chats.css';
 
 // Quiet window for coalescing mark-as-read RPCs (see markReadCoalescer below).
@@ -109,6 +111,7 @@ export function Chats() {
   const { t } = useTranslation();
   useDocumentTitle(t('nav.chats'));
   const { error: showErrorToast, warning: showWarningToast } = useToast();
+  const { canWrite } = useRole();
 
   // Sessions list & active session
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -168,6 +171,10 @@ export function Chats() {
   // The page owns only the open flag (its trigger sits in the sidebar header below); the form
   // itself — state, contacts query, submit — is components/chats/StatusComposeModal.
   const [composeOpen, setComposeOpen] = useState<boolean>(false);
+
+  // --- New conversation modal --- same ownership split as compose: this page only owns the open
+  // flag, components/chats/NewChatModal owns the form/submit.
+  const [newChatOpen, setNewChatOpen] = useState<boolean>(false);
 
   const {
     data: messages = [],
@@ -285,6 +292,22 @@ export function Chats() {
       }
     },
     [t, showErrorToast],
+  );
+
+  // Opens the chat NewChatModal just sent into: select it immediately (so the room pane shows the
+  // just-sent message without waiting on a round trip) and prepend a synthetic row so the sidebar
+  // isn't empty-looking in the meantime, then refetch so the real list (correct ordering, any other
+  // concurrent activity) reconciles it.
+  const handleChatCreated = useCallback(
+    (chat: Chat) => {
+      setActiveTab('chats');
+      setActiveChannel(null);
+      setActiveStatusContactId(null);
+      setActiveChat(chat);
+      setChats(prev => (prev.some(c => c.id === chat.id) ? prev : [chat, ...prev]));
+      void loadChats(selectedSessionId);
+    },
+    [selectedSessionId, loadChats],
   );
 
   useEffect(() => {
@@ -833,6 +856,8 @@ export function Chats() {
             searchQuery={searchQuery}
             onSearchQueryChange={setSearchQuery}
             onComposeStatus={() => setComposeOpen(true)}
+            onComposeChat={() => setNewChatOpen(true)}
+            canComposeChat={canWrite}
             formatChatTime={formatChatTime}
             chatsTab={{
               loading: loadingChats,
@@ -1045,6 +1070,14 @@ export function Chats() {
           sessionId={selectedSessionId}
           onClose={() => setComposeOpen(false)}
           onPosted={() => statusesQuery.refetch()}
+        />
+      )}
+
+      {newChatOpen && (
+        <NewChatModal
+          sessionId={selectedSessionId}
+          onClose={() => setNewChatOpen(false)}
+          onChatCreated={handleChatCreated}
         />
       )}
     </div>
