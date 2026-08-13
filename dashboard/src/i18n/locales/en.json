@@ -104,6 +104,11 @@
     "messagePlaceholder": "Type a message...",
     "noPermission": "You do not have permission to send messages",
     "send": "Send",
+    "recordTitle": "Record voice message",
+    "cancelRecording": "Cancel recording",
+    "stopRecording": "Stop recording",
+    "recording": "Recording...",
+    "voiceMessage": "Voice message",
     "placeholderTitle": "Start messaging",
     "placeholderDesc": "Choose a conversation to read and reply.",
     "scrollToBottom": "Scroll to latest",
@@ -157,7 +162,9 @@
       "markRead": "Failed to mark chat as read",
       "send": "Failed to send message",
       "react": "Failed to react to message",
-      "delete": "Failed to delete message"
+      "delete": "Failed to delete message",
+      "micUnsupported": "Audio recording is not supported in this browser",
+      "micPermission": "Could not access the microphone"
     },
     "loadMessagesError": "Couldn't load messages. Check the server logs."
   },

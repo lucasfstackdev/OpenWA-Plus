@@ -104,6 +104,11 @@
     "messagePlaceholder": "输入消息...",
     "noPermission": "你没有发送消息的权限",
     "send": "发送",
+    "recordTitle": "录制语音消息",
+    "cancelRecording": "取消录音",
+    "stopRecording": "停止录音",
+    "recording": "正在录音...",
+    "voiceMessage": "语音消息",
     "placeholderTitle": "开始聊天",
     "placeholderDesc": "从左侧边栏选择一个活跃聊天，即可开始阅读和发送 WhatsApp 消息。",
     "scrollToBottom": "滚动到最新",
@@ -157,7 +162,9 @@
       "markRead": "将聊天标记为已读失败",
       "send": "发送消息失败",
       "react": "回应消息失败",
-      "delete": "删除消息失败"
+      "delete": "删除消息失败",
+      "micUnsupported": "此浏览器不支持录音功能",
+      "micPermission": "无法访问麦克风"
     },
     "loadMessagesError": "无法加载消息。请检查服务器日志。"
   },

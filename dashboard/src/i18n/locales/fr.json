@@ -104,6 +104,11 @@
     "messagePlaceholder": "Tapez un message...",
     "noPermission": "Vous n'avez pas la permission d'envoyer des messages",
     "send": "Envoyer",
+    "recordTitle": "Enregistrer un message vocal",
+    "cancelRecording": "Annuler l'enregistrement",
+    "stopRecording": "Arrêter l'enregistrement",
+    "recording": "Enregistrement en cours...",
+    "voiceMessage": "Message vocal",
     "placeholderTitle": "Commencer à discuter",
     "placeholderDesc": "Sélectionnez une discussion active dans la barre latérale gauche pour commencer à lire et envoyer des messages WhatsApp.",
     "scrollToBottom": "Aller au plus récent",
@@ -157,7 +162,9 @@
       "markRead": "Échec du marquage de la discussion comme lue",
       "send": "Échec de l'envoi du message",
       "react": "Échec de la réaction au message",
-      "delete": "Échec de la suppression du message"
+      "delete": "Échec de la suppression du message",
+      "micUnsupported": "L'enregistrement audio n'est pas pris en charge par ce navigateur",
+      "micPermission": "Impossible d'accéder au microphone"
     },
     "loadMessagesError": "Impossible de charger les messages. Vérifiez les journaux du serveur."
   },

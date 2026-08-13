@@ -14,6 +14,7 @@ import { Template } from '../template/entities/template.entity';
 import { SsrfBlockedError } from '../../common/security/ssrf-guard';
 import { LidMappingStoreService } from '../../engine/identity/lid-mapping-store.service';
 import { SendPacingService } from './send-pacing.service';
+import { MediaConversionService } from '../media/media-conversion.service';
 
 /** Pacing is off by default in these tests; the governor's own spec covers its behaviour. */
 const inertPacing = (): SendPacingService =>
@@ -61,6 +62,7 @@ describe('MessageService', () => {
   let templateService: jest.Mocked<Partial<TemplateService>>;
   let lidMappingStore: { lidsForPhone: jest.Mock; getCached: jest.Mock };
   let mockEngine: ReturnType<typeof createMockEngine>;
+  let mediaConversion: jest.Mocked<Partial<MediaConversionService>>;
 
   // Auto-typing is on by default; disable it for the unrelated send tests so they don't incur the
   // real setTimeout delay and don't add an extra sendChatState call. The auto-typing suite opts in.
@@ -107,6 +109,13 @@ describe('MessageService', () => {
 
     lidMappingStore = { lidsForPhone: jest.fn().mockReturnValue([]), getCached: jest.fn().mockReturnValue(undefined) };
 
+    // Off by default (mirrors the real service's `isAvailable()` when MEDIA_CONVERSION_ENABLED is
+    // unset) — the sendAudio auto-conversion branch is a no-op unless a test flips this on.
+    mediaConversion = {
+      isAvailable: jest.fn().mockResolvedValue(false),
+      convertToVoice: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MessageService,
@@ -125,6 +134,7 @@ describe('MessageService', () => {
         { provide: HookManager, useValue: hookManager },
         { provide: TemplateService, useValue: templateService },
         { provide: LidMappingStoreService, useValue: lidMappingStore },
+        { provide: MediaConversionService, useValue: mediaConversion },
       ],
     }).compile();
 
@@ -1047,6 +1057,92 @@ describe('MessageService', () => {
     it('persists a plain audio send (no ptt) as type "audio"', async () => {
       await service.sendAudio('sess-1', { chatId: 'test@c.us', url: 'https://example.com/audio.ogg' });
       expect(repository.create).toHaveBeenCalledWith(expect.objectContaining({ type: 'audio' }));
+    });
+
+    // whatsapp-web.js crashes the page-side send outright for a base64 audio container it does not
+    // recognize (e.g. a browser MediaRecorder's `audio/webm`) — see isWaNativeAudioMimetype in
+    // message.service.ts. These cover the auto-transcode that avoids it.
+    describe('auto-conversion of a non-native base64 audio container', () => {
+      const webmBase64 = { chatId: 'test@c.us', base64: 'd2VibQ==', mimetype: 'audio/webm;codecs=opus' };
+
+      it('converts to Ogg/Opus and sends the converted bytes when conversion is available (ptt)', async () => {
+        (mediaConversion.isAvailable as jest.Mock).mockResolvedValue(true);
+        (mediaConversion.convertToVoice as jest.Mock).mockResolvedValue({
+          base64: 'T2dnUw==',
+          mimetype: 'audio/ogg; codecs=opus',
+          bytes: 6,
+        });
+
+        await service.sendAudio('sess-1', { ...webmBase64, ptt: true });
+
+        expect(mediaConversion.convertToVoice).toHaveBeenCalledWith({ base64: 'd2VibQ==' });
+        expect(mockEngine.sendAudioMessage).toHaveBeenCalledWith(
+          'test@c.us',
+          expect.objectContaining({ ptt: true, mimetype: 'audio/ogg; codecs=opus', data: 'T2dnUw==' }),
+        );
+      });
+
+      it('also converts a PLAIN (non-ptt) audio send — the crash is not ptt-specific', async () => {
+        (mediaConversion.isAvailable as jest.Mock).mockResolvedValue(true);
+        (mediaConversion.convertToVoice as jest.Mock).mockResolvedValue({
+          base64: 'T2dnUw==',
+          mimetype: 'audio/ogg; codecs=opus',
+          bytes: 6,
+        });
+
+        await service.sendAudio('sess-1', webmBase64);
+
+        expect(mediaConversion.convertToVoice).toHaveBeenCalledWith({ base64: 'd2VibQ==' });
+        expect(mockEngine.sendAudioMessage).toHaveBeenCalledWith(
+          'test@c.us',
+          expect.objectContaining({ ptt: undefined, mimetype: 'audio/ogg; codecs=opus', data: 'T2dnUw==' }),
+        );
+      });
+
+      it('skips conversion for an already-native container (e.g. audio/mpeg)', async () => {
+        (mediaConversion.isAvailable as jest.Mock).mockResolvedValue(true);
+
+        await service.sendAudio('sess-1', { chatId: 'test@c.us', base64: 'SUQz', mimetype: 'audio/mpeg' });
+
+        expect(mediaConversion.convertToVoice).not.toHaveBeenCalled();
+        expect(mockEngine.sendAudioMessage).toHaveBeenCalledWith(
+          'test@c.us',
+          expect.objectContaining({ mimetype: 'audio/mpeg', data: 'SUQz' }),
+        );
+      });
+
+      it('sends the original bytes unmodified when conversion is unavailable (disabled/no ffmpeg)', async () => {
+        (mediaConversion.isAvailable as jest.Mock).mockResolvedValue(false);
+
+        await service.sendAudio('sess-1', webmBase64);
+
+        expect(mediaConversion.convertToVoice).not.toHaveBeenCalled();
+        expect(mockEngine.sendAudioMessage).toHaveBeenCalledWith(
+          'test@c.us',
+          expect.objectContaining({ mimetype: 'audio/webm;codecs=opus', data: 'd2VibQ==' }),
+        );
+      });
+
+      it('falls back to the original bytes (does not throw) when conversion itself fails', async () => {
+        (mediaConversion.isAvailable as jest.Mock).mockResolvedValue(true);
+        (mediaConversion.convertToVoice as jest.Mock).mockRejectedValue(new Error('ffmpeg exploded'));
+
+        await expect(service.sendAudio('sess-1', webmBase64)).resolves.toEqual(
+          expect.objectContaining({ messageId: 'wa-msg-1' }),
+        );
+        expect(mockEngine.sendAudioMessage).toHaveBeenCalledWith(
+          'test@c.us',
+          expect.objectContaining({ mimetype: 'audio/webm;codecs=opus', data: 'd2VibQ==' }),
+        );
+      });
+
+      it('never calls conversion for a url-sourced audio send (no base64 to convert)', async () => {
+        (mediaConversion.isAvailable as jest.Mock).mockResolvedValue(true);
+
+        await service.sendAudio('sess-1', { chatId: 'test@c.us', url: 'https://example.com/audio.webm' });
+
+        expect(mediaConversion.convertToVoice).not.toHaveBeenCalled();
+      });
     });
   });
 

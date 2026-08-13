@@ -104,6 +104,11 @@
     "messagePlaceholder": "Scrivi un messaggio...",
     "noPermission": "Non hai il permesso di inviare messaggi",
     "send": "Invia",
+    "recordTitle": "Registra messaggio vocale",
+    "cancelRecording": "Annulla registrazione",
+    "stopRecording": "Interrompi registrazione",
+    "recording": "Registrazione in corso...",
+    "voiceMessage": "Messaggio vocale",
     "placeholderTitle": "Inizia a messaggiare",
     "placeholderDesc": "Seleziona una chat attiva dalla barra laterale a sinistra per iniziare a leggere e inviare messaggi WhatsApp.",
     "scrollToBottom": "Vai al più recente",
@@ -157,7 +162,9 @@
       "markRead": "Impossibile contrassegnare la chat come letta",
       "send": "Impossibile inviare il messaggio",
       "react": "Impossibile reagire al messaggio",
-      "delete": "Impossibile eliminare il messaggio"
+      "delete": "Impossibile eliminare il messaggio",
+      "micUnsupported": "La registrazione audio non è supportata in questo browser",
+      "micPermission": "Impossibile accedere al microfono"
     },
     "loadMessagesError": "Impossibile caricare i messaggi. Controlla i log del server."
   },

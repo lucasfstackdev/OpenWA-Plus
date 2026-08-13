@@ -104,6 +104,11 @@
     "messagePlaceholder": "Nachricht eingeben...",
     "noPermission": "Du bist nicht berechtigt, Nachrichten zu senden",
     "send": "Senden",
+    "recordTitle": "Sprachnachricht aufnehmen",
+    "cancelRecording": "Aufnahme abbrechen",
+    "stopRecording": "Aufnahme beenden",
+    "recording": "Aufnahme läuft...",
+    "voiceMessage": "Sprachnachricht",
     "placeholderTitle": "Unterhaltung beginnen",
     "placeholderDesc": "Wähle eine Unterhaltung aus, um sie zu lesen und zu beantworten.",
     "scrollToBottom": "Zur neuesten Nachricht springen",
@@ -157,7 +162,9 @@
       "markRead": "Chat konnte nicht als gelesen markiert werden",
       "send": "Nachricht konnte nicht gesendet werden",
       "react": "Reaktion auf die Nachricht fehlgeschlagen",
-      "delete": "Nachricht konnte nicht gelöscht werden"
+      "delete": "Nachricht konnte nicht gelöscht werden",
+      "micUnsupported": "Audioaufnahme wird in diesem Browser nicht unterstützt",
+      "micPermission": "Zugriff auf das Mikrofon nicht möglich"
     },
     "loadMessagesError": "Nachrichten konnten nicht geladen werden. Prüfe die Serverprotokolle."
   },

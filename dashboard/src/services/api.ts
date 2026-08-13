@@ -321,6 +321,8 @@ export interface SendMediaPayload {
   mimetype?: string;
   filename?: string;
   caption?: string;
+  /** Audio-only: send as a WhatsApp voice note (mic bubble + waveform) instead of a regular audio file. */
+  ptt?: boolean;
 }
 
 // Payloads below mirror the backend DTOs in src/modules/message/dto (raw bodies, no envelope).

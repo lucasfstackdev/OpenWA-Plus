@@ -101,9 +101,14 @@
     "attachTitle": "Enviar arquivo / imagem",
     "emojiTitle": "Escolher emoji",
     "captionPlaceholder": "Adicionar uma legenda...",
-    "messagePlaceholder": "Digite uma mensagem...",
+    "messagePlaceholder": "Digite uma mensagem... Precione Shift+Enter para quebrar linha ou Enter para enviar.",
     "noPermission": "Você não tem permissão para enviar mensagens",
     "send": "Enviar",
+    "recordTitle": "Gravar mensagem de voz",
+    "cancelRecording": "Cancelar gravação",
+    "stopRecording": "Parar gravação",
+    "recording": "Gravando...",
+    "voiceMessage": "Mensagem de voz",
     "placeholderTitle": "Comece a digitar",
     "placeholderDesc": "Selecione um chat ativo na barra lateral esquerda para ler e enviar mensagens do WhatsApp.",
     "scrollToBottom": "Ir para a mais recente",
@@ -157,7 +162,9 @@
       "markRead": "Erro ao marcar o chat como lido",
       "send": "Erro ao enviar a mensagem",
       "react": "Erro ao reagir à mensagem",
-      "delete": "Erro ao excluir a mensagem"
+      "delete": "Erro ao excluir a mensagem",
+      "micUnsupported": "A gravação de áudio não é compatível com este navegador",
+      "micPermission": "Não foi possível acessar o microfone"
     },
     "loadMessagesError": "Não foi possível carregar as mensagens. Verifique os registros do servidor."
   },

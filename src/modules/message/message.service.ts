@@ -23,6 +23,7 @@ import { LidMappingStoreService } from '../../engine/identity/lid-mapping-store.
 import { isUniqueConstraintError } from '../../common/utils/unique-constraint.util';
 import { ChatMediaArchiveService } from '../chat-media/chat-media-archive.service';
 import { StorageService, isMissingObjectError } from '../../common/storage/storage.service';
+import { MediaConversionService } from '../media/media-conversion.service';
 
 export interface GetMessagesOptions {
   chatId?: string;
@@ -49,6 +50,33 @@ const INERT_MEDIA_MIMETYPE =
 /** The declared mimetype when it is safe to echo back, else inert octet-stream. */
 function inertMimetype(mimetype: string): string {
   return INERT_MEDIA_MIMETYPE.test(mimetype) ? mimetype : 'application/octet-stream';
+}
+
+/**
+ * Audio containers WhatsApp Web's own client already knows how to send — notably NOT `audio/webm`,
+ * which is what a browser's `MediaRecorder` produces by default on Chromium/Edge (Firefox can record
+ * straight to Ogg/Opus). Handing whatsapp-web.js a container it does not recognize as audio does not
+ * degrade gracefully: the page-side send throws from inside WhatsApp Web's own (minified) JS, which
+ * surfaces here as an opaque, unhandled `t: t` and a bare 500 to the API caller — for a PTT voice
+ * note AND a plain audio file alike. `sendAudio` below transcodes anything outside this list to
+ * Ogg/Opus first, when ffmpeg-backed conversion is available.
+ */
+const WA_NATIVE_AUDIO_MIME_PREFIXES = [
+  'audio/ogg',
+  'audio/mpeg',
+  'audio/mp3',
+  'audio/mp4',
+  'audio/aac',
+  'audio/amr',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/3gpp',
+];
+
+function isWaNativeAudioMimetype(mimetype: string | undefined): boolean {
+  if (!mimetype) return false;
+  const base = mimetype.split(';', 1)[0].trim().toLowerCase();
+  return WA_NATIVE_AUDIO_MIME_PREFIXES.some(prefix => base.startsWith(prefix));
 }
 
 /**
@@ -90,6 +118,11 @@ export class MessageService {
     private readonly chatMediaArchive?: ChatMediaArchiveService,
     @Optional()
     private readonly storageService?: StorageService,
+    // Optional so existing standalone constructions keep working; absent (or unavailable/disabled)
+    // means sendAudio skips the auto-transcode below and sends whatever bytes it was given, same as
+    // before this existed.
+    @Optional()
+    private readonly mediaConversion?: MediaConversionService,
   ) {}
 
   async sendText(sessionId: string, dto: SendTextMessageDto): Promise<MessageResponseDto> {
@@ -297,8 +330,23 @@ export class MessageService {
     // Voice notes need a real audio codec; default to ogg/opus when the caller omits a mimetype so the
     // wire message and the persisted record agree. Resolved BEFORE buildMediaInput so its base64
     // mimetype guard sees the effective type. buildMediaInput itself stays generic (shared by all media).
-    const audioDto =
-      finalDto.ptt && !finalDto.mimetype ? { ...finalDto, mimetype: 'audio/ogg; codecs=opus' } : finalDto;
+    let audioDto = finalDto.ptt && !finalDto.mimetype ? { ...finalDto, mimetype: 'audio/ogg; codecs=opus' } : finalDto;
+
+    // A base64 upload in a container WhatsApp Web doesn't recognize as audio (typically a browser's
+    // `audio/webm` MediaRecorder output) crashes the page-side send outright rather than degrading —
+    // see isWaNativeAudioMimetype. Re-encode it to Ogg/Opus first, same bytes-in/bytes-out shape
+    // buildMediaInput already expects, so nothing downstream needs to know a conversion happened.
+    if (audioDto.base64 && !isWaNativeAudioMimetype(audioDto.mimetype) && (await this.mediaConversion?.isAvailable())) {
+      try {
+        const converted = await this.mediaConversion!.convertToVoice({ base64: audioDto.base64 });
+        audioDto = { ...audioDto, base64: converted.base64, mimetype: converted.mimetype };
+      } catch (error) {
+        this.logger.warn(
+          `Audio auto-conversion to Ogg/Opus failed, sending original bytes: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
     const media = this.buildMediaInput(audioDto);
     media.ptt = finalDto.ptt;
 

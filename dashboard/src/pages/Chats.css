@@ -610,6 +610,9 @@
   outline: none;
   transition: all 0.2s;
   box-sizing: border-box;
+  field-sizing: content;
+  max-height: 150px;
+  min-height: 45px;
 }
 
 .chats-page .message-text-input:focus {
@@ -649,6 +652,58 @@
   opacity: 0.55;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.chats-page .btn-mic:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--error);
+}
+
+/* Recording bar: replaces the input form while the mic is capturing audio. */
+.chats-page .recording-bar {
+  justify-content: space-between;
+}
+
+.chats-page .btn-cancel-recording:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--error);
+}
+
+.chats-page .recording-indicator {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+}
+
+.chats-page .recording-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--error);
+  animation: chats-recording-pulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.chats-page .recording-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+@keyframes chats-recording-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
 }
 
 /* =============================================================================
@@ -748,6 +803,12 @@
   object-fit: cover;
   border-radius: 6px;
   border: 1px solid var(--border);
+}
+
+.chats-page .preview-audio-player {
+  height: 36px;
+  max-width: 260px;
+  flex: 1;
 }
 
 .chats-page .preview-file-icon {

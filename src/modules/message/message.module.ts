@@ -8,6 +8,7 @@ import { MessageController } from './message.controller';
 import { SessionModule } from '../session/session.module';
 import { TemplateModule } from '../template/template.module';
 import { ChatMediaModule } from '../chat-media/chat-media.module';
+import { MediaModule } from '../media/media.module';
 import { Message } from './entities/message.entity';
 import { Session } from '../session/entities/session.entity';
 import { SendPacingService } from './send-pacing.service';
@@ -19,6 +20,7 @@ import { MessageBatch } from './entities/message-batch.entity';
     SessionModule,
     TemplateModule,
     ChatMediaModule,
+    MediaModule,
   ],
   controllers: [MessageController],
   providers: [
