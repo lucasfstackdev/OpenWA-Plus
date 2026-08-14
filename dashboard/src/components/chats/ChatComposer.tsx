@@ -33,12 +33,12 @@ export interface StagedAttachment {
    */
   recordedAudio?: boolean;
   /**
-   * True for every mic recording, regardless of the container the browser produced (Ogg on Firefox,
-   * WebM elsewhere): `MessageService.sendAudio` transcodes anything non-native to Ogg/Opus
-   * server-side before it reaches the engine, so it is always safe to ask for a real WhatsApp voice
-   * note (PTT — mic bubble + waveform). A non-PTT audio attachment in that same Ogg/Opus container
-   * is known not to play back on iOS, so this must stay `true` for recordings rather than mirror the
-   * source container.
+   * Always `false` for a mic recording. A WhatsApp PTT voice note is only valid as Ogg/Opus — the
+   * app's own protocol requirement — and Ogg/Opus sent from this pipeline is unreliable on iOS
+   * (surfaces there as "audio no longer available", even though the file itself decodes fine).
+   * Recordings go out as a plain audio attachment instead, transcoded server-side to AAC when the
+   * browser recorded WebM, which iOS plays back reliably. Kept as an explicit field (rather than
+   * just omitting it) so a future fix to the PTT path only has to flip this one place.
    */
   ptt?: boolean;
 }
@@ -160,10 +160,9 @@ function ChatComposer({
         reader.onload = event => {
           const dataUrl = event.target?.result as string;
           const base64Data = dataUrl.split(',')[1];
-          // See the `ptt` doc comment on StagedAttachment — the server transcodes any non-native
-          // container to Ogg/Opus before sending, so every mic recording goes out as a real voice
-          // note regardless of what the browser recorded it as.
-          setAttachment({ file, base64: base64Data, mimetype: blobType, filename, recordedAudio: true, ptt: true });
+          // See the `ptt` doc comment on StagedAttachment — recordings are sent as a plain audio
+          // attachment, not a PTT voice note.
+          setAttachment({ file, base64: base64Data, mimetype: blobType, filename, recordedAudio: true, ptt: false });
           setPreviewUrl(URL.createObjectURL(blob));
         };
         reader.readAsDataURL(blob);

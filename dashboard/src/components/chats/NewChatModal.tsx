@@ -14,8 +14,8 @@ interface StagedFile {
   filename: string;
   /** Set when this attachment came from the mic recorder (labels the preview as a voice message). */
   recordedAudio?: boolean;
-  /** True for every mic recording; see the identical doc comment on ChatComposer's StagedAttachment
-   * for why this no longer depends on the recorded container. */
+  /** Always `false` for a mic recording; see the identical doc comment on ChatComposer's
+   * StagedAttachment for why. */
   ptt?: boolean;
 }
 
@@ -159,7 +159,7 @@ function NewChatModal({ sessionId, onClose, onChatCreated }: Props) {
             mimetype: blobType,
             filename,
             recordedAudio: true,
-            ptt: true,
+            ptt: false,
           });
           setPreviewUrl(URL.createObjectURL(blob));
         };

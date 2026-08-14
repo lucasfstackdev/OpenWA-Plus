@@ -114,6 +114,7 @@ describe('MessageService', () => {
     mediaConversion = {
       isAvailable: jest.fn().mockResolvedValue(false),
       convertToVoice: jest.fn(),
+      convertToAudio: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -1082,20 +1083,21 @@ describe('MessageService', () => {
         );
       });
 
-      it('also converts a PLAIN (non-ptt) audio send — the crash is not ptt-specific', async () => {
+      it('converts a PLAIN (non-ptt) audio send to AAC — Ogg/Opus outside the PTT bubble is unreliable on iOS', async () => {
         (mediaConversion.isAvailable as jest.Mock).mockResolvedValue(true);
-        (mediaConversion.convertToVoice as jest.Mock).mockResolvedValue({
-          base64: 'T2dnUw==',
-          mimetype: 'audio/ogg; codecs=opus',
-          bytes: 6,
+        (mediaConversion.convertToAudio as jest.Mock).mockResolvedValue({
+          base64: 'QUFD',
+          mimetype: 'audio/aac',
+          bytes: 3,
         });
 
         await service.sendAudio('sess-1', webmBase64);
 
-        expect(mediaConversion.convertToVoice).toHaveBeenCalledWith({ base64: 'd2VibQ==' });
+        expect(mediaConversion.convertToAudio).toHaveBeenCalledWith({ base64: 'd2VibQ==' });
+        expect(mediaConversion.convertToVoice).not.toHaveBeenCalled();
         expect(mockEngine.sendAudioMessage).toHaveBeenCalledWith(
           'test@c.us',
-          expect.objectContaining({ ptt: undefined, mimetype: 'audio/ogg; codecs=opus', data: 'T2dnUw==' }),
+          expect.objectContaining({ ptt: undefined, mimetype: 'audio/aac', data: 'QUFD' }),
         );
       });
 
@@ -1105,6 +1107,7 @@ describe('MessageService', () => {
         await service.sendAudio('sess-1', { chatId: 'test@c.us', base64: 'SUQz', mimetype: 'audio/mpeg' });
 
         expect(mediaConversion.convertToVoice).not.toHaveBeenCalled();
+        expect(mediaConversion.convertToAudio).not.toHaveBeenCalled();
         expect(mockEngine.sendAudioMessage).toHaveBeenCalledWith(
           'test@c.us',
           expect.objectContaining({ mimetype: 'audio/mpeg', data: 'SUQz' }),
@@ -1117,6 +1120,7 @@ describe('MessageService', () => {
         await service.sendAudio('sess-1', webmBase64);
 
         expect(mediaConversion.convertToVoice).not.toHaveBeenCalled();
+        expect(mediaConversion.convertToAudio).not.toHaveBeenCalled();
         expect(mockEngine.sendAudioMessage).toHaveBeenCalledWith(
           'test@c.us',
           expect.objectContaining({ mimetype: 'audio/webm;codecs=opus', data: 'd2VibQ==' }),
@@ -1125,7 +1129,7 @@ describe('MessageService', () => {
 
       it('falls back to the original bytes (does not throw) when conversion itself fails', async () => {
         (mediaConversion.isAvailable as jest.Mock).mockResolvedValue(true);
-        (mediaConversion.convertToVoice as jest.Mock).mockRejectedValue(new Error('ffmpeg exploded'));
+        (mediaConversion.convertToAudio as jest.Mock).mockRejectedValue(new Error('ffmpeg exploded'));
 
         await expect(service.sendAudio('sess-1', webmBase64)).resolves.toEqual(
           expect.objectContaining({ messageId: 'wa-msg-1' }),
@@ -1142,6 +1146,7 @@ describe('MessageService', () => {
         await service.sendAudio('sess-1', { chatId: 'test@c.us', url: 'https://example.com/audio.webm' });
 
         expect(mediaConversion.convertToVoice).not.toHaveBeenCalled();
+        expect(mediaConversion.convertToAudio).not.toHaveBeenCalled();
       });
     });
   });

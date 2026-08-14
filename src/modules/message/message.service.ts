@@ -404,15 +404,24 @@ export class MessageService {
 
     // A base64 upload in a container WhatsApp Web doesn't recognize as audio (typically a browser's
     // `audio/webm` MediaRecorder output) crashes the page-side send outright rather than degrading —
-    // see isWaNativeAudioMimetype. Re-encode it to Ogg/Opus first, same bytes-in/bytes-out shape
-    // buildMediaInput already expects, so nothing downstream needs to know a conversion happened.
+    // see isWaNativeAudioMimetype. Re-encode it first, same bytes-in/bytes-out shape buildMediaInput
+    // already expects, so nothing downstream needs to know a conversion happened.
+    //
+    // The target codec depends on `ptt`: a PTT bubble is only valid as Ogg/Opus — WhatsApp's own
+    // protocol requirement, not a choice this app makes — while a plain audio attachment goes to AAC
+    // instead, because Ogg/Opus outside the PTT pipeline is exactly the combination that shows up as
+    // "audio no longer available" on iOS. Forcing every conversion through Ogg/Opus regardless of
+    // `ptt` (the previous behaviour) meant a plain audio send from a WebM recording carried a codec
+    // iOS cannot reliably play at all.
     if (audioDto.base64 && !isWaNativeAudioMimetype(audioDto.mimetype) && (await this.mediaConversion?.isAvailable())) {
       try {
-        const converted = await this.mediaConversion!.convertToVoice({ base64: audioDto.base64 });
+        const converted = audioDto.ptt
+          ? await this.mediaConversion!.convertToVoice({ base64: audioDto.base64 })
+          : await this.mediaConversion!.convertToAudio({ base64: audioDto.base64 });
         audioDto = { ...audioDto, base64: converted.base64, mimetype: converted.mimetype };
       } catch (error) {
         this.logger.warn(
-          `Audio auto-conversion to Ogg/Opus failed, sending original bytes: ${error instanceof Error ? error.message : String(error)}`,
+          `Audio auto-conversion failed, sending original bytes: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }

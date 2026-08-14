@@ -59,6 +59,20 @@ export function voiceEncodeArgs(): string[] {
 }
 
 /**
+ * Encoder arguments for a plain (non-PTT) WhatsApp audio attachment.
+ *
+ * AAC in an ADTS stream, not Ogg/Opus: a PTT bubble requires Ogg/Opus (see voiceEncodeArgs), but for
+ * a regular audio attachment WhatsApp accepts either, and only AAC is guaranteed to play back on
+ * iOS. iOS's own media stack has unreliable Ogg/Opus support outside WhatsApp's own PTT decoder, so
+ * a non-voice-note send in Ogg/Opus is exactly the case reported as "audio no longer available" on
+ * iPhone. 128 kbit/s stereo keeps this listenable for music/forwarded-file style attachments, not
+ * just speech.
+ */
+export function audioEncodeArgs(): string[] {
+  return ['-vn', '-c:a', 'aac', '-b:a', '128k'];
+}
+
+/**
  * Encoder arguments for a video WhatsApp will accept and preview.
  *
  * Baseline H.264 with yuv420p is the combination that plays on every WhatsApp client, including the

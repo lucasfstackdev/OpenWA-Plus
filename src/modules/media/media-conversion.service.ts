@@ -5,7 +5,7 @@ import { loadRemoteMediaBuffer } from '../../common/media/load-remote-media';
 import { SsrfBlockedError, SSRF_BLOCKED_CLIENT_MESSAGE } from '../../common/security/ssrf-guard';
 import { ConcurrencyLimiter } from '../../common/utils/concurrency-limiter';
 import { assertBase64WithinMediaCap, stripBase64DataUri } from '../message/media-cap.util';
-import { FfmpegConversionError, probeFfmpeg, runFfmpeg, videoEncodeArgs, voiceEncodeArgs } from './ffmpeg';
+import { FfmpegConversionError, probeFfmpeg, runFfmpeg, audioEncodeArgs, videoEncodeArgs, voiceEncodeArgs } from './ffmpeg';
 import type { ConvertMediaDto } from './dto/convert-media.dto';
 
 /** What a conversion produced, in the same url-or-base64 vocabulary the send endpoints speak. */
@@ -46,6 +46,15 @@ export class MediaConversionService {
    */
   async convertToVoice(dto: ConvertMediaDto): Promise<ConvertedMedia> {
     return this.convert(dto, 'ogg', voiceEncodeArgs(), 'audio/ogg; codecs=opus');
+  }
+
+  /**
+   * Convert to a plain WhatsApp audio attachment: AAC, which (unlike the Ogg/Opus a PTT voice note
+   * requires) plays reliably on iOS. Use this whenever the caller is not asking for the PTT mic
+   * bubble — see the doc comment on `audioEncodeArgs`.
+   */
+  async convertToAudio(dto: ConvertMediaDto): Promise<ConvertedMedia> {
+    return this.convert(dto, 'aac', audioEncodeArgs(), 'audio/aac');
   }
 
   /** Convert to an MP4 WhatsApp will accept and preview on every client. */
