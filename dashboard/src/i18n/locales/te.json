@@ -63,7 +63,8 @@
     "messageTester": "మెసేజ్ టెస్టర్",
     "infrastructure": "ఇన్‌ఫ్రాస్ట్రక్చర్",
     "plugins": "ప్లగిన్స్",
-    "logs": "లాగ్స్"
+    "logs": "లాగ్స్",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -977,5 +978,55 @@
       "current": "ఈ సెషన్"
     },
     "loading": "శోధిస్తోంది…"
+  },
+  "kirvano": {
+    "title": "Kirvano ఇంటిగ్రేషన్",
+    "subtitle": "ప్రతి Kirvano చెక్అవుట్ వెబ్‌హుక్ ఈవెంట్ కోసం పంపే WhatsApp సందేశాన్ని కాన్ఫిగర్ చేయండి.",
+    "noSessions": "Kirvano ఈవెంట్‌లను కాన్ఫిగర్ చేయడానికి ముందుగా సెషన్‌ను సృష్టించండి.",
+    "events": {
+      "ON_ABANDONED_CART": "వదిలేసిన కార్ట్",
+      "ON_PIX_EXPIRED": "Pix గడువు ముగిసింది",
+      "ON_PIX_GENERATED": "Pix జనరేట్ చేయబడింది",
+      "ON_SALE_APPROVED": "అమ్మకం ఆమోదించబడింది"
+    },
+    "templateLabel": "సందేశ మూస",
+    "enabledLabel": "సక్రియం",
+    "editMessage": "సందేశాన్ని సవరించండి",
+    "variablesTitle": "అందుబాటులో ఉన్న వేరియబుల్స్",
+    "variablesDescription": "మూస సందేశంలో ఈ ప్లేస్‌హోల్డర్‌లను ఉపయోగించండి. ఈవెంట్ ప్రేరేపించబడినప్పుడు Kirvano వాటిని నిజమైన డేటాతో భర్తీ చేస్తుంది.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "కస్టమర్ పేరు"
+      },
+      {
+        "token": "total_price",
+        "description": "మొత్తం ఆర్డర్ మొత్తం"
+      },
+      {
+        "token": "products",
+        "description": "కామాలతో వేరు చేయబడిన ఉత్పత్తుల పేర్లు"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Pix QR కోడ్ చిత్రం లింక్"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "కాపీ చేయదగిన Pix కోడ్"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "చెల్లింపు గడువు తేదీ"
+      },
+      {
+        "token": "checkout_url",
+        "description": "ఆన్‌లైన్ కార్ట్ URL"
+      }
+    ],
+    "toasts": {
+      "updated": "ఈవెంట్ నవీకరించబడింది",
+      "updateFailed": "ఈవెంట్‌ను నవీకరించడంలో విఫలమైంది: {{message}}"
+    }
   }
 }

@@ -9,12 +9,15 @@ import {
   pluginsApi,
   pluginInstancesApi,
   statsApi,
+  kirvanoApi,
   type Webhook,
   type WebhookFilters,
   type TemplatePayload,
   type StatsPeriod,
   type CreateInstanceInput,
   type UpdateInstanceInput,
+  type KirvanoEventType,
+  type KirvanoEventUpdatePayload,
 } from '../services/api';
 
 // ── Query Keys ────────────────────────────────────────────────────────
@@ -26,6 +29,7 @@ export const queryKeys = {
   sessionChats: (sessionId: string) => ['sessions', sessionId, 'chats'] as const,
   webhooks: ['webhooks'] as const,
   templates: (sessionId: string) => ['sessions', sessionId, 'templates'] as const,
+  kirvanoEvents: (sessionId: string) => ['sessions', sessionId, 'kirvano', 'events'] as const,
   apiKeys: ['apiKeys'] as const,
   logs: (params: { severity?: string; page: number; limit: number }) => ['logs', params] as const,
   infraStatus: ['infra', 'status'] as const,
@@ -168,6 +172,28 @@ export function useDeleteTemplateMutation() {
     mutationFn: (params: { sessionId: string; id: string }) => templateApi.delete(params.sessionId, params.id),
     onSuccess: (_template, params) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.templates(params.sessionId) });
+    },
+  });
+}
+
+// ── Kirvano Integration Queries ──────────────────────────────────────────────
+
+export function useKirvanoEventsQuery(sessionId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.kirvanoEvents(sessionId),
+    queryFn: () => kirvanoApi.list(sessionId),
+    enabled: enabled && !!sessionId,
+    staleTime: 30_000,
+  });
+}
+
+export function useUpdateKirvanoEventMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { sessionId: string; eventType: KirvanoEventType; data: KirvanoEventUpdatePayload }) =>
+      kirvanoApi.update(params.sessionId, params.eventType, params.data),
+    onSuccess: (_config, params) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.kirvanoEvents(params.sessionId) });
     },
   });
 }

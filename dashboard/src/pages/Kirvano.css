@@ -1,0 +1,289 @@
+.kirvano-page {
+  width: 100%;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+.kirvano-page.kirvano-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.kirvano-page .kirvano-session-select {
+  min-width: 240px;
+}
+
+.kirvano-page .kirvano-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.kirvano-page .kirvano-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.kirvano-page .kirvano-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.kirvano-page .kirvano-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1.25rem 1.25rem 1rem;
+}
+
+.kirvano-page .kirvano-card-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.kirvano-page .kirvano-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.kirvano-page .kirvano-card-info h3 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kirvano-page .kirvano-card-toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.kirvano-page .kirvano-card-toggle span {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.kirvano-page .kirvano-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1.25rem 1.25rem;
+}
+
+.kirvano-page .kirvano-card-preview {
+  overflow: hidden;
+  margin: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-light);
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.kirvano-page .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.kirvano-page .form-group label {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.kirvano-page .form-group select {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-light);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.kirvano-page .form-group select:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--bg-white);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.kirvano-page .kirvano-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+/* Toggle switch — same visual language as Plugins/Webhooks, scoped to this page. */
+.kirvano-page .toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.kirvano-page .toggle-switch input {
+  width: 0;
+  height: 0;
+  opacity: 0;
+}
+
+.kirvano-page .toggle-slider {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 24px;
+  background-color: var(--border);
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.kirvano-page .toggle-slider:before {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  content: '';
+  transition: 0.3s;
+}
+
+.kirvano-page .toggle-switch input:checked + .toggle-slider {
+  background-color: var(--primary);
+}
+
+.kirvano-page .toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+.kirvano-page .toggle-switch input:disabled + .toggle-slider {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.kirvano-page .kirvano-variables {
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-white);
+}
+
+.kirvano-page .kirvano-variables h2 {
+  margin: 0 0 0.375rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.kirvano-page .kirvano-variables > p {
+  margin: 0 0 1.25rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.kirvano-page .kirvano-variables-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem 1.5rem;
+}
+
+.kirvano-page .kirvano-variable-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.kirvano-page .kirvano-variable-row code {
+  flex-shrink: 0;
+  color: var(--primary);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.8125rem;
+}
+
+.kirvano-page .kirvano-variable-row span {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+.kirvano-page .kirvano-loading-inline,
+.kirvano-page .kirvano-empty-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.kirvano-page .kirvano-empty-page {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.kirvano-page .kirvano-empty-page p {
+  max-width: 340px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 900px) {
+  .kirvano-page {
+    padding: 1rem;
+  }
+
+  .kirvano-page .kirvano-session-select {
+    width: 100%;
+    min-width: 0;
+  }
+}

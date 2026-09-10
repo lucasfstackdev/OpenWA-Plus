@@ -63,7 +63,8 @@
     "messageTester": "Mesaj Test Aracı",
     "infrastructure": "Altyapı",
     "plugins": "Eklentiler",
-    "logs": "Kayıtlar (Logs)"
+    "logs": "Kayıtlar (Logs)",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -953,5 +954,55 @@
       "current": "Bu oturum"
     },
     "loading": "Aranıyor…"
+  },
+  "kirvano": {
+    "title": "Kirvano Entegrasyonu",
+    "subtitle": "Her Kirvano ödeme webhook olayı için gönderilecek WhatsApp mesajını yapılandırın.",
+    "noSessions": "Kirvano olaylarını yapılandırmak için önce bir oturum oluşturun.",
+    "events": {
+      "ON_ABANDONED_CART": "Terk Edilmiş Sepet",
+      "ON_PIX_EXPIRED": "Pix Süresi Doldu",
+      "ON_PIX_GENERATED": "Pix Oluşturuldu",
+      "ON_SALE_APPROVED": "Satış Onaylandı"
+    },
+    "templateLabel": "Mesaj şablonu",
+    "enabledLabel": "Aktif",
+    "editMessage": "Mesajı düzenle",
+    "variablesTitle": "Kullanılabilir değişkenler",
+    "variablesDescription": "Bu yer tutucuları bir şablonun mesajı içinde kullanın. Olay tetiklendiğinde Kirvano bunları gerçek verilerle değiştirir.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "Müşterinin adı"
+      },
+      {
+        "token": "total_price",
+        "description": "Siparişin toplam tutarı"
+      },
+      {
+        "token": "products",
+        "description": "Virgülle ayrılmış ürün adları"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Pix QR Kodu görsel bağlantısı"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "Kopyalanabilir Pix kodu"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "Ödemenin son geçerlilik tarihi"
+      },
+      {
+        "token": "checkout_url",
+        "description": "Çevrimiçi sepet URL'si"
+      }
+    ],
+    "toasts": {
+      "updated": "Olay güncellendi",
+      "updateFailed": "Olay güncellenemedi: {{message}}"
+    }
   }
 }

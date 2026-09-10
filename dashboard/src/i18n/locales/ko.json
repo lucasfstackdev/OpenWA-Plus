@@ -63,7 +63,8 @@
     "messageTester": "메시지 테스터",
     "infrastructure": "인프라",
     "plugins": "플러그인",
-    "logs": "로그"
+    "logs": "로그",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -977,5 +978,55 @@
       "current": "현재 세션"
     },
     "loading": "검색하는 중…"
+  },
+  "kirvano": {
+    "title": "Kirvano 연동",
+    "subtitle": "각 Kirvano 결제 웹훅 이벤트에 대해 전송할 WhatsApp 메시지를 구성하세요.",
+    "noSessions": "Kirvano 이벤트를 구성하려면 먼저 세션을 생성하세요.",
+    "events": {
+      "ON_ABANDONED_CART": "장바구니 이탈",
+      "ON_PIX_EXPIRED": "Pix 만료됨",
+      "ON_PIX_GENERATED": "Pix 생성됨",
+      "ON_SALE_APPROVED": "판매 승인됨"
+    },
+    "templateLabel": "메시지 템플릿",
+    "enabledLabel": "활성",
+    "editMessage": "메시지 편집",
+    "variablesTitle": "사용 가능한 변수",
+    "variablesDescription": "템플릿 메시지 안에서 이 플레이스홀더를 사용하세요. 이벤트가 발생하면 Kirvano가 실제 데이터로 대체합니다.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "고객 이름"
+      },
+      {
+        "token": "total_price",
+        "description": "주문 총액"
+      },
+      {
+        "token": "products",
+        "description": "쉼표로 구분된 상품 이름"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Pix QR 코드 이미지 링크"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "복사용 Pix 코드"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "결제 만료 날짜"
+      },
+      {
+        "token": "checkout_url",
+        "description": "온라인 장바구니 URL"
+      }
+    ],
+    "toasts": {
+      "updated": "이벤트가 업데이트되었습니다",
+      "updateFailed": "이벤트 업데이트 실패: {{message}}"
+    }
   }
 }

@@ -63,7 +63,8 @@
     "messageTester": "בדיקת הודעות",
     "infrastructure": "תשתית",
     "plugins": "תוספים",
-    "logs": "לוגים"
+    "logs": "לוגים",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -986,5 +987,55 @@
       "current": "הפעלה זו"
     },
     "loading": "מחפש…"
+  },
+  "kirvano": {
+    "title": "אינטגרציית Kirvano",
+    "subtitle": "הגדירו את הודעת הוואטסאפ שנשלחת עבור כל אירוע webhook של תשלום ב-Kirvano.",
+    "noSessions": "צרו תחילה session כדי להגדיר את אירועי Kirvano.",
+    "events": {
+      "ON_ABANDONED_CART": "עגלה נטושה",
+      "ON_PIX_EXPIRED": "Pix פג תוקף",
+      "ON_PIX_GENERATED": "Pix נוצר",
+      "ON_SALE_APPROVED": "מכירה אושרה"
+    },
+    "templateLabel": "תבנית הודעה",
+    "enabledLabel": "פעיל",
+    "editMessage": "עריכת הודעה",
+    "variablesTitle": "משתנים זמינים",
+    "variablesDescription": "השתמשו בפלייסהולדרים האלה בתוך הודעת התבנית. Kirvano מחליף אותם בנתונים אמיתיים כאשר האירוע מופעל.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "שם הלקוח"
+      },
+      {
+        "token": "total_price",
+        "description": "סכום ההזמנה הכולל"
+      },
+      {
+        "token": "products",
+        "description": "שמות המוצרים, מופרדים בפסיקים"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "קישור לתמונת קוד ה-QR של Pix"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "קוד Pix להעתקה"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "תאריך תפוגת התשלום"
+      },
+      {
+        "token": "checkout_url",
+        "description": "כתובת URL של העגלה המקוונת"
+      }
+    ],
+    "toasts": {
+      "updated": "האירוע עודכן",
+      "updateFailed": "עדכון האירוע נכשל: {{message}}"
+    }
   }
 }

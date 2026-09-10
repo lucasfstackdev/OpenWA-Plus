@@ -63,7 +63,8 @@
     "messageTester": "Nachrichtentester",
     "infrastructure": "Infrastruktur",
     "plugins": "Plugins",
-    "logs": "Protokolle"
+    "logs": "Protokolle",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -977,5 +978,55 @@
       "current": "Diese Sitzung"
     },
     "loading": "Suche läuft…"
+  },
+  "kirvano": {
+    "title": "Kirvano-Integration",
+    "subtitle": "Konfigurieren Sie die WhatsApp-Nachricht, die für jedes Kirvano-Checkout-Webhook-Ereignis gesendet wird.",
+    "noSessions": "Erstellen Sie zuerst eine Sitzung, um Kirvano-Ereignisse zu konfigurieren.",
+    "events": {
+      "ON_ABANDONED_CART": "Abgebrochener Warenkorb",
+      "ON_PIX_EXPIRED": "Pix Abgelaufen",
+      "ON_PIX_GENERATED": "Pix Erstellt",
+      "ON_SALE_APPROVED": "Verkauf Genehmigt"
+    },
+    "templateLabel": "Nachrichtenvorlage",
+    "enabledLabel": "Aktiv",
+    "editMessage": "Nachricht bearbeiten",
+    "variablesTitle": "Verfügbare Variablen",
+    "variablesDescription": "Verwenden Sie diese Platzhalter in der Nachricht einer Vorlage. Kirvano ersetzt sie beim Auslösen des Ereignisses durch echte Daten.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "Name des Kunden"
+      },
+      {
+        "token": "total_price",
+        "description": "Gesamtbetrag der Bestellung"
+      },
+      {
+        "token": "products",
+        "description": "Produktnamen, durch Kommas getrennt"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Link zum Pix-QR-Code-Bild"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "Pix-Code zum Kopieren"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "Ablaufdatum der Zahlung"
+      },
+      {
+        "token": "checkout_url",
+        "description": "URL des Online-Warenkorbs"
+      }
+    ],
+    "toasts": {
+      "updated": "Ereignis aktualisiert",
+      "updateFailed": "Ereignis konnte nicht aktualisiert werden: {{message}}"
+    }
   }
 }

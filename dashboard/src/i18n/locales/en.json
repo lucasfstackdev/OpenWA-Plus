@@ -63,7 +63,8 @@
     "messageTester": "Message Tester",
     "infrastructure": "Infrastructure",
     "plugins": "Plugins",
-    "logs": "Logs"
+    "logs": "Logs",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -977,5 +978,55 @@
       "current": "This session"
     },
     "loading": "Searching…"
+  },
+  "kirvano": {
+    "title": "Kirvano Integration",
+    "subtitle": "Configure the WhatsApp message sent for each Kirvano checkout webhook event.",
+    "noSessions": "Create a session first to configure Kirvano events.",
+    "events": {
+      "ON_ABANDONED_CART": "Abandoned Cart",
+      "ON_PIX_EXPIRED": "Pix Expired",
+      "ON_PIX_GENERATED": "Pix Generated",
+      "ON_SALE_APPROVED": "Sale Approved"
+    },
+    "templateLabel": "Message template",
+    "enabledLabel": "Active",
+    "editMessage": "Edit message",
+    "variablesTitle": "Available variables",
+    "variablesDescription": "Use these placeholders inside a template's message. Kirvano replaces them with real data when the event fires.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "Customer's name"
+      },
+      {
+        "token": "total_price",
+        "description": "Total order amount"
+      },
+      {
+        "token": "products",
+        "description": "Product names, separated by commas"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Pix QR Code image link"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "Pix copy-and-paste code"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "Payment expiration date"
+      },
+      {
+        "token": "checkout_url",
+        "description": "Online checkout URL"
+      }
+    ],
+    "toasts": {
+      "updated": "Event updated",
+      "updateFailed": "Failed to update event: {{message}}"
+    }
   }
 }

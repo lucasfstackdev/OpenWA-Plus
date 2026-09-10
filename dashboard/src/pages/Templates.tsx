@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Check, Copy, FileText, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
 import { type MessageTemplate, type TemplatePayload } from '../services/api';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -56,7 +57,11 @@ export function Templates() {
   useDocumentTitle(t('templates.title'));
   const { canWrite } = useRole();
   const { data: sessions = [], isLoading: loadingSessions } = useSessionsQuery();
-  const [selectedSessionId, setSelectedSessionId] = useState('');
+  // Deep-linked from /kirvano ("Edit message"): ?session=<id>&template=<id> preselects the session
+  // and opens that template's editor once its templates have loaded (see effect below).
+  const [searchParams] = useSearchParams();
+  const [selectedSessionId, setSelectedSessionId] = useState(() => searchParams.get('session') || '');
+  const deepLinkAppliedRef = useRef(false);
   const [form, setForm] = useState<TemplateForm>(emptyForm);
   const [editingTemplate, setEditingTemplate] = useState<MessageTemplate | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MessageTemplate | null>(null);
@@ -124,6 +129,15 @@ export function Templates() {
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  useEffect(() => {
+    if (deepLinkAppliedRef.current) return;
+    const templateId = searchParams.get('template');
+    if (!templateId || templates.length === 0) return;
+    const match = templates.find(template => template.id === templateId);
+    if (match) openEdit(match);
+    deepLinkAppliedRef.current = true;
+  }, [templates, searchParams]);
 
   const handleSave = async () => {
     if (!selectedSessionId || !form.name.trim() || !form.body.trim()) return;

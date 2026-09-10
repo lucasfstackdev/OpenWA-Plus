@@ -849,6 +849,36 @@ export const templateApi = {
 };
 
 // =============================================================================
+// Kirvano Integration API
+// =============================================================================
+
+export type KirvanoEventType = 'ON_ABANDONED_CART' | 'ON_PIX_EXPIRED' | 'ON_PIX_GENERATED' | 'ON_SALE_APPROVED';
+
+export interface KirvanoEventConfig {
+  id: string;
+  sessionId: string;
+  eventType: KirvanoEventType;
+  templateId: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KirvanoEventUpdatePayload {
+  templateId?: string;
+  enabled?: boolean;
+}
+
+export const kirvanoApi = {
+  list: (sessionId: string) => request<KirvanoEventConfig[]>(`/sessions/${sessionId}/kirvano/events`),
+  update: (sessionId: string, eventType: KirvanoEventType, data: KirvanoEventUpdatePayload) =>
+    request<KirvanoEventConfig>(`/sessions/${sessionId}/kirvano/events/${eventType}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+};
+
+// =============================================================================
 // Contact API
 // =============================================================================
 

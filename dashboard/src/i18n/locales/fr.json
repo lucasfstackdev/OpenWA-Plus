@@ -63,7 +63,8 @@
     "messageTester": "Testeur de messages",
     "infrastructure": "Infrastructure",
     "plugins": "Plugins",
-    "logs": "Journaux"
+    "logs": "Journaux",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -977,5 +978,55 @@
       "current": "Cette session"
     },
     "loading": "Recherche…"
+  },
+  "kirvano": {
+    "title": "Intégration Kirvano",
+    "subtitle": "Configurez le message WhatsApp envoyé pour chaque événement du webhook de paiement Kirvano.",
+    "noSessions": "Créez d'abord une session pour configurer les événements Kirvano.",
+    "events": {
+      "ON_ABANDONED_CART": "Panier Abandonné",
+      "ON_PIX_EXPIRED": "Pix Expiré",
+      "ON_PIX_GENERATED": "Pix Généré",
+      "ON_SALE_APPROVED": "Vente Approuvée"
+    },
+    "templateLabel": "Modèle de message",
+    "enabledLabel": "Actif",
+    "editMessage": "Modifier le message",
+    "variablesTitle": "Variables disponibles",
+    "variablesDescription": "Utilisez ces variables dans le message d'un modèle. Kirvano les remplace par les données réelles lorsque l'événement se déclenche.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "Nom du client"
+      },
+      {
+        "token": "total_price",
+        "description": "Montant total de l'achat"
+      },
+      {
+        "token": "products",
+        "description": "Noms des produits, séparés par des virgules"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Lien de l'image du QR Code Pix"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "Code Pix à copier-coller"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "Date d'expiration du paiement"
+      },
+      {
+        "token": "checkout_url",
+        "description": "URL du panier en ligne"
+      }
+    ],
+    "toasts": {
+      "updated": "Événement mis à jour",
+      "updateFailed": "Échec de la mise à jour de l'événement : {{message}}"
+    }
   }
 }

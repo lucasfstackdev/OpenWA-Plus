@@ -63,7 +63,8 @@
     "messageTester": "訊息測試器",
     "infrastructure": "基礎架構",
     "plugins": "外掛",
-    "logs": "記錄"
+    "logs": "記錄",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -977,5 +978,55 @@
       "current": "目前工作階段"
     },
     "loading": "搜尋中…"
+  },
+  "kirvano": {
+    "title": "Kirvano 整合",
+    "subtitle": "為每個 Kirvano 結賬 Webhook 事件配置要發送的 WhatsApp 訊息。",
+    "noSessions": "請先建立一個工作階段以配置 Kirvano 事件。",
+    "events": {
+      "ON_ABANDONED_CART": "購物車放棄",
+      "ON_PIX_EXPIRED": "Pix已過期",
+      "ON_PIX_GENERATED": "Pix已生成",
+      "ON_SALE_APPROVED": "銷售已批准"
+    },
+    "templateLabel": "訊息範本",
+    "enabledLabel": "啟用",
+    "editMessage": "編輯訊息",
+    "variablesTitle": "可用變數",
+    "variablesDescription": "在範本訊息中使用這些佔位符。事件觸發時,Kirvano 會將其替換為真實資料。",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "客戶姓名"
+      },
+      {
+        "token": "total_price",
+        "description": "訂單總金額"
+      },
+      {
+        "token": "products",
+        "description": "產品名稱,以逗號分隔"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Pix 二維碼圖片連結"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "可複製貼上的 Pix 代碼"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "付款到期日期"
+      },
+      {
+        "token": "checkout_url",
+        "description": "線上購物車網址"
+      }
+    ],
+    "toasts": {
+      "updated": "事件已更新",
+      "updateFailed": "更新事件失敗:{{message}}"
+    }
   }
 }

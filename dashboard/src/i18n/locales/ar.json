@@ -63,7 +63,8 @@
     "messageTester": "اختبار الرسائل",
     "infrastructure": "البنية التحتية",
     "plugins": "الإضافات",
-    "logs": "السجلات"
+    "logs": "السجلات",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -992,5 +993,55 @@
       "current": "هذه الجلسة"
     },
     "loading": "جارٍ البحث…"
+  },
+  "kirvano": {
+    "title": "تكامل Kirvano",
+    "subtitle": "قم بتهيئة رسالة واتساب التي يتم إرسالها لكل حدث من أحداث ويب هوك الدفع في Kirvano.",
+    "noSessions": "أنشئ جلسة أولاً لتهيئة أحداث Kirvano.",
+    "events": {
+      "ON_ABANDONED_CART": "سلة متروكة",
+      "ON_PIX_EXPIRED": "انتهاء صلاحية Pix",
+      "ON_PIX_GENERATED": "إنشاء Pix",
+      "ON_SALE_APPROVED": "تم اعتماد البيع"
+    },
+    "templateLabel": "قالب الرسالة",
+    "enabledLabel": "نشط",
+    "editMessage": "تعديل الرسالة",
+    "variablesTitle": "المتغيرات المتاحة",
+    "variablesDescription": "استخدم هذه العناصر النائبة داخل رسالة القالب. يستبدلها Kirvano بالبيانات الفعلية عند تشغيل الحدث.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "اسم العميل"
+      },
+      {
+        "token": "total_price",
+        "description": "إجمالي مبلغ الطلب"
+      },
+      {
+        "token": "products",
+        "description": "أسماء المنتجات مفصولة بفواصل"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "رابط صورة رمز QR الخاص بـ Pix"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "كود Pix للنسخ واللصق"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "تاريخ انتهاء صلاحية الدفع"
+      },
+      {
+        "token": "checkout_url",
+        "description": "رابط سلة التسوق عبر الإنترنت"
+      }
+    ],
+    "toasts": {
+      "updated": "تم تحديث الحدث",
+      "updateFailed": "فشل تحديث الحدث: {{message}}"
+    }
   }
 }
