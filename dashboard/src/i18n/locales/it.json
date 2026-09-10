@@ -1026,7 +1026,44 @@
     ],
     "toasts": {
       "updated": "Evento aggiornato",
-      "updateFailed": "Impossibile aggiornare l'evento: {{message}}"
+      "updateFailed": "Impossibile aggiornare l'evento: {{message}}",
+      "tokenRegenerated": "Token rigenerato",
+      "regenerateFailed": "Impossibile rigenerare il token: {{message}}"
+    },
+    "connectionTitle": "Connessione webhook",
+    "connectionDescription": "Configura questo URL e questo token come webhook nel tuo account Kirvano affinché gli eventi arrivino qui.",
+    "urlLabel": "URL di integrazione",
+    "tokenLabel": "Token (header X-Kirvano-Token)",
+    "copy": "Copia",
+    "regenerateToken": "Rigenera token",
+    "regenerateConfirm": "Rigenerare invalida immediatamente il token attuale — dovrai aggiornarlo anche nella configurazione del webhook su Kirvano. Continuare?",
+    "variablesTable": {
+      "variable": "Variabile",
+      "description": "Descrizione"
+    },
+    "testMessage": {
+      "button": "Testa messaggio",
+      "title": "Testa messaggio",
+      "subtitle": "Compila le variabili qui sotto, controlla l'anteprima e invia un vero messaggio di prova a un numero WhatsApp.",
+      "phoneLabel": "Numero di telefono",
+      "phoneHint": "Includi il prefisso internazionale, es.: 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "Variabili",
+      "previewTitle": "Anteprima",
+      "previewEmpty": "Compila le variabili per vedere l'anteprima",
+      "submit": "Invia prova",
+      "cancel": "Annulla",
+      "errors": {
+        "required": "Questo campo è obbligatorio",
+        "invalidUrl": "Inserisci un URL valido",
+        "invalidEmail": "Inserisci un indirizzo email valido",
+        "invalidNumber": "Inserisci un numero valido"
+      },
+      "toasts": {
+        "numberNotFound": "Questo numero non è su WhatsApp",
+        "sent": "Messaggio di prova inviato",
+        "sendFailed": "Impossibile inviare il messaggio di prova: {{message}}"
+      }
     }
   }
 }

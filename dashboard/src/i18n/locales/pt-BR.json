@@ -1026,7 +1026,44 @@
     ],
     "toasts": {
       "updated": "Evento atualizado",
-      "updateFailed": "Falha ao atualizar evento: {{message}}"
+      "updateFailed": "Falha ao atualizar evento: {{message}}",
+      "tokenRegenerated": "Token regenerado",
+      "regenerateFailed": "Falha ao regenerar o token: {{message}}"
+    },
+    "connectionTitle": "Conexão do webhook",
+    "connectionDescription": "Configure essa URL e esse token como um webhook na sua conta Kirvano para que os eventos cheguem aqui.",
+    "urlLabel": "URL de integração",
+    "tokenLabel": "Token (header X-Kirvano-Token)",
+    "copy": "Copiar",
+    "regenerateToken": "Regenerar token",
+    "regenerateConfirm": "Regenerar invalida o token atual imediatamente — você também vai precisar atualizá-lo na configuração do webhook na Kirvano. Continuar?",
+    "variablesTable": {
+      "variable": "Variável",
+      "description": "Descrição"
+    },
+    "testMessage": {
+      "button": "Testar mensagem",
+      "title": "Testar mensagem",
+      "subtitle": "Preencha as variáveis abaixo, confira a prévia e envie uma mensagem de teste real para um número do WhatsApp.",
+      "phoneLabel": "Número de telefone",
+      "phoneHint": "Inclua o código do país, ex.: 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "Variáveis",
+      "previewTitle": "Prévia",
+      "previewEmpty": "Preencha as variáveis para ver a prévia",
+      "submit": "Enviar teste",
+      "cancel": "Cancelar",
+      "errors": {
+        "required": "Este campo é obrigatório",
+        "invalidUrl": "Informe uma URL válida",
+        "invalidEmail": "Informe um e-mail válido",
+        "invalidNumber": "Informe um número válido"
+      },
+      "toasts": {
+        "numberNotFound": "Esse número não está no WhatsApp",
+        "sent": "Mensagem de teste enviada",
+        "sendFailed": "Falha ao enviar mensagem de teste: {{message}}"
+      }
     }
   }
 }

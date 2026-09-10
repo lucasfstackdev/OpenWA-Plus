@@ -102,6 +102,7 @@ describe('PUBLIC_PATHS drift guard', () => {
     'src/modules/health/health.controller.ts',
     'src/modules/infra/infra-status.controller.ts',
     'src/modules/integration/ingress.controller.ts',
+    'src/modules/kirvano/kirvano-receiver.controller.ts',
     'src/modules/metrics/metrics.controller.ts',
   ];
 
@@ -141,6 +142,7 @@ describe('PUBLIC_PATHS drift guard', () => {
         '/api/health/ready',
         '/api/infra/health',
         '/api/ingress/{pluginId}/{instanceId}/{path}',
+        '/api/sessions/{sessionId}/kirvano/receiver',
       ].sort(),
     );
   });

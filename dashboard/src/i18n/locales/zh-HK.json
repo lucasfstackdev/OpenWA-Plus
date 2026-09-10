@@ -1026,7 +1026,44 @@
     ],
     "toasts": {
       "updated": "事件已更新",
-      "updateFailed": "更新事件失敗:{{message}}"
+      "updateFailed": "更新事件失敗:{{message}}",
+      "tokenRegenerated": "權杖已重新產生",
+      "regenerateFailed": "重新產生權杖失敗:{{message}}"
+    },
+    "connectionTitle": "Webhook 連接",
+    "connectionDescription": "在您的 Kirvano 帳戶中將此網址和權杖配置為 Webhook,以便事件傳送到這裡。",
+    "urlLabel": "整合網址",
+    "tokenLabel": "權杖(X-Kirvano-Token 標頭)",
+    "copy": "複製",
+    "regenerateToken": "重新產生權杖",
+    "regenerateConfirm": "重新產生會立即使目前的權杖失效 — 您還需要在 Kirvano 的 Webhook 設定中更新它。是否繼續?",
+    "variablesTable": {
+      "variable": "變數",
+      "description": "說明"
+    },
+    "testMessage": {
+      "button": "測試訊息",
+      "title": "測試訊息",
+      "subtitle": "填寫下方變數,查看預覽,然後向一個 WhatsApp 號碼發送真實的測試訊息。",
+      "phoneLabel": "電話號碼",
+      "phoneHint": "請包含國家代碼,例如:55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "變數",
+      "previewTitle": "預覽",
+      "previewEmpty": "填寫變數以查看預覽",
+      "submit": "傳送測試",
+      "cancel": "取消",
+      "errors": {
+        "required": "此欄位為必填",
+        "invalidUrl": "請輸入有效的網址",
+        "invalidEmail": "請輸入有效的電郵地址",
+        "invalidNumber": "請輸入有效的數字"
+      },
+      "toasts": {
+        "numberNotFound": "此號碼未註冊 WhatsApp",
+        "sent": "測試訊息已傳送",
+        "sendFailed": "傳送測試訊息失敗:{{message}}"
+      }
     }
   }
 }

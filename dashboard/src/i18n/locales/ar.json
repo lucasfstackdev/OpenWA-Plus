@@ -1041,7 +1041,44 @@
     ],
     "toasts": {
       "updated": "تم تحديث الحدث",
-      "updateFailed": "فشل تحديث الحدث: {{message}}"
+      "updateFailed": "فشل تحديث الحدث: {{message}}",
+      "tokenRegenerated": "تمت إعادة إنشاء الرمز",
+      "regenerateFailed": "فشلت إعادة إنشاء الرمز: {{message}}"
+    },
+    "connectionTitle": "اتصال الويب هوك",
+    "connectionDescription": "قم بتهيئة هذا الرابط وهذا الرمز كويب هوك في حساب Kirvano الخاص بك لكي تصل الأحداث إلى هنا.",
+    "urlLabel": "رابط التكامل",
+    "tokenLabel": "الرمز (ترويسة X-Kirvano-Token)",
+    "copy": "نسخ",
+    "regenerateToken": "إعادة إنشاء الرمز",
+    "regenerateConfirm": "تؤدي إعادة الإنشاء إلى إبطال الرمز الحالي فورًا — ستحتاج أيضًا إلى تحديثه في إعدادات الويب هوك في Kirvano. المتابعة؟",
+    "variablesTable": {
+      "variable": "المتغير",
+      "description": "الوصف"
+    },
+    "testMessage": {
+      "button": "اختبار الرسالة",
+      "title": "اختبار الرسالة",
+      "subtitle": "املأ المتغيرات أدناه، راجع المعاينة، وأرسل رسالة اختبار حقيقية إلى رقم واتساب.",
+      "phoneLabel": "رقم الهاتف",
+      "phoneHint": "أدرج رمز البلد، مثال: 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "المتغيرات",
+      "previewTitle": "معاينة",
+      "previewEmpty": "املأ المتغيرات لعرض المعاينة",
+      "submit": "إرسال الاختبار",
+      "cancel": "إلغاء",
+      "errors": {
+        "required": "هذا الحقل مطلوب",
+        "invalidUrl": "أدخل رابطًا صالحًا",
+        "invalidEmail": "أدخل بريدًا إلكترونيًا صالحًا",
+        "invalidNumber": "أدخل رقمًا صالحًا"
+      },
+      "toasts": {
+        "numberNotFound": "هذا الرقم غير مسجل في واتساب",
+        "sent": "تم إرسال رسالة الاختبار",
+        "sendFailed": "فشل إرسال رسالة الاختبار: {{message}}"
+      }
     }
   }
 }

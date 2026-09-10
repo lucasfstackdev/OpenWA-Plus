@@ -869,6 +869,10 @@ export interface KirvanoEventUpdatePayload {
   enabled?: boolean;
 }
 
+export interface KirvanoTokenView {
+  token: string;
+}
+
 export const kirvanoApi = {
   list: (sessionId: string) => request<KirvanoEventConfig[]>(`/sessions/${sessionId}/kirvano/events`),
   update: (sessionId: string, eventType: KirvanoEventType, data: KirvanoEventUpdatePayload) =>
@@ -876,6 +880,9 @@ export const kirvanoApi = {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
+  getToken: (sessionId: string) => request<KirvanoTokenView>(`/sessions/${sessionId}/kirvano/token`),
+  regenerateToken: (sessionId: string) =>
+    request<KirvanoTokenView>(`/sessions/${sessionId}/kirvano/token/regenerate`, { method: 'POST' }),
 };
 
 // =============================================================================

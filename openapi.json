@@ -3656,6 +3656,140 @@
         ]
       }
     },
+    "/api/sessions/{sessionId}/media/convert": {
+      "get": {
+        "operationId": "MediaController_conversionStatus",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "description": "Session ID the API key must be authorized for",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reports whether conversion is switched on AND the ffmpeg binary can be run, so a client can decide between converting here and converting before it sends.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversionStatusResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Whether server-side media conversion is available",
+        "tags": [
+          "media"
+        ]
+      }
+    },
+    "/api/sessions/{sessionId}/media/convert/voice": {
+      "post": {
+        "operationId": "MediaController_convertVoice",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "description": "Session ID the API key must be authorized for",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertMediaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Converted bytes, ready to post to send-audio with ptt=true. WhatsApp only renders a playable mic bubble for Ogg/Opus; other formats arrive as an audio file that will not play.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertedMediaResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither url nor base64 given, or ffmpeg refused the input."
+          },
+          "413": {
+            "description": "The supplied media is above the media size cap."
+          },
+          "503": {
+            "description": "Conversion is disabled, the ffmpeg binary is not runnable, or the conversion queue is saturated — retry shortly."
+          }
+        },
+        "summary": "Convert audio into a WhatsApp voice note (Ogg/Opus)",
+        "tags": [
+          "media"
+        ]
+      }
+    },
+    "/api/sessions/{sessionId}/media/convert/video": {
+      "post": {
+        "operationId": "MediaController_convertVideo",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "description": "Session ID the API key must be authorized for",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConvertMediaDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Converted bytes: baseline H.264 with AAC audio, long edge bounded at 1280, index moved to the front so the recipient can start playing before the whole file arrives.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConvertedMediaResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Neither url nor base64 given, or ffmpeg refused the input."
+          },
+          "413": {
+            "description": "The supplied media is above the media size cap."
+          },
+          "503": {
+            "description": "Conversion is disabled, the ffmpeg binary is not runnable, or the conversion queue is saturated — retry shortly."
+          }
+        },
+        "summary": "Convert video into a WhatsApp-compatible MP4",
+        "tags": [
+          "media"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -7566,15 +7700,15 @@
         ]
       }
     },
-    "/api/sessions/{sessionId}/media/convert": {
+    "/api/sessions/{sessionId}/kirvano/events": {
       "get": {
-        "operationId": "MediaController_conversionStatus",
+        "operationId": "KirvanoController_list",
         "parameters": [
           {
             "name": "sessionId",
             "required": true,
             "in": "path",
-            "description": "Session ID the API key must be authorized for",
+            "description": "Session ID",
             "schema": {
               "type": "string"
             }
@@ -7582,31 +7716,43 @@
         ],
         "responses": {
           "200": {
-            "description": "Reports whether conversion is switched on AND the ffmpeg binary can be run, so a client can decide between converting here and converting before it sends.",
+            "description": "The 4 Kirvano events.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConversionStatusResponseDto"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KirvanoEventConfigResponseDto"
+                  }
                 }
               }
             }
           }
         },
-        "summary": "Whether server-side media conversion is available",
+        "summary": "List the session's Kirvano event configs (seeding defaults on first call)",
         "tags": [
-          "media"
+          "kirvano"
         ]
       }
     },
-    "/api/sessions/{sessionId}/media/convert/voice": {
-      "post": {
-        "operationId": "MediaController_convertVoice",
+    "/api/sessions/{sessionId}/kirvano/events/{eventType}": {
+      "put": {
+        "operationId": "KirvanoController_update",
         "parameters": [
           {
             "name": "sessionId",
             "required": true,
             "in": "path",
-            "description": "Session ID the API key must be authorized for",
+            "description": "Session ID",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventType",
+            "required": true,
+            "in": "path",
+            "description": "Kirvano event type",
             "schema": {
               "type": "string"
             }
@@ -7617,87 +7763,129 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ConvertMediaDto"
+                "$ref": "#/components/schemas/UpdateKirvanoEventConfigDto"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Converted bytes, ready to post to send-audio with ptt=true. WhatsApp only renders a playable mic bubble for Ogg/Opus; other formats arrive as an audio file that will not play.",
+            "description": "Updated event config.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConvertedMediaResponseDto"
+                  "$ref": "#/components/schemas/KirvanoEventConfigResponseDto"
                 }
               }
             }
           },
-          "400": {
-            "description": "Neither url nor base64 given, or ffmpeg refused the input."
-          },
-          "413": {
-            "description": "The supplied media is above the media size cap."
-          },
-          "503": {
-            "description": "Conversion is disabled, the ffmpeg binary is not runnable, or the conversion queue is saturated — retry shortly."
+          "404": {
+            "description": "Unknown event type, or the referenced template does not exist."
           }
         },
-        "summary": "Convert audio into a WhatsApp voice note (Ogg/Opus)",
+        "summary": "Update the template and/or active state for one Kirvano event",
         "tags": [
-          "media"
+          "kirvano"
         ]
       }
     },
-    "/api/sessions/{sessionId}/media/convert/video": {
-      "post": {
-        "operationId": "MediaController_convertVideo",
+    "/api/sessions/{sessionId}/kirvano/token": {
+      "get": {
+        "operationId": "KirvanoTokenController_get",
         "parameters": [
           {
             "name": "sessionId",
             "required": true,
             "in": "path",
-            "description": "Session ID the API key must be authorized for",
+            "description": "Session ID",
             "schema": {
               "type": "string"
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ConvertMediaDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
-            "description": "Converted bytes: baseline H.264 with AAC audio, long edge bounded at 1280, index moved to the front so the recipient can start playing before the whole file arrives.",
+            "description": "The token.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ConvertedMediaResponseDto"
+                  "$ref": "#/components/schemas/KirvanoTokenResponseDto"
                 }
               }
             }
-          },
-          "400": {
-            "description": "Neither url nor base64 given, or ffmpeg refused the input."
-          },
-          "413": {
-            "description": "The supplied media is above the media size cap."
-          },
-          "503": {
-            "description": "Conversion is disabled, the ffmpeg binary is not runnable, or the conversion queue is saturated — retry shortly."
           }
         },
-        "summary": "Convert video into a WhatsApp-compatible MP4",
+        "summary": "Get the session's Kirvano webhook token (minted on first call)",
         "tags": [
-          "media"
+          "kirvano"
         ]
+      }
+    },
+    "/api/sessions/{sessionId}/kirvano/token/regenerate": {
+      "post": {
+        "operationId": "KirvanoTokenController_regenerate",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "description": "Session ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The new token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KirvanoTokenResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Replace the session’s Kirvano webhook token, invalidating the old one",
+        "tags": [
+          "kirvano"
+        ]
+      }
+    },
+    "/api/sessions/{sessionId}/kirvano/receiver": {
+      "post": {
+        "operationId": "KirvanoReceiverController_receive",
+        "parameters": [
+          {
+            "name": "sessionId",
+            "required": true,
+            "in": "path",
+            "description": "Session ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Accepted: \"queued\" (dispatch enqueued) or \"ignored\" (unmapped/disabled event)."
+          },
+          "400": {
+            "description": "Payload is missing customer.phone_number."
+          },
+          "401": {
+            "description": "Missing or invalid X-Kirvano-Token header."
+          },
+          "429": {
+            "description": "Per-session rate limit exceeded (KIRVANO_RECEIVER_LIMIT)."
+          }
+        },
+        "summary": "Kirvano checkout webhook receiver — dispatches the mapped message template",
+        "tags": [
+          "kirvano"
+        ],
+        "security": []
       }
     },
     "/api/sessions/{sessionId}/catalog": {
@@ -11356,6 +11544,59 @@
           }
         }
       },
+      "ConversionStatusResponseDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "description": "True only when conversion is switched on AND the ffmpeg binary is runnable. False means a convert call will be refused, so check this before offering conversion in a UI.",
+            "example": true
+          }
+        },
+        "required": [
+          "available"
+        ]
+      },
+      "ConvertMediaDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Public http(s) URL of the media to convert (server-fetched, SSRF-guarded).",
+            "example": "https://example.com/note.m4a"
+          },
+          "base64": {
+            "type": "string",
+            "description": "Base64-encoded media to convert. Takes precedence when both are supplied.",
+            "example": "SUQzBAAAAAAA..."
+          }
+        }
+      },
+      "ConvertedMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "base64": {
+            "type": "string",
+            "description": "The converted bytes, ready to hand straight to a send endpoint's `base64` field.",
+            "example": "T2dnUwACAAAAAAAAAAA..."
+          },
+          "mimetype": {
+            "type": "string",
+            "description": "The type the bytes now are — not the type they were.",
+            "example": "audio/ogg; codecs=opus"
+          },
+          "bytes": {
+            "type": "number",
+            "description": "Decoded size, so a caller can check a send limit without decoding.",
+            "example": 20480
+          }
+        },
+        "required": [
+          "base64",
+          "mimetype",
+          "bytes"
+        ]
+      },
       "HealthCheckResponseDto": {
         "type": "object",
         "properties": {
@@ -14537,57 +14778,72 @@
           "message"
         ]
       },
-      "ConversionStatusResponseDto": {
+      "KirvanoEventConfigResponseDto": {
         "type": "object",
         "properties": {
-          "available": {
-            "type": "boolean",
-            "description": "True only when conversion is switched on AND the ffmpeg binary is runnable. False means a convert call will be refused, so check this before offering conversion in a UI.",
-            "example": true
+          "id": {
+            "type": "string"
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "eventType": {
+            "type": "string",
+            "enum": [
+              "ON_ABANDONED_CART",
+              "ON_PIX_EXPIRED",
+              "ON_PIX_GENERATED",
+              "ON_SALE_APPROVED"
+            ]
+          },
+          "templateId": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
           }
         },
         "required": [
-          "available"
+          "id",
+          "sessionId",
+          "eventType",
+          "templateId",
+          "enabled",
+          "createdAt",
+          "updatedAt"
         ]
       },
-      "ConvertMediaDto": {
+      "UpdateKirvanoEventConfigDto": {
         "type": "object",
         "properties": {
-          "url": {
+          "templateId": {
             "type": "string",
-            "description": "Public http(s) URL of the media to convert (server-fetched, SSRF-guarded).",
-            "example": "https://example.com/note.m4a"
+            "description": "Id of an existing template (within the same session) to send when the event fires"
           },
-          "base64": {
-            "type": "string",
-            "description": "Base64-encoded media to convert. Takes precedence when both are supplied.",
-            "example": "SUQzBAAAAAAA..."
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the event is currently active"
           }
         }
       },
-      "ConvertedMediaResponseDto": {
+      "KirvanoTokenResponseDto": {
         "type": "object",
         "properties": {
-          "base64": {
+          "token": {
             "type": "string",
-            "description": "The converted bytes, ready to hand straight to a send endpoint's `base64` field.",
-            "example": "T2dnUwACAAAAAAAAAAA..."
-          },
-          "mimetype": {
-            "type": "string",
-            "description": "The type the bytes now are — not the type they were.",
-            "example": "audio/ogg; codecs=opus"
-          },
-          "bytes": {
-            "type": "number",
-            "description": "Decoded size, so a caller can check a send limit without decoding.",
-            "example": 20480
+            "description": "Shared secret sent by Kirvano in the X-Kirvano-Token header"
           }
         },
         "required": [
-          "base64",
-          "mimetype",
-          "bytes"
+          "token"
         ]
       },
       "CatalogDto": {

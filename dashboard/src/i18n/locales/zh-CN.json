@@ -1026,7 +1026,44 @@
     ],
     "toasts": {
       "updated": "事件已更新",
-      "updateFailed": "更新事件失败:{{message}}"
+      "updateFailed": "更新事件失败:{{message}}",
+      "tokenRegenerated": "令牌已重新生成",
+      "regenerateFailed": "重新生成令牌失败:{{message}}"
+    },
+    "connectionTitle": "Webhook 连接",
+    "connectionDescription": "在您的 Kirvano 账户中将此网址和令牌配置为 Webhook,以便事件发送到这里。",
+    "urlLabel": "集成网址",
+    "tokenLabel": "令牌(X-Kirvano-Token 请求头)",
+    "copy": "复制",
+    "regenerateToken": "重新生成令牌",
+    "regenerateConfirm": "重新生成会立即使当前令牌失效 — 您还需要在 Kirvano 的 Webhook 设置中更新它。是否继续?",
+    "variablesTable": {
+      "variable": "变量",
+      "description": "说明"
+    },
+    "testMessage": {
+      "button": "测试消息",
+      "title": "测试消息",
+      "subtitle": "填写下方变量,查看预览,然后向一个 WhatsApp 号码发送真实的测试消息。",
+      "phoneLabel": "电话号码",
+      "phoneHint": "请包含国家代码,例如:55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "变量",
+      "previewTitle": "预览",
+      "previewEmpty": "填写变量以查看预览",
+      "submit": "发送测试",
+      "cancel": "取消",
+      "errors": {
+        "required": "此字段为必填项",
+        "invalidUrl": "请输入有效的网址",
+        "invalidEmail": "请输入有效的电子邮件地址",
+        "invalidNumber": "请输入有效的数字"
+      },
+      "toasts": {
+        "numberNotFound": "该号码未注册 WhatsApp",
+        "sent": "测试消息已发送",
+        "sendFailed": "发送测试消息失败:{{message}}"
+      }
     }
   }
 }

@@ -1026,7 +1026,44 @@
     ],
     "toasts": {
       "updated": "이벤트가 업데이트되었습니다",
-      "updateFailed": "이벤트 업데이트 실패: {{message}}"
+      "updateFailed": "이벤트 업데이트 실패: {{message}}",
+      "tokenRegenerated": "토큰이 재발급되었습니다",
+      "regenerateFailed": "토큰 재발급 실패: {{message}}"
+    },
+    "connectionTitle": "웹훅 연결",
+    "connectionDescription": "이벤트가 여기로 전달되도록 이 URL과 토큰을 Kirvano 계정의 웹훅으로 구성하세요.",
+    "urlLabel": "연동 URL",
+    "tokenLabel": "토큰 (X-Kirvano-Token 헤더)",
+    "copy": "복사",
+    "regenerateToken": "토큰 재발급",
+    "regenerateConfirm": "재발급하면 현재 토큰이 즉시 무효화됩니다 — Kirvano 웹훅 설정에서도 업데이트해야 합니다. 계속하시겠습니까?",
+    "variablesTable": {
+      "variable": "변수",
+      "description": "설명"
+    },
+    "testMessage": {
+      "button": "메시지 테스트",
+      "title": "메시지 테스트",
+      "subtitle": "아래 변수를 입력하고 미리보기를 확인한 후 WhatsApp 번호로 실제 테스트 메시지를 보내세요.",
+      "phoneLabel": "전화번호",
+      "phoneHint": "국가 코드를 포함하세요. 예: 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "변수",
+      "previewTitle": "미리보기",
+      "previewEmpty": "미리보기를 보려면 변수를 입력하세요",
+      "submit": "테스트 보내기",
+      "cancel": "취소",
+      "errors": {
+        "required": "이 필드는 필수입니다",
+        "invalidUrl": "유효한 URL을 입력하세요",
+        "invalidEmail": "유효한 이메일 주소를 입력하세요",
+        "invalidNumber": "유효한 숫자를 입력하세요"
+      },
+      "toasts": {
+        "numberNotFound": "이 번호는 WhatsApp에 등록되어 있지 않습니다",
+        "sent": "테스트 메시지가 전송되었습니다",
+        "sendFailed": "테스트 메시지 전송 실패: {{message}}"
+      }
     }
   }
 }

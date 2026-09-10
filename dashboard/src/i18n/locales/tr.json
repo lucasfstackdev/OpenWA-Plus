@@ -1002,7 +1002,44 @@
     ],
     "toasts": {
       "updated": "Olay güncellendi",
-      "updateFailed": "Olay güncellenemedi: {{message}}"
+      "updateFailed": "Olay güncellenemedi: {{message}}",
+      "tokenRegenerated": "Token yenilendi",
+      "regenerateFailed": "Token yenilenemedi: {{message}}"
+    },
+    "connectionTitle": "Webhook bağlantısı",
+    "connectionDescription": "Olayların buraya ulaşması için bu URL'yi ve bu token'ı Kirvano hesabınızda webhook olarak yapılandırın.",
+    "urlLabel": "Entegrasyon URL'si",
+    "tokenLabel": "Token (X-Kirvano-Token başlığı)",
+    "copy": "Kopyala",
+    "regenerateToken": "Token'ı yenile",
+    "regenerateConfirm": "Yenileme mevcut token'ı hemen geçersiz kılar — Kirvano webhook ayarlarında da güncellemeniz gerekecek. Devam edilsin mi?",
+    "variablesTable": {
+      "variable": "Değişken",
+      "description": "Açıklama"
+    },
+    "testMessage": {
+      "button": "Mesajı test et",
+      "title": "Mesajı test et",
+      "subtitle": "Aşağıdaki değişkenleri doldurun, önizlemeyi kontrol edin ve bir WhatsApp numarasına gerçek bir test mesajı gönderin.",
+      "phoneLabel": "Telefon numarası",
+      "phoneHint": "Ülke kodunu ekleyin, ör.: 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "Değişkenler",
+      "previewTitle": "Önizleme",
+      "previewEmpty": "Önizlemeyi görmek için değişkenleri doldurun",
+      "submit": "Testi gönder",
+      "cancel": "İptal",
+      "errors": {
+        "required": "Bu alan zorunludur",
+        "invalidUrl": "Geçerli bir URL girin",
+        "invalidEmail": "Geçerli bir e-posta adresi girin",
+        "invalidNumber": "Geçerli bir sayı girin"
+      },
+      "toasts": {
+        "numberNotFound": "Bu numara WhatsApp'ta kayıtlı değil",
+        "sent": "Test mesajı gönderildi",
+        "sendFailed": "Test mesajı gönderilemedi: {{message}}"
+      }
     }
   }
 }

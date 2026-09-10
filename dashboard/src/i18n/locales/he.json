@@ -1035,7 +1035,44 @@
     ],
     "toasts": {
       "updated": "האירוע עודכן",
-      "updateFailed": "עדכון האירוע נכשל: {{message}}"
+      "updateFailed": "עדכון האירוע נכשל: {{message}}",
+      "tokenRegenerated": "הטוקן נוצר מחדש",
+      "regenerateFailed": "יצירת הטוקן מחדש נכשלה: {{message}}"
+    },
+    "connectionTitle": "חיבור ה-webhook",
+    "connectionDescription": "הגדירו את הכתובת והטוקן האלה כ-webhook בחשבון Kirvano שלכם כדי שהאירועים יגיעו לכאן.",
+    "urlLabel": "כתובת האינטגרציה",
+    "tokenLabel": "טוקן (כותרת X-Kirvano-Token)",
+    "copy": "העתקה",
+    "regenerateToken": "יצירת טוקן מחדש",
+    "regenerateConfirm": "יצירה מחדש מבטלת מיד את הטוקן הנוכחי — תצטרכו לעדכן אותו גם בהגדרות ה-webhook ב-Kirvano. להמשיך?",
+    "variablesTable": {
+      "variable": "משתנה",
+      "description": "תיאור"
+    },
+    "testMessage": {
+      "button": "בדיקת הודעה",
+      "title": "בדיקת הודעה",
+      "subtitle": "מלאו את המשתנים למטה, בדקו את התצוגה המקדימה ושלחו הודעת בדיקה אמיתית למספר וואטסאפ.",
+      "phoneLabel": "מספר טלפון",
+      "phoneHint": "כללו קידומת מדינה, למשל: 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "משתנים",
+      "previewTitle": "תצוגה מקדימה",
+      "previewEmpty": "מלאו את המשתנים כדי לראות את התצוגה המקדימה",
+      "submit": "שליחת בדיקה",
+      "cancel": "ביטול",
+      "errors": {
+        "required": "שדה זה הוא חובה",
+        "invalidUrl": "הזינו כתובת URL תקינה",
+        "invalidEmail": "הזינו כתובת אימייל תקינה",
+        "invalidNumber": "הזינו מספר תקין"
+      },
+      "toasts": {
+        "numberNotFound": "המספר הזה אינו רשום בוואטסאפ",
+        "sent": "הודעת הבדיקה נשלחה",
+        "sendFailed": "שליחת הודעת הבדיקה נכשלה: {{message}}"
+      }
     }
   }
 }

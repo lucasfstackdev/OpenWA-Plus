@@ -15,6 +15,7 @@ import {
 import { PageHeader } from '../components/PageHeader';
 import { Modal } from '../components/Modal';
 import { copyToClipboard } from '../utils/clipboard';
+import { extractPlaceholders, renderPreview } from '../utils/templateVariables';
 import './Templates.css';
 
 type TemplateForm = {
@@ -31,11 +32,6 @@ const emptyForm: TemplateForm = {
   footer: '',
 };
 
-function extractPlaceholders(template: TemplateForm | MessageTemplate) {
-  const source = [template.header, template.body, template.footer].filter(Boolean).join('\n');
-  return Array.from(new Set(Array.from(source.matchAll(/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g), match => match[1]))).sort();
-}
-
 function toPayload(form: TemplateForm): TemplatePayload {
   return {
     name: form.name.trim(),
@@ -43,13 +39,6 @@ function toPayload(form: TemplateForm): TemplatePayload {
     body: form.body.trim(),
     footer: form.footer.trim() || null,
   };
-}
-
-function renderPreview(template: TemplateForm, values: Record<string, string>) {
-  return [template.header, template.body, template.footer]
-    .filter(Boolean)
-    .join('\n\n')
-    .replace(/\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}/g, (_match, key: string) => values[key] || `{{${key}}}`);
 }
 
 export function Templates() {

@@ -6395,6 +6395,98 @@ Partial update (any subset of the create fields). **Auth:** API key (OPERATOR) �
 
 Delete a rule. **Auth:** API key (OPERATOR) · **Response** `204`.
 
+### 6.4.17 Kirvano integration
+
+Per-session mapping of Kirvano checkout webhook events to message templates, managed under
+`/api/sessions/:sessionId/kirvano` (`KirvanoController`, `KirvanoTokenController`). Every
+configuration route requires an API key with **OPERATOR** role or higher; the receiver route
+below is `@Public()` and authenticates with a session-scoped token instead.
+
+Four events are tracked: `ON_ABANDONED_CART`, `ON_PIX_EXPIRED`, `ON_PIX_GENERATED`,
+`ON_SALE_APPROVED`. The first read for a session lazily creates all four config rows, each
+pointing at a seeded default template (named `[Kirvano] <Event>`) and `enabled: true` — this
+works whether the seeding is triggered by opening the dashboard's Kirvano page or by the first
+webhook delivery arriving before anyone has.
+
+#### GET /api/sessions/:sessionId/kirvano/events
+
+List the session's 4 event configs (seeding defaults on first call). **Auth:** API key (OPERATOR)
+
+**Response** `200`
+
+```json
+[
+  {
+    "id": "46a30832-787e-48d0-a022-c97879083085",
+    "sessionId": "0d7a2a4e-...",
+    "eventType": "ON_ABANDONED_CART",
+    "templateId": "f396eacf-43fa-4194-a02c-f78a7b0e3508",
+    "enabled": true,
+    "createdAt": "2026-08-04T10:00:00.000Z",
+    "updatedAt": "2026-08-04T10:00:00.000Z"
+  }
+]
+```
+
+#### PUT /api/sessions/:sessionId/kirvano/events/:eventType
+
+Update the template and/or active state for one event. **Auth:** API key (OPERATOR)
+
+**Request body**
+
+| Field      | Type    | Required | Description                                       |
+| ---------- | ------- | -------- | -------------------------------------------------- |
+| templateId | string  | no       | Id of an existing template in the same session.   |
+| enabled    | boolean | no       | Whether the event is active.                      |
+
+**Response** `200` — the shape above. `404` — unknown `eventType`, or `templateId` not found in this session.
+
+#### GET /api/sessions/:sessionId/kirvano/token
+
+Get the session's webhook token, minting one on first call. **Auth:** API key (OPERATOR)
+
+**Response** `200`
+
+```json
+{ "token": "6a1e2f3b-6c8d-4e2f-9a1b-2c3d4e5f6a7b" }
+```
+
+#### POST /api/sessions/:sessionId/kirvano/token/regenerate
+
+Replace the session's webhook token, invalidating the old one immediately. **Auth:** API key (OPERATOR) · **Response** `200` — the shape above.
+
+#### POST /api/sessions/:sessionId/kirvano/receiver
+
+Kirvano's own webhook target — configure it in your Kirvano account, sending the token above in
+the `X-Kirvano-Token` header. **Auth:** none (`@Public()`); the header token is instead checked
+against the session's stored token in constant time. Also rate-limited per session
+(`KIRVANO_RECEIVER_LIMIT`/`KIRVANO_RECEIVER_TTL`, default 120 requests per 60s window) — kept
+independent of the global per-IP limit since Kirvano delivers every merchant's webhooks from
+shared egress IPs.
+
+The request body is Kirvano's own payload (`event`, `customer`, `payment`, `products`,
+`checkout_url`, ...) — see Kirvano's webhook documentation for the full shape; it is accepted
+untyped, so extra fields never cause a `400`. `event` is mapped to an internal event type
+(`PIX_GENERATED` → `ON_PIX_GENERATED`, `PIX_EXPIRED` → `ON_PIX_EXPIRED`, `SALE_APPROVED` →
+`ON_SALE_APPROVED`, `ABANDONED_CART` → `ON_ABANDONED_CART`); any other value is accepted and
+ignored, as is a mapped event whose config is currently disabled. Otherwise the matching
+template is rendered with variables read from the payload (`customer.name`, `total_price`,
+`products`, `payment.qrcode_image`, `payment.qrcode`, `payment.expires_at`, `checkout_url`) and
+queued for delivery to `customer.phone_number`, paced at up to 2 sends per rolling 5-second
+window per session — a burst of events queues rather than firing all at once. `payment.expires_at`
+is reformatted from Kirvano's `YYYY-MM-DD HH:mm:ss` to the Brazilian `DD/MM/YYYY HH:mm` pattern
+(seconds dropped) before substitution; every other variable is substituted verbatim.
+
+**Response** `200`
+
+```json
+{ "status": "queued", "event": "ON_PIX_GENERATED" }
+```
+
+`{ "status": "ignored" }` (same `200`) for an unmapped or disabled event. `400` — payload is
+missing `customer.phone_number`. `401` — missing or invalid `X-Kirvano-Token`. `429` — per-session
+rate limit exceeded.
+
 ## 6.5 Real-time API (WebSocket)
 
 Live events are delivered over a **Socket.IO** connection (not a raw WebSocket). The server mounts a single Socket.IO namespace, **`/events`**, on the same port as the REST API. There are no REST routes in this module.

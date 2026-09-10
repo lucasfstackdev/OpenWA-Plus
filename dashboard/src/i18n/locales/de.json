@@ -1026,7 +1026,44 @@
     ],
     "toasts": {
       "updated": "Ereignis aktualisiert",
-      "updateFailed": "Ereignis konnte nicht aktualisiert werden: {{message}}"
+      "updateFailed": "Ereignis konnte nicht aktualisiert werden: {{message}}",
+      "tokenRegenerated": "Token erneuert",
+      "regenerateFailed": "Token konnte nicht erneuert werden: {{message}}"
+    },
+    "connectionTitle": "Webhook-Verbindung",
+    "connectionDescription": "Konfigurieren Sie diese URL und dieses Token als Webhook in Ihrem Kirvano-Konto, damit Ereignisse hier ankommen.",
+    "urlLabel": "Integrations-URL",
+    "tokenLabel": "Token (Header X-Kirvano-Token)",
+    "copy": "Kopieren",
+    "regenerateToken": "Token erneuern",
+    "regenerateConfirm": "Das Erneuern macht das aktuelle Token sofort ungültig — Sie müssen es auch in den Webhook-Einstellungen von Kirvano aktualisieren. Fortfahren?",
+    "variablesTable": {
+      "variable": "Variable",
+      "description": "Beschreibung"
+    },
+    "testMessage": {
+      "button": "Nachricht testen",
+      "title": "Nachricht testen",
+      "subtitle": "Füllen Sie die Variablen unten aus, prüfen Sie die Vorschau und senden Sie eine echte Testnachricht an eine WhatsApp-Nummer.",
+      "phoneLabel": "Telefonnummer",
+      "phoneHint": "Landesvorwahl einschließen, z. B. 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "Variablen",
+      "previewTitle": "Vorschau",
+      "previewEmpty": "Füllen Sie die Variablen aus, um die Vorschau zu sehen",
+      "submit": "Test senden",
+      "cancel": "Abbrechen",
+      "errors": {
+        "required": "Dieses Feld ist erforderlich",
+        "invalidUrl": "Geben Sie eine gültige URL ein",
+        "invalidEmail": "Geben Sie eine gültige E-Mail-Adresse ein",
+        "invalidNumber": "Geben Sie eine gültige Zahl ein"
+      },
+      "toasts": {
+        "numberNotFound": "Diese Nummer ist nicht bei WhatsApp registriert",
+        "sent": "Testnachricht gesendet",
+        "sendFailed": "Testnachricht konnte nicht gesendet werden: {{message}}"
+      }
     }
   }
 }

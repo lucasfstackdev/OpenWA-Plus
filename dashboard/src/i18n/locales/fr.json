@@ -1026,7 +1026,44 @@
     ],
     "toasts": {
       "updated": "Événement mis à jour",
-      "updateFailed": "Échec de la mise à jour de l'événement : {{message}}"
+      "updateFailed": "Échec de la mise à jour de l'événement : {{message}}",
+      "tokenRegenerated": "Jeton régénéré",
+      "regenerateFailed": "Échec de la régénération du jeton : {{message}}"
+    },
+    "connectionTitle": "Connexion du webhook",
+    "connectionDescription": "Configurez cette URL et ce jeton comme webhook dans votre compte Kirvano pour que les événements arrivent ici.",
+    "urlLabel": "URL d'intégration",
+    "tokenLabel": "Jeton (en-tête X-Kirvano-Token)",
+    "copy": "Copier",
+    "regenerateToken": "Régénérer le jeton",
+    "regenerateConfirm": "Régénérer invalide immédiatement le jeton actuel — vous devrez aussi le mettre à jour dans la configuration du webhook Kirvano. Continuer ?",
+    "variablesTable": {
+      "variable": "Variable",
+      "description": "Description"
+    },
+    "testMessage": {
+      "button": "Tester le message",
+      "title": "Tester le message",
+      "subtitle": "Remplissez les variables ci-dessous, vérifiez l'aperçu et envoyez un vrai message de test à un numéro WhatsApp.",
+      "phoneLabel": "Numéro de téléphone",
+      "phoneHint": "Incluez l'indicatif du pays, ex. : 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "Variables",
+      "previewTitle": "Aperçu",
+      "previewEmpty": "Remplissez les variables pour voir l'aperçu",
+      "submit": "Envoyer le test",
+      "cancel": "Annuler",
+      "errors": {
+        "required": "Ce champ est obligatoire",
+        "invalidUrl": "Saisissez une URL valide",
+        "invalidEmail": "Saisissez une adresse e-mail valide",
+        "invalidNumber": "Saisissez un nombre valide"
+      },
+      "toasts": {
+        "numberNotFound": "Ce numéro n'est pas sur WhatsApp",
+        "sent": "Message de test envoyé",
+        "sendFailed": "Échec de l'envoi du message de test : {{message}}"
+      }
     }
   }
 }

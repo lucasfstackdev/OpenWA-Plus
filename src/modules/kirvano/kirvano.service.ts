@@ -59,7 +59,12 @@ export class KirvanoService {
     return eventType as KirvanoEventType;
   }
 
-  private async ensureConfig(sessionId: string, eventType: KirvanoEventType): Promise<KirvanoEventConfig> {
+  /**
+   * Idempotently returns the session's config row for one event, creating it (with the default
+   * template) on first access. Public because the Kirvano webhook receiver needs the same guarantee
+   * as the dashboard's `listEvents` — it must work even if `/kirvano` was never opened for this session.
+   */
+  async ensureConfig(sessionId: string, eventType: KirvanoEventType): Promise<KirvanoEventConfig> {
     const existing = await this.repository.findOne({ where: { sessionId, eventType } });
     if (existing) {
       return existing;

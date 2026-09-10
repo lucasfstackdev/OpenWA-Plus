@@ -30,6 +30,7 @@ export const queryKeys = {
   webhooks: ['webhooks'] as const,
   templates: (sessionId: string) => ['sessions', sessionId, 'templates'] as const,
   kirvanoEvents: (sessionId: string) => ['sessions', sessionId, 'kirvano', 'events'] as const,
+  kirvanoToken: (sessionId: string) => ['sessions', sessionId, 'kirvano', 'token'] as const,
   apiKeys: ['apiKeys'] as const,
   logs: (params: { severity?: string; page: number; limit: number }) => ['logs', params] as const,
   infraStatus: ['infra', 'status'] as const,
@@ -194,6 +195,25 @@ export function useUpdateKirvanoEventMutation() {
       kirvanoApi.update(params.sessionId, params.eventType, params.data),
     onSuccess: (_config, params) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.kirvanoEvents(params.sessionId) });
+    },
+  });
+}
+
+export function useKirvanoTokenQuery(sessionId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.kirvanoToken(sessionId),
+    queryFn: () => kirvanoApi.getToken(sessionId),
+    enabled: enabled && !!sessionId,
+    staleTime: 30_000,
+  });
+}
+
+export function useRegenerateKirvanoTokenMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => kirvanoApi.regenerateToken(sessionId),
+    onSuccess: (_token, sessionId) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.kirvanoToken(sessionId) });
     },
   });
 }
