@@ -3,6 +3,7 @@ import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '../auth/decorators/auth.decorators';
 import { KirvanoReceiverService, KirvanoWebhookResult } from './kirvano-receiver.service';
 import { KirvanoReceiverThrottlerGuard } from './kirvano-receiver-throttler.guard';
+import { createLogger } from '../../common/services/logger.service';
 
 // @Public so the global ApiKeyGuard early-returns (Kirvano can't present an OpenWA API key) — auth is
 // instead the X-Kirvano-Token header, checked in KirvanoReceiverService against the per-session token
@@ -14,6 +15,8 @@ import { KirvanoReceiverThrottlerGuard } from './kirvano-receiver-throttler.guar
 @Public()
 @Controller('sessions/:sessionId/kirvano/receiver')
 export class KirvanoReceiverController {
+  private readonly logger = createLogger('KirvanoReceiverController');
+
   constructor(private readonly receiverService: KirvanoReceiverService) {}
 
   @UseGuards(KirvanoReceiverThrottlerGuard)
@@ -30,9 +33,12 @@ export class KirvanoReceiverController {
   @ApiResponse({ status: 429, description: 'Per-session rate limit exceeded (KIRVANO_RECEIVER_LIMIT).' })
   async receive(
     @Param('sessionId') sessionId: string,
-    @Headers('x-kirvano-token') token: string | undefined,
+    // @Headers('x-kirvano-token') token: string | undefined,
+    @Headers('security-token') token: string | undefined,
+    @Headers() headers: Record<string, string>,
     @Body() payload: Record<string, unknown>,
   ): Promise<KirvanoWebhookResult> {
+    this.logger.log('TOKEN', token);
     return this.receiverService.handleWebhook(sessionId, token, payload);
   }
 }
