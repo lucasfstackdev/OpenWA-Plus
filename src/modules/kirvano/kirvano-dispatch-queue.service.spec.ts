@@ -92,4 +92,32 @@ describe('KirvanoDispatchQueueService', () => {
 
     expect(sendTemplate).toHaveBeenCalledTimes(2);
   });
+
+  it('calls onSettled with the sent outcome after a successful dispatch', async () => {
+    const onSettled = jest.fn();
+    service.enqueue('sessA', job({ onSettled }));
+    await flush();
+
+    expect(onSettled).toHaveBeenCalledWith({ outcome: 'sent' });
+  });
+
+  it('calls onSettled with the failed outcome and the error message after a failed dispatch', async () => {
+    sendTemplate.mockImplementationOnce(() => Promise.reject(new Error('session offline')));
+    const onSettled = jest.fn();
+    service.enqueue('sessA', job({ onSettled }));
+    await flush();
+
+    expect(onSettled).toHaveBeenCalledWith({ outcome: 'failed', error: 'session offline' });
+  });
+
+  it('keeps draining the queue even when an onSettled callback throws', async () => {
+    const throwingOnSettled = jest.fn(() => {
+      throw new Error('boom');
+    });
+    service.enqueue('sessA', job({ onSettled: throwingOnSettled }));
+    service.enqueue('sessA', job());
+    await flush();
+
+    expect(sendTemplate).toHaveBeenCalledTimes(2);
+  });
 });

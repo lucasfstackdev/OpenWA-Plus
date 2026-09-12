@@ -12,6 +12,7 @@ import {
   RefreshCw,
   Send,
   ShoppingCart,
+  Timer,
 } from 'lucide-react';
 import {
   API_BASE_URL,
@@ -19,6 +20,7 @@ import {
   messageApi,
   type KirvanoEventConfig,
   type KirvanoEventType,
+  type KirvanoEventUpdatePayload,
   type MessageTemplate,
 } from '../services/api';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -36,6 +38,7 @@ import { PageHeader } from '../components/PageHeader';
 import { Modal } from '../components/Modal';
 import { copyToClipboard } from '../utils/clipboard';
 import { extractPlaceholders, renderPreview } from '../utils/templateVariables';
+import { KirvanoEventLog } from './KirvanoEventLog';
 import './Kirvano.css';
 
 interface KirvanoVariable {
@@ -255,7 +258,9 @@ function TestMessageModal({
   }
   const preview = renderPreview(template, displayValues);
 
-  const allFieldsValid = placeholders.every(key => isFieldValid(KIRVANO_VARIABLE_TYPES[key] ?? 'text', values[key] ?? ''));
+  const allFieldsValid = placeholders.every(key =>
+    isFieldValid(KIRVANO_VARIABLE_TYPES[key] ?? 'text', values[key] ?? ''),
+  );
   const phoneValid = phoneDigits.length === 13;
   const canSubmit = allFieldsValid && phoneValid && !sending;
 
@@ -363,6 +368,66 @@ const EVENT_ICONS: Record<KirvanoEventType, typeof ShoppingCart> = {
   ON_SALE_APPROVED: CheckCircle2,
 };
 
+function DelayConfigModal({
+  open,
+  onClose,
+  config,
+  canWrite,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  config: KirvanoEventConfig | null;
+  canWrite: boolean;
+  onSave: (delayMinutes: number) => void;
+}) {
+  const { t } = useTranslation();
+  const [minutes, setMinutes] = useState(config?.delayMinutes ?? 1);
+
+  useEffect(() => {
+    if (open) setMinutes(config?.delayMinutes ?? 1);
+  }, [open, config?.id, config?.delayMinutes]);
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={t('kirvano.delay.title')}
+      closeLabel={t('common.close')}
+      footer={
+        <>
+          <button className="btn-secondary" onClick={onClose}>
+            {t('common.cancel')}
+          </button>
+          <button
+            className="btn-primary"
+            disabled={!canWrite}
+            onClick={() => {
+              onSave(minutes);
+              onClose();
+            }}
+          >
+            {t('common.save')}
+          </button>
+        </>
+      }
+    >
+      <p className="kirvano-delay-description">{t('kirvano.delay.description')}</p>
+      <div className="form-group">
+        <label>{t('kirvano.delay.minutesLabel')}</label>
+        <input
+          type="number"
+          min={0}
+          max={1440}
+          value={minutes}
+          disabled={!canWrite}
+          onChange={e => setMinutes(Math.min(1440, Math.max(0, Number(e.target.value) || 0)))}
+        />
+      </div>
+    </Modal>
+  );
+}
+
 function EventCard({
   config,
   templates,
@@ -371,6 +436,7 @@ function EventCard({
   onChangeTemplate,
   onToggleEnabled,
   onTest,
+  onConfigureDelay,
 }: {
   config: KirvanoEventConfig;
   templates: MessageTemplate[];
@@ -379,6 +445,7 @@ function EventCard({
   onChangeTemplate: (templateId: string) => void;
   onToggleEnabled: (enabled: boolean) => void;
   onTest: () => void;
+  onConfigureDelay: () => void;
 }) {
   const { t } = useTranslation();
   const Icon = EVENT_ICONS[config.eventType];
@@ -393,21 +460,29 @@ function EventCard({
           </div>
           <h3>{t(`kirvano.events.${config.eventType}`)}</h3>
         </div>
-        <div className="kirvano-card-toggle">
-          <span>{t('kirvano.enabledLabel')}</span>
-          <label className="toggle-switch">
-            <input
-              type="checkbox"
-              checked={config.enabled}
-              disabled={!canWrite}
-              onChange={e => onToggleEnabled(e.target.checked)}
-            />
-            <span className="toggle-slider" />
-          </label>
+        <div className="kirvano-card-header-actions">
+          
+          <div className="kirvano-card-toggle">
+            <span>{t('kirvano.enabledLabel')}</span>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={config.enabled}
+                disabled={!canWrite}
+                onChange={e => onToggleEnabled(e.target.checked)}
+              />
+              <span className="toggle-slider" />
+            </label>
+          </div>
+          <button type="button" className="icon-btn" title={t('kirvano.delay.button')} onClick={onConfigureDelay}>
+            <Timer size={16} />
+          </button>
         </div>
       </div>
 
       <div className="kirvano-card-body">
+        <p className="kirvano-card-delay">{t('kirvano.delay.summary', { count: config.delayMinutes })}</p>
+
         {selectedTemplate && <p className="kirvano-card-preview">{selectedTemplate.body}</p>}
 
         <div className="form-group">
@@ -447,13 +522,12 @@ export function Kirvano() {
   const { data: sessions = [], isLoading: loadingSessions } = useSessionsQuery();
   const [selectedSessionId, setSelectedSessionId] = useState('');
 
-  const { data: events = [], isLoading: loadingEvents } = useKirvanoEventsQuery(
-    selectedSessionId,
-    !!selectedSessionId,
-  );
+  const { data: events = [], isLoading: loadingEvents } = useKirvanoEventsQuery(selectedSessionId, !!selectedSessionId);
   const { data: templates = [] } = useTemplatesQuery(selectedSessionId, !!selectedSessionId);
   const updateMutation = useUpdateKirvanoEventMutation();
   const [testingConfig, setTestingConfig] = useState<KirvanoEventConfig | null>(null);
+  const [configuringDelayFor, setConfiguringDelayFor] = useState<KirvanoEventConfig | null>(null);
+  const [activeTab, setActiveTab] = useState<'config' | 'log'>('config');
 
   useEffect(() => {
     if (!selectedSessionId && sessions.length > 0) {
@@ -463,7 +537,7 @@ export function Kirvano() {
 
   const variables = t('kirvano.variables', { returnObjects: true }) as unknown as KirvanoVariable[];
 
-  const handleUpdate = async (eventType: KirvanoEventType, data: { templateId?: string; enabled?: boolean }) => {
+  const handleUpdate = async (eventType: KirvanoEventType, data: KirvanoEventUpdatePayload) => {
     try {
       await updateMutation.mutateAsync({ sessionId: selectedSessionId, eventType, data });
       toast.success(t('kirvano.toasts.updated'));
@@ -509,59 +583,93 @@ export function Kirvano() {
           <ShoppingCart size={48} strokeWidth={1} />
           <p>{t('kirvano.noSessions')}</p>
         </div>
-      ) : loadingEvents ? (
-        <div className="kirvano-loading-inline">
-          <Loader2 className="animate-spin" size={28} />
-        </div>
       ) : (
         <>
-          <ConnectionCard sessionId={selectedSessionId} canWrite={canWrite} />
-
-          <div className="kirvano-grid">
-            {events.map(config => (
-              <EventCard
-                key={config.id}
-                config={config}
-                templates={templates}
-                canWrite={canWrite}
-                sessionId={selectedSessionId}
-                onChangeTemplate={templateId => void handleUpdate(config.eventType, { templateId })}
-                onToggleEnabled={enabled => void handleUpdate(config.eventType, { enabled })}
-                onTest={() => setTestingConfig(config)}
-              />
-            ))}
+          <div className="kirvano-tabs">
+            <button
+              type="button"
+              className={`kirvano-tab${activeTab === 'config' ? ' active' : ''}`}
+              onClick={() => setActiveTab('config')}
+            >
+              {t('kirvano.tabs.config')}
+            </button>
+            <button
+              type="button"
+              className={`kirvano-tab${activeTab === 'log' ? ' active' : ''}`}
+              onClick={() => setActiveTab('log')}
+            >
+              {t('kirvano.tabs.log')}
+            </button>
           </div>
 
-          <section className="kirvano-variables">
-            <h2>{t('kirvano.variablesTitle')}</h2>
-            <p>{t('kirvano.variablesDescription')}</p>
-            <div className="kirvano-variables-table-wrap">
-              <table className="kirvano-variables-table">
-                <thead>
-                  <tr>
-                    <th>{t('kirvano.variablesTable.variable')}</th>
-                    <th>{t('kirvano.variablesTable.description')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {variables.map(variable => (
-                    <tr key={variable.token}>
-                      <td>
-                        <code>{`{{${variable.token}}}`}</code>
-                      </td>
-                      <td>{variable.description}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {activeTab === 'log' ? (
+            <KirvanoEventLog sessionId={selectedSessionId} />
+          ) : loadingEvents ? (
+            <div className="kirvano-loading-inline">
+              <Loader2 className="animate-spin" size={28} />
             </div>
-          </section>
+          ) : (
+            <>
+              <ConnectionCard sessionId={selectedSessionId} canWrite={canWrite} />
+
+              <div className="kirvano-grid">
+                {events.map(config => (
+                  <EventCard
+                    key={config.id}
+                    config={config}
+                    templates={templates}
+                    canWrite={canWrite}
+                    sessionId={selectedSessionId}
+                    onChangeTemplate={templateId => void handleUpdate(config.eventType, { templateId })}
+                    onToggleEnabled={enabled => void handleUpdate(config.eventType, { enabled })}
+                    onTest={() => setTestingConfig(config)}
+                    onConfigureDelay={() => setConfiguringDelayFor(config)}
+                  />
+                ))}
+              </div>
+
+              <section className="kirvano-variables">
+                <h2>{t('kirvano.variablesTitle')}</h2>
+                <p>{t('kirvano.variablesDescription')}</p>
+                <div className="kirvano-variables-table-wrap">
+                  <table className="kirvano-variables-table">
+                    <thead>
+                      <tr>
+                        <th>{t('kirvano.variablesTable.variable')}</th>
+                        <th>{t('kirvano.variablesTable.description')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {variables.map(variable => (
+                        <tr key={variable.token}>
+                          <td>
+                            <code>{`{{${variable.token}}}`}</code>
+                          </td>
+                          <td>{variable.description}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </>
+          )}
 
           <TestMessageModal
             open={!!testingConfig}
             onClose={() => setTestingConfig(null)}
             sessionId={selectedSessionId}
             template={templates.find(tpl => tpl.id === testingConfig?.templateId)}
+          />
+
+          <DelayConfigModal
+            open={!!configuringDelayFor}
+            onClose={() => setConfiguringDelayFor(null)}
+            config={configuringDelayFor}
+            canWrite={canWrite}
+            onSave={delayMinutes => {
+              if (configuringDelayFor) void handleUpdate(configuringDelayFor.eventType, { delayMinutes });
+            }}
           />
         </>
       )}

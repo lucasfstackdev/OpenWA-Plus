@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, plainToInstance } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, IsNotEmpty } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, IsNotEmpty, Max, Min } from 'class-validator';
 import { ToStrictBoolean } from '../../../common/utils/strict-boolean';
 import { KirvanoEventConfig } from '../entities/kirvano-event-config.entity';
 import type { KirvanoEventType } from '../entities/kirvano-event-config.entity';
@@ -19,6 +19,15 @@ export class UpdateKirvanoEventConfigDto {
   @ToStrictBoolean()
   @IsBoolean()
   enabled?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Minutes to wait between receiving the webhook and enqueuing the message for dispatch',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(1440)
+  delayMinutes?: number;
 }
 
 export class KirvanoEventConfigResponseDto {
@@ -41,6 +50,10 @@ export class KirvanoEventConfigResponseDto {
   @ApiProperty()
   @Expose()
   enabled!: boolean;
+
+  @ApiProperty()
+  @Expose()
+  delayMinutes!: number;
 
   @ApiProperty()
   @Expose()

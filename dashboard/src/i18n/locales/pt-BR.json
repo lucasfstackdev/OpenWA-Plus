@@ -12,6 +12,7 @@
     "delete": "Excluir",
     "create": "Criar",
     "close": "Fechar",
+    "save": "Salvar",
     "search": "Pesquisar",
     "status": "Status",
     "name": "Nome",
@@ -992,6 +993,46 @@
     "templateLabel": "Modelo de mensagem",
     "enabledLabel": "Ativo",
     "editMessage": "Editar mensagem",
+    "delay": {
+      "button": "Configurar delay de disparo",
+      "title": "Delay de disparo",
+      "description": "Tempo de espera entre o recebimento do evento e o envio da mensagem.",
+      "minutesLabel": "Minutos de delay",
+      "summary": "Disparo em {{count}} min"
+    },
+    "tabs": {
+      "config": "Configuração",
+      "log": "Log de eventos"
+    },
+    "log": {
+      "subtitle": "Histórico de eventos recebidos da Kirvano e o status do disparo de cada um.",
+      "searchPlaceholder": "Buscar por nome ou telefone",
+      "filters": {
+        "eventType": "Tipo de evento",
+        "allEvents": "Todos os eventos",
+        "from": "De",
+        "to": "Até"
+      },
+      "columns": {
+        "receivedAt": "Recebido em",
+        "eventType": "Tipo",
+        "status": "Status",
+        "queueEstimate": "Entrada na fila (estimada)",
+        "customerName": "Cliente",
+        "customerPhone": "Telefone"
+      },
+      "status": {
+        "pending": "Pendente",
+        "queued": "Na fila",
+        "dispatched": "Disparado",
+        "failed": "Falhou"
+      },
+      "attemptLabel": "Tentativa {{count}}",
+      "empty": {
+        "title": "Nenhum evento registrado",
+        "description": "Eventos recebidos da Kirvano vão aparecer aqui."
+      }
+    },
     "variablesTitle": "Variáveis disponíveis",
     "variablesDescription": "Use esses placeholders dentro da mensagem de um modelo. A Kirvano os substitui pelos dados reais quando o evento é disparado.",
     "variables": [
@@ -1033,7 +1074,7 @@
     "connectionTitle": "Conexão do webhook",
     "connectionDescription": "Configure essa URL e esse token como um webhook na sua conta Kirvano para que os eventos cheguem aqui.",
     "urlLabel": "URL de integração",
-    "tokenLabel": "Token (header X-Kirvano-Token)",
+    "tokenLabel": "Token (header security-token)",
     "copy": "Copiar",
     "regenerateToken": "Regenerar token",
     "regenerateConfirm": "Regenerar invalida o token atual imediatamente — você também vai precisar atualizá-lo na configuração do webhook na Kirvano. Continuar?",

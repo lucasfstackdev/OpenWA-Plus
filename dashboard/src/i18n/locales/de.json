@@ -12,6 +12,7 @@
     "delete": "Löschen",
     "create": "Erstellen",
     "close": "Schließen",
+    "save": "Speichern",
     "showApiKey": "API-Schlüssel anzeigen",
     "hideApiKey": "API-Schlüssel ausblenden",
     "search": "Suchen",
@@ -992,6 +993,46 @@
     "templateLabel": "Nachrichtenvorlage",
     "enabledLabel": "Aktiv",
     "editMessage": "Nachricht bearbeiten",
+    "delay": {
+      "button": "Sendeverzögerung konfigurieren",
+      "title": "Sendeverzögerung",
+      "description": "Wartezeit zwischen dem Empfang des Ereignisses und dem Versand der Nachricht.",
+      "minutesLabel": "Verzögerung in Minuten",
+      "summary": "Versand in {{count}} Min."
+    },
+    "tabs": {
+      "config": "Konfiguration",
+      "log": "Ereignisprotokoll"
+    },
+    "log": {
+      "subtitle": "Verlauf der von Kirvano empfangenen Ereignisse und deren Versandstatus.",
+      "searchPlaceholder": "Nach Name oder Telefon suchen",
+      "filters": {
+        "eventType": "Ereignistyp",
+        "allEvents": "Alle Ereignisse",
+        "from": "Von",
+        "to": "Bis"
+      },
+      "columns": {
+        "receivedAt": "Empfangen am",
+        "eventType": "Typ",
+        "status": "Status",
+        "queueEstimate": "Warteschlangeneintritt (geschätzt)",
+        "customerName": "Kunde",
+        "customerPhone": "Telefon"
+      },
+      "status": {
+        "pending": "Ausstehend",
+        "queued": "In Warteschlange",
+        "dispatched": "Gesendet",
+        "failed": "Fehlgeschlagen"
+      },
+      "attemptLabel": "Versuch {{count}}",
+      "empty": {
+        "title": "Keine Ereignisse erfasst",
+        "description": "Von Kirvano empfangene Ereignisse werden hier angezeigt."
+      }
+    },
     "variablesTitle": "Verfügbare Variablen",
     "variablesDescription": "Verwenden Sie diese Platzhalter in der Nachricht einer Vorlage. Kirvano ersetzt sie beim Auslösen des Ereignisses durch echte Daten.",
     "variables": [
@@ -1033,7 +1074,7 @@
     "connectionTitle": "Webhook-Verbindung",
     "connectionDescription": "Konfigurieren Sie diese URL und dieses Token als Webhook in Ihrem Kirvano-Konto, damit Ereignisse hier ankommen.",
     "urlLabel": "Integrations-URL",
-    "tokenLabel": "Token (Header X-Kirvano-Token)",
+    "tokenLabel": "Token (Header security-token)",
     "copy": "Kopieren",
     "regenerateToken": "Token erneuern",
     "regenerateConfirm": "Das Erneuern macht das aktuelle Token sofort ungültig — Sie müssen es auch in den Webhook-Einstellungen von Kirvano aktualisieren. Fortfahren?",

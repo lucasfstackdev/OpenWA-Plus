@@ -12,6 +12,7 @@
     "delete": "حذف",
     "create": "إنشاء",
     "close": "إغلاق",
+    "save": "حفظ",
     "showApiKey": "إظهار مفتاح API",
     "hideApiKey": "إخفاء مفتاح API",
     "search": "بحث",
@@ -1007,6 +1008,46 @@
     "templateLabel": "قالب الرسالة",
     "enabledLabel": "نشط",
     "editMessage": "تعديل الرسالة",
+    "delay": {
+      "button": "تكوين تأخير الإرسال",
+      "title": "تأخير الإرسال",
+      "description": "الوقت المستغرق بين استلام الحدث وإرسال الرسالة.",
+      "minutesLabel": "دقائق التأخير",
+      "summary": "الإرسال خلال {{count}} دقيقة"
+    },
+    "tabs": {
+      "config": "الإعدادات",
+      "log": "سجل الأحداث"
+    },
+    "log": {
+      "subtitle": "سجل الأحداث المستلمة من Kirvano وحالة إرسال كل منها.",
+      "searchPlaceholder": "البحث بالاسم أو الهاتف",
+      "filters": {
+        "eventType": "نوع الحدث",
+        "allEvents": "جميع الأحداث",
+        "from": "من",
+        "to": "إلى"
+      },
+      "columns": {
+        "receivedAt": "وقت الاستلام",
+        "eventType": "النوع",
+        "status": "الحالة",
+        "queueEstimate": "دخول قائمة الانتظار (تقديري)",
+        "customerName": "العميل",
+        "customerPhone": "الهاتف"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "queued": "في قائمة الانتظار",
+        "dispatched": "تم الإرسال",
+        "failed": "فشل"
+      },
+      "attemptLabel": "المحاولة {{count}}",
+      "empty": {
+        "title": "لا توجد أحداث مسجلة",
+        "description": "ستظهر هنا الأحداث المستلمة من Kirvano."
+      }
+    },
     "variablesTitle": "المتغيرات المتاحة",
     "variablesDescription": "استخدم هذه العناصر النائبة داخل رسالة القالب. يستبدلها Kirvano بالبيانات الفعلية عند تشغيل الحدث.",
     "variables": [
@@ -1048,7 +1089,7 @@
     "connectionTitle": "اتصال الويب هوك",
     "connectionDescription": "قم بتهيئة هذا الرابط وهذا الرمز كويب هوك في حساب Kirvano الخاص بك لكي تصل الأحداث إلى هنا.",
     "urlLabel": "رابط التكامل",
-    "tokenLabel": "الرمز (ترويسة X-Kirvano-Token)",
+    "tokenLabel": "الرمز (ترويسة security-token)",
     "copy": "نسخ",
     "regenerateToken": "إعادة إنشاء الرمز",
     "regenerateConfirm": "تؤدي إعادة الإنشاء إلى إبطال الرمز الحالي فورًا — ستحتاج أيضًا إلى تحديثه في إعدادات الويب هوك في Kirvano. المتابعة؟",

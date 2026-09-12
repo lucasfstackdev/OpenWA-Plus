@@ -12,6 +12,7 @@
     "delete": "삭제",
     "create": "생성",
     "close": "닫기",
+    "save": "저장",
     "showApiKey": "API 키 표시",
     "hideApiKey": "API 키 숨기기",
     "search": "검색",
@@ -992,6 +993,46 @@
     "templateLabel": "메시지 템플릿",
     "enabledLabel": "활성",
     "editMessage": "메시지 편집",
+    "delay": {
+      "button": "발송 지연 설정",
+      "title": "발송 지연",
+      "description": "이벤트 수신과 메시지 발송 사이의 대기 시간입니다.",
+      "minutesLabel": "지연 시간(분)",
+      "summary": "{{count}}분 후 발송"
+    },
+    "tabs": {
+      "config": "설정",
+      "log": "이벤트 로그"
+    },
+    "log": {
+      "subtitle": "Kirvano에서 수신한 이벤트 기록과 각 발송 상태입니다.",
+      "searchPlaceholder": "이름 또는 전화번호로 검색",
+      "filters": {
+        "eventType": "이벤트 유형",
+        "allEvents": "모든 이벤트",
+        "from": "시작",
+        "to": "종료"
+      },
+      "columns": {
+        "receivedAt": "수신 시각",
+        "eventType": "유형",
+        "status": "상태",
+        "queueEstimate": "대기열 진입(예상)",
+        "customerName": "고객",
+        "customerPhone": "전화번호"
+      },
+      "status": {
+        "pending": "대기 중",
+        "queued": "대기열",
+        "dispatched": "발송됨",
+        "failed": "실패"
+      },
+      "attemptLabel": "{{count}}번째 시도",
+      "empty": {
+        "title": "기록된 이벤트 없음",
+        "description": "Kirvano에서 수신한 이벤트가 여기에 표시됩니다."
+      }
+    },
     "variablesTitle": "사용 가능한 변수",
     "variablesDescription": "템플릿 메시지 안에서 이 플레이스홀더를 사용하세요. 이벤트가 발생하면 Kirvano가 실제 데이터로 대체합니다.",
     "variables": [
@@ -1033,7 +1074,7 @@
     "connectionTitle": "웹훅 연결",
     "connectionDescription": "이벤트가 여기로 전달되도록 이 URL과 토큰을 Kirvano 계정의 웹훅으로 구성하세요.",
     "urlLabel": "연동 URL",
-    "tokenLabel": "토큰 (X-Kirvano-Token 헤더)",
+    "tokenLabel": "토큰 (security-token 헤더)",
     "copy": "복사",
     "regenerateToken": "토큰 재발급",
     "regenerateConfirm": "재발급하면 현재 토큰이 즉시 무효화됩니다 — Kirvano 웹훅 설정에서도 업데이트해야 합니다. 계속하시겠습니까?",

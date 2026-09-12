@@ -1,6 +1,6 @@
 // Fixtures are the real payloads from sample-kirvano.payload.md, trimmed to the fields the reader
 // actually looks at plus the ones known to vary/be absent per event type.
-import { buildVars, extractPhoneDigits, formatLocalDateTime } from './kirvano-payload.util';
+import { buildVars, extractCustomerName, extractPhoneDigits, formatLocalDateTime } from './kirvano-payload.util';
 
 const pixGenerated = {
   event: 'PIX_GENERATED',
@@ -101,6 +101,18 @@ describe('formatLocalDateTime', () => {
     expect(formatLocalDateTime('2023-12-18T17:38:17Z')).toBe('2023-12-18T17:38:17Z');
     expect(formatLocalDateTime('')).toBe('');
     expect(formatLocalDateTime('not a date')).toBe('not a date');
+  });
+});
+
+describe('extractCustomerName', () => {
+  it('returns customer.name', () => {
+    expect(extractCustomerName(pixGenerated)).toBe('João da Silva');
+  });
+
+  it('returns undefined when absent or empty', () => {
+    expect(extractCustomerName({})).toBeUndefined();
+    expect(extractCustomerName({ customer: {} })).toBeUndefined();
+    expect(extractCustomerName({ customer: { name: '' } })).toBeUndefined();
   });
 });
 

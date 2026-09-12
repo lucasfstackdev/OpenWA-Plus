@@ -50,7 +50,7 @@ export class KirvanoTokenService {
    */
   async assertValidToken(sessionId: string, presented: string | undefined): Promise<void> {
     if (!presented) {
-      throw new UnauthorizedException('Missing X-Kirvano-Token header');
+      throw new UnauthorizedException('Missing security-token header');
     }
     const row = await this.repository.findOne({ where: { sessionId } });
     if (!row || !constantTimeEqual(presented, row.token)) {

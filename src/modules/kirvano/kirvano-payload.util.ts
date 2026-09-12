@@ -37,13 +37,12 @@ export function formatLocalDateTime(value: string): string {
  * instead of silently blanking.
  */
 export function buildVars(payload: Record<string, unknown>): Record<string, string> {
-  const customer = asRecord(payload.customer);
   const payment = asRecord(payload.payment);
   const products = Array.isArray(payload.products) ? payload.products : [];
 
   const vars: Record<string, string> = {};
 
-  const customerName = asString(customer?.name);
+  const customerName = extractCustomerName(payload);
   if (customerName) vars['customer.name'] = customerName;
 
   const totalPrice = asString(payload.total_price);
@@ -67,6 +66,12 @@ export function buildVars(payload: Record<string, unknown>): Record<string, stri
   if (checkoutUrl) vars.checkout_url = checkoutUrl;
 
   return vars;
+}
+
+/** `customer.name`, or undefined when absent/empty. */
+export function extractCustomerName(payload: Record<string, unknown>): string | undefined {
+  const customer = asRecord(payload.customer);
+  return asString(customer?.name);
 }
 
 /** Digits of `customer.phone_number`, or undefined when absent/empty (e.g. "5511987654321"). */

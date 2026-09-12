@@ -12,6 +12,7 @@
     "delete": "刪除",
     "create": "建立",
     "close": "關閉",
+    "save": "儲存",
     "showApiKey": "顯示 API 金鑰",
     "hideApiKey": "隱藏 API 金鑰",
     "search": "搜尋",
@@ -992,6 +993,46 @@
     "templateLabel": "訊息範本",
     "enabledLabel": "啟用",
     "editMessage": "編輯訊息",
+    "delay": {
+      "button": "設定發送延遲",
+      "title": "發送延遲",
+      "description": "從收到事件到發送訊息之間的等待時間。",
+      "minutesLabel": "延遲分鐘數",
+      "summary": "{{count}} 分鐘後發送"
+    },
+    "tabs": {
+      "config": "設定",
+      "log": "事件記錄"
+    },
+    "log": {
+      "subtitle": "從 Kirvano 收到的事件記錄及各自的發送狀態。",
+      "searchPlaceholder": "以姓名或電話搜尋",
+      "filters": {
+        "eventType": "事件類型",
+        "allEvents": "所有事件",
+        "from": "由",
+        "to": "至"
+      },
+      "columns": {
+        "receivedAt": "收到時間",
+        "eventType": "類型",
+        "status": "狀態",
+        "queueEstimate": "預計排隊時間",
+        "customerName": "客戶",
+        "customerPhone": "電話"
+      },
+      "status": {
+        "pending": "待處理",
+        "queued": "排隊中",
+        "dispatched": "已發送",
+        "failed": "失敗"
+      },
+      "attemptLabel": "第 {{count}} 次嘗試",
+      "empty": {
+        "title": "尚無事件記錄",
+        "description": "從 Kirvano 收到的事件將顯示在這裡。"
+      }
+    },
     "variablesTitle": "可用變數",
     "variablesDescription": "在範本訊息中使用這些佔位符。事件觸發時,Kirvano 會將其替換為真實資料。",
     "variables": [
@@ -1033,7 +1074,7 @@
     "connectionTitle": "Webhook 連接",
     "connectionDescription": "在您的 Kirvano 帳戶中將此網址和權杖配置為 Webhook,以便事件傳送到這裡。",
     "urlLabel": "整合網址",
-    "tokenLabel": "權杖(X-Kirvano-Token 標頭)",
+    "tokenLabel": "權杖(security-token 標頭)",
     "copy": "複製",
     "regenerateToken": "重新產生權杖",
     "regenerateConfirm": "重新產生會立即使目前的權杖失效 — 您還需要在 Kirvano 的 Webhook 設定中更新它。是否繼續?",

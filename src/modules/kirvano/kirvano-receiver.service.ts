@@ -1,14 +1,18 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { KirvanoService } from './kirvano.service';
 import { KirvanoTokenService } from './kirvano-token.service';
-import { KirvanoDispatchQueueService } from './kirvano-dispatch-queue.service';
+import { KirvanoEventLogService } from './kirvano-event-log.service';
 import { KIRVANO_EVENT_MAP } from './kirvano-event-map';
-import { buildVars, extractPhoneDigits } from './kirvano-payload.util';
+import { buildVars, extractCustomerName, extractPhoneDigits } from './kirvano-payload.util';
 import { toParticipantWid } from '../../engine/identity/wa-id';
 import { ContactService } from '../contact/contact.service';
 import { createLogger } from '../../common/services/logger.service';
 
 export interface KirvanoWebhookResult {
+  /**
+   * 'queued' means the event was persisted and scheduled — not that it's in the in-memory dispatch
+   * queue yet. KirvanoEventLogSweeperService moves it there once the event's delayMinutes elapses.
+   */
   status: 'queued' | 'ignored';
   event?: string;
 }
@@ -20,7 +24,7 @@ export class KirvanoReceiverService {
   constructor(
     private readonly kirvanoService: KirvanoService,
     private readonly tokenService: KirvanoTokenService,
-    private readonly dispatchQueue: KirvanoDispatchQueueService,
+    private readonly eventLogService: KirvanoEventLogService,
     private readonly contactService: ContactService,
   ) {}
 
@@ -74,11 +78,15 @@ export class KirvanoReceiverService {
       });
     }
 
-    this.dispatchQueue.enqueue(sessionId, {
+    await this.eventLogService.recordPending(sessionId, {
+      eventType,
       chatId,
       templateId: config.templateId,
       vars: buildVars(payload),
-      eventType,
+      customerName: extractCustomerName(payload) ?? null,
+      customerPhone: phone,
+      delayMinutes: config.delayMinutes,
+      receivedAt: new Date(),
     });
 
     return { status: 'queued', event: eventType };

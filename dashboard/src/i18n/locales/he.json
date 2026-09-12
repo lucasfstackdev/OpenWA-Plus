@@ -12,6 +12,7 @@
     "delete": "מחיקה",
     "create": "יצירה",
     "close": "סגירה",
+    "save": "שמירה",
     "showApiKey": "הצג מפתח API",
     "hideApiKey": "הסתר מפתח API",
     "search": "חיפוש",
@@ -1001,6 +1002,46 @@
     "templateLabel": "תבנית הודעה",
     "enabledLabel": "פעיל",
     "editMessage": "עריכת הודעה",
+    "delay": {
+      "button": "הגדרת עיכוב שליחה",
+      "title": "עיכוב שליחה",
+      "description": "זמן ההמתנה בין קבלת האירוע לשליחת ההודעה.",
+      "minutesLabel": "דקות עיכוב",
+      "summary": "שליחה בעוד {{count}} דק׳"
+    },
+    "tabs": {
+      "config": "הגדרות",
+      "log": "יומן אירועים"
+    },
+    "log": {
+      "subtitle": "היסטוריית האירועים שהתקבלו מ-Kirvano וסטטוס השליחה של כל אחד מהם.",
+      "searchPlaceholder": "חיפוש לפי שם או טלפון",
+      "filters": {
+        "eventType": "סוג אירוע",
+        "allEvents": "כל האירועים",
+        "from": "מ־",
+        "to": "עד"
+      },
+      "columns": {
+        "receivedAt": "התקבל ב־",
+        "eventType": "סוג",
+        "status": "סטטוס",
+        "queueEstimate": "כניסה לתור (משוער)",
+        "customerName": "לקוח",
+        "customerPhone": "טלפון"
+      },
+      "status": {
+        "pending": "ממתין",
+        "queued": "בתור",
+        "dispatched": "נשלח",
+        "failed": "נכשל"
+      },
+      "attemptLabel": "ניסיון {{count}}",
+      "empty": {
+        "title": "לא נרשמו אירועים",
+        "description": "אירועים שיתקבלו מ-Kirvano יופיעו כאן."
+      }
+    },
     "variablesTitle": "משתנים זמינים",
     "variablesDescription": "השתמשו בפלייסהולדרים האלה בתוך הודעת התבנית. Kirvano מחליף אותם בנתונים אמיתיים כאשר האירוע מופעל.",
     "variables": [
@@ -1042,7 +1083,7 @@
     "connectionTitle": "חיבור ה-webhook",
     "connectionDescription": "הגדירו את הכתובת והטוקן האלה כ-webhook בחשבון Kirvano שלכם כדי שהאירועים יגיעו לכאן.",
     "urlLabel": "כתובת האינטגרציה",
-    "tokenLabel": "טוקן (כותרת X-Kirvano-Token)",
+    "tokenLabel": "טוקן (כותרת security-token)",
     "copy": "העתקה",
     "regenerateToken": "יצירת טוקן מחדש",
     "regenerateConfirm": "יצירה מחדש מבטלת מיד את הטוקן הנוכחי — תצטרכו לעדכן אותו גם בהגדרות ה-webhook ב-Kirvano. להמשיך?",

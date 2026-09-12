@@ -54,6 +54,10 @@ export class KirvanoEventConfig {
   @Column({ type: 'boolean', default: true })
   enabled!: boolean;
 
+  // Minutes to wait between receiving the webhook and enqueuing the message for dispatch.
+  @Column({ type: 'int', default: 1 })
+  delayMinutes!: number;
+
   @CreateDateColumn()
   createdAt!: Date;
 

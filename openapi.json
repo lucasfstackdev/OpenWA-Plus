@@ -7875,7 +7875,7 @@
             "description": "Payload is missing customer.phone_number."
           },
           "401": {
-            "description": "Missing or invalid X-Kirvano-Token header."
+            "description": "Missing or invalid security-token header."
           },
           "429": {
             "description": "Per-session rate limit exceeded (KIRVANO_RECEIVER_LIMIT)."
@@ -14839,7 +14839,7 @@
         "properties": {
           "token": {
             "type": "string",
-            "description": "Shared secret sent by Kirvano in the X-Kirvano-Token header"
+            "description": "Shared secret sent by Kirvano in the security-token header"
           }
         },
         "required": [

@@ -12,6 +12,7 @@
     "delete": "Supprimer",
     "create": "Créer",
     "close": "Fermer",
+    "save": "Enregistrer",
     "showApiKey": "Afficher la clé API",
     "hideApiKey": "Masquer la clé API",
     "search": "Rechercher",
@@ -992,6 +993,46 @@
     "templateLabel": "Modèle de message",
     "enabledLabel": "Actif",
     "editMessage": "Modifier le message",
+    "delay": {
+      "button": "Configurer le délai d'envoi",
+      "title": "Délai d'envoi",
+      "description": "Temps d'attente entre la réception de l'événement et l'envoi du message.",
+      "minutesLabel": "Minutes de délai",
+      "summary": "Envoi dans {{count}} min"
+    },
+    "tabs": {
+      "config": "Configuration",
+      "log": "Journal des événements"
+    },
+    "log": {
+      "subtitle": "Historique des événements reçus de Kirvano et le statut d'envoi de chacun.",
+      "searchPlaceholder": "Rechercher par nom ou téléphone",
+      "filters": {
+        "eventType": "Type d'événement",
+        "allEvents": "Tous les événements",
+        "from": "De",
+        "to": "À"
+      },
+      "columns": {
+        "receivedAt": "Reçu le",
+        "eventType": "Type",
+        "status": "Statut",
+        "queueEstimate": "Entrée en file (estimée)",
+        "customerName": "Client",
+        "customerPhone": "Téléphone"
+      },
+      "status": {
+        "pending": "En attente",
+        "queued": "En file",
+        "dispatched": "Envoyé",
+        "failed": "Échoué"
+      },
+      "attemptLabel": "Tentative {{count}}",
+      "empty": {
+        "title": "Aucun événement enregistré",
+        "description": "Les événements reçus de Kirvano apparaîtront ici."
+      }
+    },
     "variablesTitle": "Variables disponibles",
     "variablesDescription": "Utilisez ces variables dans le message d'un modèle. Kirvano les remplace par les données réelles lorsque l'événement se déclenche.",
     "variables": [
@@ -1033,7 +1074,7 @@
     "connectionTitle": "Connexion du webhook",
     "connectionDescription": "Configurez cette URL et ce jeton comme webhook dans votre compte Kirvano pour que les événements arrivent ici.",
     "urlLabel": "URL d'intégration",
-    "tokenLabel": "Jeton (en-tête X-Kirvano-Token)",
+    "tokenLabel": "Jeton (en-tête security-token)",
     "copy": "Copier",
     "regenerateToken": "Régénérer le jeton",
     "regenerateConfirm": "Régénérer invalide immédiatement le jeton actuel — vous devrez aussi le mettre à jour dans la configuration du webhook Kirvano. Continuer ?",

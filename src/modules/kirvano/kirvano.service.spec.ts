@@ -42,6 +42,7 @@ describe('KirvanoService', () => {
       expect(configs.map(c => c.eventType)).toEqual(KIRVANO_EVENT_TYPES);
       for (const config of configs) {
         expect(config.enabled).toBe(true);
+        expect(config.delayMinutes).toBe(1);
         const template = await templateService.findOne('sessA', config.templateId);
         expect(template.name).toBe(KIRVANO_DEFAULT_TEMPLATES[config.eventType].name);
         expect(template.body).toBe(KIRVANO_DEFAULT_TEMPLATES[config.eventType].body);
@@ -79,6 +80,12 @@ describe('KirvanoService', () => {
 
       const updated = await service.updateEvent('sessA', 'ON_PIX_GENERATED', { templateId: custom.id });
       expect(updated.templateId).toBe(custom.id);
+    });
+
+    it('persists a custom delayMinutes', async () => {
+      await service.listEvents('sessA');
+      const updated = await service.updateEvent('sessA', 'ON_PIX_GENERATED', { delayMinutes: 15 });
+      expect(updated.delayMinutes).toBe(15);
     });
 
     it('rejects an unknown event type', async () => {

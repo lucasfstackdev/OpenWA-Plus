@@ -12,6 +12,7 @@
     "delete": "Delete",
     "create": "Create",
     "close": "Close",
+    "save": "Save",
     "showApiKey": "Show API key",
     "hideApiKey": "Hide API key",
     "search": "Search",
@@ -992,6 +993,46 @@
     "templateLabel": "Message template",
     "enabledLabel": "Active",
     "editMessage": "Edit message",
+    "delay": {
+      "button": "Configure dispatch delay",
+      "title": "Dispatch delay",
+      "description": "Time to wait between receiving the event and sending the message.",
+      "minutesLabel": "Delay minutes",
+      "summary": "Dispatches in {{count}} min"
+    },
+    "tabs": {
+      "config": "Configuration",
+      "log": "Event log"
+    },
+    "log": {
+      "subtitle": "History of events received from Kirvano and each one's dispatch status.",
+      "searchPlaceholder": "Search by name or phone",
+      "filters": {
+        "eventType": "Event type",
+        "allEvents": "All events",
+        "from": "From",
+        "to": "To"
+      },
+      "columns": {
+        "receivedAt": "Received at",
+        "eventType": "Type",
+        "status": "Status",
+        "queueEstimate": "Queue entry (estimated)",
+        "customerName": "Customer",
+        "customerPhone": "Phone"
+      },
+      "status": {
+        "pending": "Pending",
+        "queued": "Queued",
+        "dispatched": "Dispatched",
+        "failed": "Failed"
+      },
+      "attemptLabel": "Attempt {{count}}",
+      "empty": {
+        "title": "No events recorded",
+        "description": "Events received from Kirvano will appear here."
+      }
+    },
     "variablesTitle": "Available variables",
     "variablesDescription": "Use these placeholders inside a template's message. Kirvano replaces them with real data when the event fires.",
     "variables": [
@@ -1033,7 +1074,7 @@
     "connectionTitle": "Webhook connection",
     "connectionDescription": "Configure this URL and token as a webhook in your Kirvano account so events are delivered here.",
     "urlLabel": "Integration URL",
-    "tokenLabel": "Token (X-Kirvano-Token header)",
+    "tokenLabel": "Token (security-token header)",
     "copy": "Copy",
     "regenerateToken": "Regenerate token",
     "regenerateConfirm": "Regenerating invalidates the current token immediately — you'll need to update it in Kirvano's webhook settings too. Continue?",

@@ -6458,7 +6458,7 @@ Replace the session's webhook token, invalidating the old one immediately. **Aut
 #### POST /api/sessions/:sessionId/kirvano/receiver
 
 Kirvano's own webhook target — configure it in your Kirvano account, sending the token above in
-the `X-Kirvano-Token` header. **Auth:** none (`@Public()`); the header token is instead checked
+the `security-token` header. **Auth:** none (`@Public()`); the header token is instead checked
 against the session's stored token in constant time. Also rate-limited per session
 (`KIRVANO_RECEIVER_LIMIT`/`KIRVANO_RECEIVER_TTL`, default 120 requests per 60s window) — kept
 independent of the global per-IP limit since Kirvano delivers every merchant's webhooks from
@@ -6484,7 +6484,7 @@ is reformatted from Kirvano's `YYYY-MM-DD HH:mm:ss` to the Brazilian `DD/MM/YYYY
 ```
 
 `{ "status": "ignored" }` (same `200`) for an unmapped or disabled event. `400` — payload is
-missing `customer.phone_number`. `401` — missing or invalid `X-Kirvano-Token`. `429` — per-session
+missing `customer.phone_number`. `401` — missing or invalid `security-token`. `429` — per-session
 rate limit exceeded.
 
 ## 6.5 Real-time API (WebSocket)

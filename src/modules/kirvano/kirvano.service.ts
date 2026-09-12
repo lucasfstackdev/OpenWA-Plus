@@ -46,6 +46,9 @@ export class KirvanoService {
     if (dto.enabled !== undefined) {
       config.enabled = dto.enabled;
     }
+    if (dto.delayMinutes !== undefined) {
+      config.delayMinutes = dto.delayMinutes;
+    }
 
     const saved = await this.repository.save(config);
     this.logger.log('Kirvano event config updated', { sessionId, eventType: validEventType });

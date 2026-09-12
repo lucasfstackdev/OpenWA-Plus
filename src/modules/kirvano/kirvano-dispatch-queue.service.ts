@@ -8,6 +8,13 @@ export interface KirvanoDispatchJob {
   vars: Record<string, string>;
   /** Kept only for logging a failed dispatch — not sent anywhere. */
   eventType?: string;
+  /**
+   * Optional per-job outcome hook (e.g. so KirvanoEventLogSweeperService can persist the final
+   * status). Called right where the existing try/catch already logs success/failure — never allowed
+   * to throw back into the queue loop, so a bug in the callback can't stop other sessions' jobs from
+   * draining.
+   */
+  onSettled?: (result: { outcome: 'sent' } | { outcome: 'failed'; error: string }) => void;
 }
 
 interface SessionQueueState {
@@ -73,19 +80,32 @@ export class KirvanoDispatchQueueService {
             templateId: job.templateId,
             vars: job.vars,
           });
+          this.safeSettle(job, { outcome: 'sent' });
         } catch (err) {
           // A failed dispatch (deleted template, session offline, invalid chatId, ...) must not stop
           // the rest of the queue for this session, nor propagate anywhere — the HTTP response for the
           // webhook that enqueued this job was already sent.
-          this.logger.warn('Kirvano dispatch failed', {
-            sessionId,
-            eventType: job.eventType,
-            error: err instanceof Error ? err.message : String(err),
-          });
+          const error = err instanceof Error ? err.message : String(err);
+          this.logger.warn('Kirvano dispatch failed', { sessionId, eventType: job.eventType, error });
+          this.safeSettle(job, { outcome: 'failed', error });
         }
       }
     } finally {
       state.processing = false;
+    }
+  }
+
+  /** Invokes job.onSettled without letting a throw inside it escape into the processing loop. */
+  private safeSettle(
+    job: KirvanoDispatchJob,
+    result: Parameters<NonNullable<KirvanoDispatchJob['onSettled']>>[0],
+  ): void {
+    try {
+      job.onSettled?.(result);
+    } catch (err) {
+      this.logger.warn('Kirvano dispatch onSettled callback threw', {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 

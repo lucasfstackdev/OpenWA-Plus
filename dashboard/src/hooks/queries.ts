@@ -18,6 +18,7 @@ import {
   type UpdateInstanceInput,
   type KirvanoEventType,
   type KirvanoEventUpdatePayload,
+  type KirvanoEventLogListParams,
 } from '../services/api';
 
 // ── Query Keys ────────────────────────────────────────────────────────
@@ -31,6 +32,8 @@ export const queryKeys = {
   templates: (sessionId: string) => ['sessions', sessionId, 'templates'] as const,
   kirvanoEvents: (sessionId: string) => ['sessions', sessionId, 'kirvano', 'events'] as const,
   kirvanoToken: (sessionId: string) => ['sessions', sessionId, 'kirvano', 'token'] as const,
+  kirvanoEventLog: (sessionId: string, params: KirvanoEventLogListParams) =>
+    ['sessions', sessionId, 'kirvano', 'log', params] as const,
   apiKeys: ['apiKeys'] as const,
   logs: (params: { severity?: string; page: number; limit: number }) => ['logs', params] as const,
   infraStatus: ['infra', 'status'] as const,
@@ -215,6 +218,17 @@ export function useRegenerateKirvanoTokenMutation() {
     onSuccess: (_token, sessionId) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.kirvanoToken(sessionId) });
     },
+  });
+}
+
+export function useKirvanoEventLogQuery(sessionId: string, params: KirvanoEventLogListParams, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.kirvanoEventLog(sessionId, params),
+    queryFn: () => kirvanoApi.listLog(sessionId, params),
+    enabled: enabled && !!sessionId,
+    // Shorter than the other Kirvano hooks' 30s: automatic retries change a row's status on their
+    // own, so a fairly fresh refetch is what keeps the table honest without any user action.
+    staleTime: 10_000,
   });
 }
 

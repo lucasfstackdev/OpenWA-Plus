@@ -860,6 +860,7 @@ export interface KirvanoEventConfig {
   eventType: KirvanoEventType;
   templateId: string;
   enabled: boolean;
+  delayMinutes: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -867,10 +868,36 @@ export interface KirvanoEventConfig {
 export interface KirvanoEventUpdatePayload {
   templateId?: string;
   enabled?: boolean;
+  delayMinutes?: number;
 }
 
 export interface KirvanoTokenView {
   token: string;
+}
+
+export type KirvanoEventLogStatus = 'pending' | 'queued' | 'dispatched' | 'failed';
+
+export interface KirvanoEventLogEntry {
+  id: string;
+  sessionId: string;
+  eventType: KirvanoEventType;
+  receivedAt: string;
+  dispatchAt: string;
+  status: KirvanoEventLogStatus;
+  customerName: string | null;
+  customerPhone: string | null;
+  dispatchAttempts: number;
+  lastError: string | null;
+  dispatchedAt: string | null;
+}
+
+export interface KirvanoEventLogListParams {
+  from?: string;
+  to?: string;
+  eventType?: KirvanoEventType;
+  search?: string;
+  limit?: number;
+  offset?: number;
 }
 
 export const kirvanoApi = {
@@ -883,6 +910,19 @@ export const kirvanoApi = {
   getToken: (sessionId: string) => request<KirvanoTokenView>(`/sessions/${sessionId}/kirvano/token`),
   regenerateToken: (sessionId: string) =>
     request<KirvanoTokenView>(`/sessions/${sessionId}/kirvano/token/regenerate`, { method: 'POST' }),
+  listLog: (sessionId: string, params: KirvanoEventLogListParams = {}) => {
+    const query = new URLSearchParams();
+    if (params.from) query.set('from', params.from);
+    if (params.to) query.set('to', params.to);
+    if (params.eventType) query.set('eventType', params.eventType);
+    if (params.search) query.set('search', params.search);
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    const qs = query.toString();
+    return request<{ data: KirvanoEventLogEntry[]; total: number }>(
+      `/sessions/${sessionId}/kirvano/events/log${qs ? `?${qs}` : ''}`,
+    );
+  },
 };
 
 // =============================================================================

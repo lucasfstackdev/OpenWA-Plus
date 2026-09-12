@@ -2,7 +2,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
  * Creates `kirvano_integrations` — one row per session holding the shared secret the Kirvano webhook
- * receiver compares against the `X-Kirvano-Token` header. `sessionId` is the primary key (not
+ * receiver compares against the `security-token` header. `sessionId` is the primary key (not
  * generated): a session either has a token or doesn't, there's nothing else to key on. CASCADE FK to
  * sessions: the token has no meaning after its session is gone. Hand-authored because `synchronize` is
  * off on the `data` connection for Postgres (and optional on SQLite).

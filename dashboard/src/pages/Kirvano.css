@@ -15,6 +15,33 @@
   min-width: 240px;
 }
 
+.kirvano-page .kirvano-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.kirvano-page .kirvano-tab {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kirvano-page .kirvano-tab:hover {
+  color: var(--text-primary);
+}
+
+.kirvano-page .kirvano-tab.active {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+
 .kirvano-page .kirvano-connection {
   display: flex;
   flex-direction: column;
@@ -154,12 +181,26 @@
   white-space: nowrap;
 }
 
+.kirvano-page .kirvano-card-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
 .kirvano-page .kirvano-card-toggle {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
   flex-shrink: 0;
+}
+
+.kirvano-page .kirvano-card-delay {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .kirvano-page .kirvano-card-toggle span {
@@ -404,6 +445,13 @@
   font-size: 0.875rem;
 }
 
+.kirvano-page .kirvano-delay-description {
+  margin: 0 0 1.25rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
 .kirvano-page .kirvano-test-modal {
   width: min(560px, 100%);
 }
@@ -465,6 +513,245 @@
   word-break: break-word;
 }
 
+/* Event log tab — mirrors the .logs-page table/filters pattern (Logs.css), scoped to .kirvano-page
+   since those classes aren't global. */
+.kirvano-page .kirvano-log-subtitle {
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.kirvano-page .filters-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kirvano-page .search-input {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 220px;
+  max-width: 400px;
+  padding: 0.75rem 1rem;
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.kirvano-page .search-input svg {
+  color: var(--text-muted);
+}
+
+.kirvano-page .search-input input {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 0.9375rem;
+  color: var(--text-primary);
+}
+
+.kirvano-page .search-input input:focus {
+  outline: none;
+}
+
+.kirvano-page .filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 200px;
+}
+
+.kirvano-page .filter-group .custom-select {
+  flex: 1;
+}
+
+.kirvano-page .kirvano-log-date-filter {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.kirvano-page .kirvano-log-date-filter label {
+  white-space: nowrap;
+}
+
+.kirvano-page .kirvano-log-date-filter input {
+  width: auto;
+}
+
+.kirvano-page .logs-table-container {
+  background: var(--bg-white);
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+.kirvano-page .logs-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 800px;
+  font-size: 0.875rem;
+}
+
+.kirvano-page .logs-table .table-row {
+  display: grid;
+  grid-template-columns: 170px 150px 150px 170px 1fr 150px;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.kirvano-page .logs-table .table-row:last-child {
+  border-bottom: none;
+}
+
+.kirvano-page .logs-table .table-row.header {
+  background: var(--bg-light);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+
+.kirvano-page .logs-table .table-row:not(.header):hover {
+  background: rgba(37, 211, 102, 0.05);
+}
+
+.kirvano-page .logs-table .timestamp {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.kirvano-page .kirvano-log-status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+.kirvano-page .kirvano-log-status-badge.pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
+}
+
+.kirvano-page .kirvano-log-status-badge.queued {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--info);
+}
+
+.kirvano-page .kirvano-log-status-badge.dispatched {
+  background: rgba(37, 211, 102, 0.15);
+  color: var(--primary);
+}
+
+.kirvano-page .kirvano-log-status-badge.failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--error);
+}
+
+.kirvano-page .kirvano-log-attempts {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+}
+
+.kirvano-page .kirvano-log-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+}
+
+.kirvano-page .empty-table-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.kirvano-page .empty-table-state svg {
+  margin-bottom: 1rem;
+  opacity: 0.4;
+  color: var(--text-muted);
+}
+
+.kirvano-page .empty-table-state h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem;
+}
+
+.kirvano-page .empty-table-state p {
+  margin: 0;
+  font-size: 0.875rem;
+  max-width: 300px;
+}
+
+.kirvano-page .pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+}
+
+.kirvano-page .pagination button {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.kirvano-page .pagination button:hover:not(:disabled) {
+  background: var(--bg-light);
+}
+
+.kirvano-page .pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.kirvano-page .page-numbers {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.kirvano-page .page-numbers button {
+  min-width: 36px;
+  padding: 0.5rem;
+}
+
+.kirvano-page .page-numbers button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
 @media (max-width: 900px) {
   .kirvano-page {
     padding: 1rem;
@@ -473,5 +760,9 @@
   .kirvano-page .kirvano-session-select {
     width: 100%;
     min-width: 0;
+  }
+
+  .kirvano-page .search-input {
+    max-width: none;
   }
 }

@@ -12,6 +12,7 @@
     "delete": "Sil",
     "create": "Oluştur",
     "close": "Kapat",
+    "save": "Kaydet",
     "showApiKey": "API anahtarını göster",
     "hideApiKey": "API anahtarını gizle",
     "search": "Ara",
@@ -968,6 +969,46 @@
     "templateLabel": "Mesaj şablonu",
     "enabledLabel": "Aktif",
     "editMessage": "Mesajı düzenle",
+    "delay": {
+      "button": "Gönderim gecikmesini yapılandır",
+      "title": "Gönderim gecikmesi",
+      "description": "Olayın alınması ile mesajın gönderilmesi arasındaki bekleme süresi.",
+      "minutesLabel": "Gecikme dakikası",
+      "summary": "{{count}} dk içinde gönderilecek"
+    },
+    "tabs": {
+      "config": "Yapılandırma",
+      "log": "Olay günlüğü"
+    },
+    "log": {
+      "subtitle": "Kirvano'dan alınan olayların geçmişi ve her birinin gönderim durumu.",
+      "searchPlaceholder": "İsim veya telefon ile ara",
+      "filters": {
+        "eventType": "Olay türü",
+        "allEvents": "Tüm olaylar",
+        "from": "Başlangıç",
+        "to": "Bitiş"
+      },
+      "columns": {
+        "receivedAt": "Alınma zamanı",
+        "eventType": "Tür",
+        "status": "Durum",
+        "queueEstimate": "Kuyruğa giriş (tahmini)",
+        "customerName": "Müşteri",
+        "customerPhone": "Telefon"
+      },
+      "status": {
+        "pending": "Beklemede",
+        "queued": "Kuyrukta",
+        "dispatched": "Gönderildi",
+        "failed": "Başarısız"
+      },
+      "attemptLabel": "Deneme {{count}}",
+      "empty": {
+        "title": "Kayıtlı olay yok",
+        "description": "Kirvano'dan alınan olaylar burada görünecek."
+      }
+    },
     "variablesTitle": "Kullanılabilir değişkenler",
     "variablesDescription": "Bu yer tutucuları bir şablonun mesajı içinde kullanın. Olay tetiklendiğinde Kirvano bunları gerçek verilerle değiştirir.",
     "variables": [
@@ -1009,7 +1050,7 @@
     "connectionTitle": "Webhook bağlantısı",
     "connectionDescription": "Olayların buraya ulaşması için bu URL'yi ve bu token'ı Kirvano hesabınızda webhook olarak yapılandırın.",
     "urlLabel": "Entegrasyon URL'si",
-    "tokenLabel": "Token (X-Kirvano-Token başlığı)",
+    "tokenLabel": "Token (security-token başlığı)",
     "copy": "Kopyala",
     "regenerateToken": "Token'ı yenile",
     "regenerateConfirm": "Yenileme mevcut token'ı hemen geçersiz kılar — Kirvano webhook ayarlarında da güncellemeniz gerekecek. Devam edilsin mi?",
