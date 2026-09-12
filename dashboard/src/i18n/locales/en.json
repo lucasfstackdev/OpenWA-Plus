@@ -1105,6 +1105,23 @@
         "sent": "Test message sent",
         "sendFailed": "Failed to send test message: {{message}}"
       }
+    },
+    "settingsTitle": "Settings",
+    "stats": {
+      "title": "Event statistics",
+      "chartTitle": "Events over time",
+      "empty": "No events in the selected period",
+      "presets": {
+        "today": "Today",
+        "threeDays": "3 days",
+        "week": "This week",
+        "month": "This month",
+        "custom": "Custom"
+      },
+      "mode": {
+        "cumulative": "Cumulative",
+        "grouped": "Grouped by period"
+      }
     }
   }
 }

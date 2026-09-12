@@ -1081,6 +1081,23 @@
         "sent": "Test mesajı gönderildi",
         "sendFailed": "Test mesajı gönderilemedi: {{message}}"
       }
+    },
+    "settingsTitle": "Ayarlar",
+    "stats": {
+      "title": "Olay istatistikleri",
+      "chartTitle": "Zaman içinde olaylar",
+      "empty": "Seçilen dönemde olay yok",
+      "presets": {
+        "today": "Bugün",
+        "threeDays": "3 gün",
+        "week": "Bu hafta",
+        "month": "Bu ay",
+        "custom": "Özel"
+      },
+      "mode": {
+        "cumulative": "Kümülatif",
+        "grouped": "Döneme göre gruplanmış"
+      }
     }
   }
 }

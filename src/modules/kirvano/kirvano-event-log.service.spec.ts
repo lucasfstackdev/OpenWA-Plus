@@ -1,8 +1,13 @@
 // Exercises the real repository behaviour (Between/Like filtering, pagination, status transitions)
 // against an in-memory DB rather than a mocked repository — those TypeORM query shapes are easy to
 // get subtly wrong with mocks.
+import { BadRequestException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { KirvanoEventLogService, MAX_KIRVANO_EVENT_LOG_PAGE_SIZE } from './kirvano-event-log.service';
+import {
+  KirvanoEventLogService,
+  MAX_KIRVANO_EVENT_LOG_PAGE_SIZE,
+  MAX_KIRVANO_STATS_RANGE_DAYS,
+} from './kirvano-event-log.service';
 import { KirvanoEventLog } from './entities/kirvano-event-log.entity';
 import { Session, SessionStatus } from '../session/entities/session.entity';
 
@@ -108,6 +113,123 @@ describe('KirvanoEventLogService', () => {
       expect((await service.list('sessA', { search: 'ana' })).data).toHaveLength(1);
       expect((await service.list('sessA', { search: '22222' })).data).toHaveLength(1);
       expect((await service.list('sessA', { search: 'nobody' })).data).toHaveLength(0);
+    });
+  });
+
+  describe('getStats', () => {
+    it('sums totals per type and buckets by day when the range spans more than 36h', async () => {
+      await service.recordPending('sessA', {
+        ...baseInput,
+        eventType: 'ON_PIX_GENERATED',
+        receivedAt: new Date('2024-01-01T10:00:00.000Z'),
+      });
+      await service.recordPending('sessA', {
+        ...baseInput,
+        eventType: 'ON_PIX_GENERATED',
+        receivedAt: new Date('2024-01-01T14:00:00.000Z'), // same day as above -> same bucket
+      });
+      await service.recordPending('sessA', {
+        ...baseInput,
+        eventType: 'ON_SALE_APPROVED',
+        receivedAt: new Date('2024-01-02T09:00:00.000Z'),
+      });
+
+      const result = await service.getStats(
+        'sessA',
+        new Date('2024-01-01T00:00:00.000Z'),
+        new Date('2024-01-03T00:00:00.000Z'),
+      );
+
+      expect(result.totals).toEqual({
+        ON_ABANDONED_CART: 0,
+        ON_PIX_EXPIRED: 0,
+        ON_PIX_GENERATED: 2,
+        ON_SALE_APPROVED: 1,
+      });
+      expect(result.timeSeries).toEqual([
+        {
+          timestamp: '2024-01-01',
+          ON_ABANDONED_CART: 0,
+          ON_PIX_EXPIRED: 0,
+          ON_PIX_GENERATED: 2,
+          ON_SALE_APPROVED: 0,
+        },
+        {
+          timestamp: '2024-01-02',
+          ON_ABANDONED_CART: 0,
+          ON_PIX_EXPIRED: 0,
+          ON_PIX_GENERATED: 0,
+          ON_SALE_APPROVED: 1,
+        },
+      ]);
+    });
+
+    it('buckets by hour when the range is 36h or less', async () => {
+      await service.recordPending('sessA', {
+        ...baseInput,
+        eventType: 'ON_PIX_EXPIRED',
+        receivedAt: new Date('2024-01-01T10:15:00.000Z'),
+      });
+      await service.recordPending('sessA', {
+        ...baseInput,
+        eventType: 'ON_PIX_EXPIRED',
+        receivedAt: new Date('2024-01-01T10:45:00.000Z'), // same hour -> same bucket
+      });
+
+      const result = await service.getStats(
+        'sessA',
+        new Date('2024-01-01T00:00:00.000Z'),
+        new Date('2024-01-01T23:59:59.000Z'),
+      );
+
+      expect(result.timeSeries).toEqual([
+        {
+          timestamp: '2024-01-01 10:00:00',
+          ON_ABANDONED_CART: 0,
+          ON_PIX_EXPIRED: 2,
+          ON_PIX_GENERATED: 0,
+          ON_SALE_APPROVED: 0,
+        },
+      ]);
+    });
+
+    it('excludes events outside the [from, to] range', async () => {
+      await service.recordPending('sessA', { ...baseInput, receivedAt: new Date('2024-01-01T00:00:00.000Z') });
+      await service.recordPending('sessA', { ...baseInput, receivedAt: new Date('2024-06-01T00:00:00.000Z') });
+
+      const result = await service.getStats(
+        'sessA',
+        new Date('2024-05-01T00:00:00.000Z'),
+        new Date('2024-07-01T00:00:00.000Z'),
+      );
+
+      expect(result.totals.ON_PIX_GENERATED).toBe(1);
+    });
+
+    it('scopes counts to the given session', async () => {
+      const sessions = ds.getRepository(Session);
+      await sessions.save(sessions.create({ id: 'sessB', name: 'sessB', status: SessionStatus.READY, config: {} }));
+      await service.recordPending('sessA', { ...baseInput, receivedAt: new Date('2024-01-01T00:00:00.000Z') });
+      await service.recordPending('sessB', { ...baseInput, receivedAt: new Date('2024-01-01T00:00:00.000Z') });
+
+      const result = await service.getStats(
+        'sessA',
+        new Date('2023-12-31T00:00:00.000Z'),
+        new Date('2024-01-02T00:00:00.000Z'),
+      );
+
+      expect(result.totals.ON_PIX_GENERATED).toBe(1);
+    });
+
+    it('rejects a `to` at or before `from`', async () => {
+      const at = new Date('2024-01-01T00:00:00.000Z');
+      await expect(service.getStats('sessA', at, at)).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('rejects a span longer than MAX_KIRVANO_STATS_RANGE_DAYS', async () => {
+      const from = new Date('2024-01-01T00:00:00.000Z');
+      const to = new Date(from.getTime() + (MAX_KIRVANO_STATS_RANGE_DAYS + 1) * 24 * 60 * 60 * 1000);
+      await expect(service.getStats('sessA', from, to)).rejects.toBeInstanceOf(BadRequestException);
     });
   });
 

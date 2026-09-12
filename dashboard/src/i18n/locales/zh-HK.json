@@ -1105,6 +1105,23 @@
         "sent": "測試訊息已傳送",
         "sendFailed": "傳送測試訊息失敗:{{message}}"
       }
+    },
+    "settingsTitle": "設定",
+    "stats": {
+      "title": "事件統計",
+      "chartTitle": "事件趨勢",
+      "empty": "所選時間段內沒有事件",
+      "presets": {
+        "today": "今天",
+        "threeDays": "3天",
+        "week": "本週",
+        "month": "本月",
+        "custom": "自訂"
+      },
+      "mode": {
+        "cumulative": "累計",
+        "grouped": "按週期分組"
+      }
     }
   }
 }

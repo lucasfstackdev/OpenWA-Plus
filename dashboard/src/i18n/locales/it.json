@@ -1105,6 +1105,23 @@
         "sent": "Messaggio di prova inviato",
         "sendFailed": "Impossibile inviare il messaggio di prova: {{message}}"
       }
+    },
+    "settingsTitle": "Impostazioni",
+    "stats": {
+      "title": "Statistiche degli eventi",
+      "chartTitle": "Eventi nel tempo",
+      "empty": "Nessun evento nel periodo selezionato",
+      "presets": {
+        "today": "Oggi",
+        "threeDays": "3 giorni",
+        "week": "Questa settimana",
+        "month": "Questo mese",
+        "custom": "Personalizzato"
+      },
+      "mode": {
+        "cumulative": "Cumulativo",
+        "grouped": "Raggruppato per periodo"
+      }
     }
   }
 }

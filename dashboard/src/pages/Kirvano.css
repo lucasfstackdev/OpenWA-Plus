@@ -60,6 +60,16 @@
   font-weight: 700;
 }
 
+/* Visual divider between the new stats/KPI block and the existing config cards (connection + events). */
+.kirvano-page .kirvano-section-title {
+  margin: 0.5rem 0 1.25rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
 .kirvano-page .kirvano-connection > p {
   margin: -0.625rem 0 0;
   color: var(--text-secondary);

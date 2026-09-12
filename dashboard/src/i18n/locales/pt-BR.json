@@ -1105,6 +1105,23 @@
         "sent": "Mensagem de teste enviada",
         "sendFailed": "Falha ao enviar mensagem de teste: {{message}}"
       }
+    },
+    "settingsTitle": "Configurações",
+    "stats": {
+      "title": "Estatísticas dos eventos",
+      "chartTitle": "Eventos ao longo do tempo",
+      "empty": "Nenhum evento no período selecionado",
+      "presets": {
+        "today": "Hoje",
+        "threeDays": "3 dias",
+        "week": "Essa semana",
+        "month": "Esse mês",
+        "custom": "Personalizado"
+      },
+      "mode": {
+        "cumulative": "Acumulado",
+        "grouped": "Agrupado por período"
+      }
     }
   }
 }

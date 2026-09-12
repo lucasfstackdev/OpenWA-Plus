@@ -1105,6 +1105,23 @@
         "sent": "测试消息已发送",
         "sendFailed": "发送测试消息失败:{{message}}"
       }
+    },
+    "settingsTitle": "设置",
+    "stats": {
+      "title": "事件统计",
+      "chartTitle": "事件趋势",
+      "empty": "所选时间段内没有事件",
+      "presets": {
+        "today": "今天",
+        "threeDays": "3天",
+        "week": "本周",
+        "month": "本月",
+        "custom": "自定义"
+      },
+      "mode": {
+        "cumulative": "累计",
+        "grouped": "按周期分组"
+      }
     }
   }
 }

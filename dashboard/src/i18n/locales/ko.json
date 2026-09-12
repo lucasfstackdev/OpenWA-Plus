@@ -1105,6 +1105,23 @@
         "sent": "테스트 메시지가 전송되었습니다",
         "sendFailed": "테스트 메시지 전송 실패: {{message}}"
       }
+    },
+    "settingsTitle": "설정",
+    "stats": {
+      "title": "이벤트 통계",
+      "chartTitle": "시간별 이벤트",
+      "empty": "선택한 기간에 이벤트가 없습니다",
+      "presets": {
+        "today": "오늘",
+        "threeDays": "3일",
+        "week": "이번 주",
+        "month": "이번 달",
+        "custom": "사용자 지정"
+      },
+      "mode": {
+        "cumulative": "누적",
+        "grouped": "기간별 그룹화"
+      }
     }
   }
 }

@@ -5,6 +5,7 @@ import type { KirvanoEventLogEntry, KirvanoEventType } from '../services/api';
 import { useKirvanoEventLogQuery } from '../hooks/queries';
 import { CustomSelect } from '../components/CustomSelect';
 import { pageWindow } from '../utils/pageWindow';
+import { formatBrazilianPhone } from '../utils/formatPhone';
 
 const EVENT_TYPES: KirvanoEventType[] = ['ON_ABANDONED_CART', 'ON_PIX_EXPIRED', 'ON_PIX_GENERATED', 'ON_SALE_APPROVED'];
 const LIMIT = 20;
@@ -128,7 +129,7 @@ export function KirvanoEventLog({ sessionId }: { sessionId: string }) {
                 </span>
                 <span className="timestamp">{formatTimestamp(row.dispatchAt)}</span>
                 <span>{row.customerName || '—'}</span>
-                <span>{row.customerPhone || '—'}</span>
+                <span>{row.customerPhone ? formatBrazilianPhone(row.customerPhone) : '—'}</span>
               </div>
             ))
           )}

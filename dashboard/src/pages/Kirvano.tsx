@@ -1,19 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import {
-  Check,
-  CheckCircle2,
-  Clock,
-  Copy,
-  Loader2,
-  Pencil,
-  QrCode,
-  RefreshCw,
-  Send,
-  ShoppingCart,
-  Timer,
-} from 'lucide-react';
+import { Check, Copy, Loader2, Pencil, RefreshCw, Send, ShoppingCart, Timer } from 'lucide-react';
+import { lazyWithRetry as lazy } from '../utils/lazyWithRetry';
 import {
   API_BASE_URL,
   contactApi,
@@ -38,8 +27,14 @@ import { PageHeader } from '../components/PageHeader';
 import { Modal } from '../components/Modal';
 import { copyToClipboard } from '../utils/clipboard';
 import { extractPlaceholders, renderPreview } from '../utils/templateVariables';
+import { formatBrazilianPhone } from '../utils/formatPhone';
+import { EVENT_ICONS } from '../utils/kirvanoEvents';
 import { KirvanoEventLog } from './KirvanoEventLog';
 import './Kirvano.css';
+
+// recharts is heavy — lazy-load the stats/KPI section as its own chunk, same reasoning as
+// DashboardCharts on the main Dashboard page.
+const KirvanoCharts = lazy(() => import('../components/KirvanoCharts').then(m => ({ default: m.KirvanoCharts })));
 
 interface KirvanoVariable {
   token: string;
@@ -92,23 +87,6 @@ function isFieldValid(type: VariableFieldType, rawValue: string): boolean {
     default:
       return true;
   }
-}
-
-/** Formats raw digits into "55 (18) 99160 4584" (country code + area code + number) as the user
- *  types. Caps at 13 digits: 2 (country) + 2 (area) + 9 (BR mobile number with the 9th digit). */
-function formatBrazilianPhone(digits: string): string {
-  const d = digits.slice(0, 13);
-  if (d.length <= 2) return d;
-  let result = d.slice(0, 2);
-  const rest = d.slice(2);
-  result += ` (${rest.slice(0, 2)}`;
-  if (rest.length <= 2) return result;
-  result += ')';
-  const number = rest.slice(2);
-  if (number.length === 0) return result;
-  result += ` ${number.slice(0, 5)}`;
-  if (number.length > 5) result += ` ${number.slice(5, 9)}`;
-  return result;
 }
 
 /** Absolute URL: API_BASE_URL is relative ('/api') for same-origin deploys, absolute for split-origin
@@ -361,13 +339,6 @@ function TestMessageModal({
   );
 }
 
-const EVENT_ICONS: Record<KirvanoEventType, typeof ShoppingCart> = {
-  ON_ABANDONED_CART: ShoppingCart,
-  ON_PIX_EXPIRED: Clock,
-  ON_PIX_GENERATED: QrCode,
-  ON_SALE_APPROVED: CheckCircle2,
-};
-
 function DelayConfigModal({
   open,
   onClose,
@@ -610,6 +581,12 @@ export function Kirvano() {
             </div>
           ) : (
             <>
+              <Suspense fallback={null}>
+                <KirvanoCharts sessionId={selectedSessionId} />
+              </Suspense>
+
+              <h2 className="kirvano-section-title">{t('kirvano.settingsTitle')}</h2>
+
               <ConnectionCard sessionId={selectedSessionId} canWrite={canWrite} />
 
               <div className="kirvano-grid">

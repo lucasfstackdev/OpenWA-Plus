@@ -34,6 +34,8 @@ export const queryKeys = {
   kirvanoToken: (sessionId: string) => ['sessions', sessionId, 'kirvano', 'token'] as const,
   kirvanoEventLog: (sessionId: string, params: KirvanoEventLogListParams) =>
     ['sessions', sessionId, 'kirvano', 'log', params] as const,
+  kirvanoStats: (sessionId: string, from: string, to: string) =>
+    ['sessions', sessionId, 'kirvano', 'stats', from, to] as const,
   apiKeys: ['apiKeys'] as const,
   logs: (params: { severity?: string; page: number; limit: number }) => ['logs', params] as const,
   infraStatus: ['infra', 'status'] as const,
@@ -188,6 +190,10 @@ export function useKirvanoEventsQuery(sessionId: string, enabled = true) {
     queryFn: () => kirvanoApi.list(sessionId),
     enabled: enabled && !!sessionId,
     staleTime: 30_000,
+    // Kirvano's own webhook receiver can seed/enable events outside this tab (another operator, or
+    // the first webhook ever hitting a session) — poll so the page reflects that without a manual
+    // refresh. Only ticks while the tab is visible (React Query default).
+    refetchInterval: 10_000,
   });
 }
 
@@ -229,6 +235,20 @@ export function useKirvanoEventLogQuery(sessionId: string, params: KirvanoEventL
     // Shorter than the other Kirvano hooks' 30s: automatic retries change a row's status on their
     // own, so a fairly fresh refetch is what keeps the table honest without any user action.
     staleTime: 10_000,
+    // New webhook events land here without any action in this tab — poll so the log fills in live.
+    refetchInterval: 10_000,
+  });
+}
+
+export function useKirvanoStatsQuery(sessionId: string, from: string, to: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.kirvanoStats(sessionId, from, to),
+    queryFn: () => kirvanoApi.getStats(sessionId, from, to),
+    enabled: enabled && !!sessionId && !!from && !!to,
+    staleTime: 30_000,
+    // Keeps the KPI totals/chart moving as new events arrive, same reasoning as the other Kirvano
+    // queries above.
+    refetchInterval: 10_000,
   });
 }
 

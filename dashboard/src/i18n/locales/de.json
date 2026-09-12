@@ -1105,6 +1105,23 @@
         "sent": "Testnachricht gesendet",
         "sendFailed": "Testnachricht konnte nicht gesendet werden: {{message}}"
       }
+    },
+    "settingsTitle": "Einstellungen",
+    "stats": {
+      "title": "Ereignisstatistiken",
+      "chartTitle": "Ereignisse im Zeitverlauf",
+      "empty": "Keine Ereignisse im ausgewählten Zeitraum",
+      "presets": {
+        "today": "Heute",
+        "threeDays": "3 Tage",
+        "week": "Diese Woche",
+        "month": "Dieser Monat",
+        "custom": "Benutzerdefiniert"
+      },
+      "mode": {
+        "cumulative": "Kumulativ",
+        "grouped": "Nach Zeitraum gruppiert"
+      }
     }
   }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Put, Query } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { RequireRole } from '../auth/decorators/auth.decorators';
 import { ApiKeyRole } from '../auth/entities/api-key.entity';
@@ -8,6 +8,7 @@ import {
   KirvanoEventConfigResponseDto,
   KirvanoEventLogListResponseDto,
   KirvanoEventLogResponseDto,
+  KirvanoEventStatsResponseDto,
   UpdateKirvanoEventConfigDto,
 } from './dto';
 
@@ -64,6 +65,34 @@ export class KirvanoController {
       offset: offset ? parseInt(offset, 10) : undefined,
     });
     return { data: result.data.map(entity => KirvanoEventLogResponseDto.fromEntity(entity)), total: result.total };
+  }
+
+  @Get('stats')
+  @RequireRole(ApiKeyRole.OPERATOR)
+  @ApiOperation({ summary: "Aggregate the session's Kirvano event counts per type, bucketed for a chart" })
+  @ApiParam({ name: 'sessionId', description: 'Session ID' })
+  @ApiQuery({ name: 'from', required: true, description: 'ISO datetime lower bound on receivedAt' })
+  @ApiQuery({ name: 'to', required: true, description: 'ISO datetime upper bound on receivedAt' })
+  @ApiResponse({
+    status: 200,
+    description: 'Per-type totals and a bucketed time series.',
+    type: KirvanoEventStatsResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Missing/invalid from or to, or an out-of-range span.' })
+  async getStats(
+    @Param('sessionId') sessionId: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ): Promise<KirvanoEventStatsResponseDto> {
+    if (!from || !to) {
+      throw new BadRequestException('`from` and `to` are required');
+    }
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+    if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) {
+      throw new BadRequestException('`from` and `to` must be valid ISO datetimes');
+    }
+    return this.eventLogService.getStats(sessionId, fromDate, toDate);
   }
 
   @Put(':eventType')

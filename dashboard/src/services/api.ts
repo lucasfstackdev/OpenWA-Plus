@@ -900,6 +900,19 @@ export interface KirvanoEventLogListParams {
   offset?: number;
 }
 
+export interface KirvanoEventStatsPoint {
+  timestamp: string;
+  ON_ABANDONED_CART: number;
+  ON_PIX_EXPIRED: number;
+  ON_PIX_GENERATED: number;
+  ON_SALE_APPROVED: number;
+}
+
+export interface KirvanoEventStats {
+  totals: Record<KirvanoEventType, number>;
+  timeSeries: KirvanoEventStatsPoint[];
+}
+
 export const kirvanoApi = {
   list: (sessionId: string) => request<KirvanoEventConfig[]>(`/sessions/${sessionId}/kirvano/events`),
   update: (sessionId: string, eventType: KirvanoEventType, data: KirvanoEventUpdatePayload) =>
@@ -923,6 +936,10 @@ export const kirvanoApi = {
       `/sessions/${sessionId}/kirvano/events/log${qs ? `?${qs}` : ''}`,
     );
   },
+  getStats: (sessionId: string, from: string, to: string) =>
+    request<KirvanoEventStats>(
+      `/sessions/${sessionId}/kirvano/events/stats?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    ),
 };
 
 // =============================================================================
