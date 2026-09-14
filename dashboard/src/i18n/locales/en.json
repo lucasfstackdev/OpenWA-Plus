@@ -1019,7 +1019,8 @@
         "status": "Status",
         "queueEstimate": "Queue entry (estimated)",
         "customerName": "Customer",
-        "customerPhone": "Phone"
+        "customerPhone": "Phone",
+        "actions": "Actions"
       },
       "status": {
         "pending": "Pending",
@@ -1031,7 +1032,8 @@
       "empty": {
         "title": "No events recorded",
         "description": "Events received from Kirvano will appear here."
-      }
+      },
+      "openChat": "Open chat"
     },
     "variablesTitle": "Available variables",
     "variablesDescription": "Use these placeholders inside a template's message. Kirvano replaces them with real data when the event fires.",

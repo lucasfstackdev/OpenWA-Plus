@@ -612,7 +612,7 @@
 
 .kirvano-page .logs-table .table-row {
   display: grid;
-  grid-template-columns: 170px 150px 150px 170px 1fr 150px;
+  grid-template-columns: 170px 150px 150px 170px 1fr 150px 56px;
   gap: 1rem;
   padding: 1rem 1.5rem;
   align-items: center;

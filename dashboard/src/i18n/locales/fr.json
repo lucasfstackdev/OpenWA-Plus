@@ -1019,7 +1019,8 @@
         "status": "Statut",
         "queueEstimate": "Entrée en file (estimée)",
         "customerName": "Client",
-        "customerPhone": "Téléphone"
+        "customerPhone": "Téléphone",
+        "actions": "Actions"
       },
       "status": {
         "pending": "En attente",
@@ -1031,7 +1032,8 @@
       "empty": {
         "title": "Aucun événement enregistré",
         "description": "Les événements reçus de Kirvano apparaîtront ici."
-      }
+      },
+      "openChat": "Ouvrir la conversation"
     },
     "variablesTitle": "Variables disponibles",
     "variablesDescription": "Utilisez ces variables dans le message d'un modèle. Kirvano les remplace par les données réelles lorsque l'événement se déclenche.",

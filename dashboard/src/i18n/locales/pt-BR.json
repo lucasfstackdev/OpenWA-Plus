@@ -1019,7 +1019,8 @@
         "status": "Status",
         "queueEstimate": "Entrada na fila (estimada)",
         "customerName": "Cliente",
-        "customerPhone": "Telefone"
+        "customerPhone": "Telefone",
+        "actions": "Ação"
       },
       "status": {
         "pending": "Pendente",
@@ -1031,7 +1032,8 @@
       "empty": {
         "title": "Nenhum evento registrado",
         "description": "Eventos recebidos da Kirvano vão aparecer aqui."
-      }
+      },
+      "openChat": "Abrir conversa"
     },
     "variablesTitle": "Variáveis disponíveis",
     "variablesDescription": "Use esses placeholders dentro da mensagem de um modelo. A Kirvano os substitui pelos dados reais quando o evento é disparado.",

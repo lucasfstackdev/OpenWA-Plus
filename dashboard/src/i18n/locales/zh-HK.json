@@ -1019,7 +1019,8 @@
         "status": "狀態",
         "queueEstimate": "預計排隊時間",
         "customerName": "客戶",
-        "customerPhone": "電話"
+        "customerPhone": "電話",
+        "actions": "操作"
       },
       "status": {
         "pending": "待處理",
@@ -1031,7 +1032,8 @@
       "empty": {
         "title": "尚無事件記錄",
         "description": "從 Kirvano 收到的事件將顯示在這裡。"
-      }
+      },
+      "openChat": "開啟聊天"
     },
     "variablesTitle": "可用變數",
     "variablesDescription": "在範本訊息中使用這些佔位符。事件觸發時,Kirvano 會將其替換為真實資料。",

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo, useLayoutEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Trans, useTranslation } from 'react-i18next';
 import { nextReconnectState } from '../utils/reconnectState';
@@ -113,9 +114,14 @@ export function Chats() {
   const { error: showErrorToast, warning: showWarningToast } = useToast();
   const { canWrite } = useRole();
 
+  // Deep-linked from /kirvano's event log ("open chat"): ?session=<id>&chat=<id> preselects the
+  // session and opens that chat once its chat list has loaded (see pendingHitRef below, which the
+  // existing global-search "jump to chat" effects already drive to completion).
+  const [searchParams] = useSearchParams();
+
   // Sessions list & active session
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [selectedSessionId, setSelectedSessionId] = useState<string>('');
+  const [selectedSessionId, setSelectedSessionId] = useState<string>(() => searchParams.get('session') || '');
   const [loadingSessions, setLoadingSessions] = useState<boolean>(true);
 
   // Chats list
@@ -263,7 +269,9 @@ export function Chats() {
         const list = await sessionApi.list();
         const readySessions = list.filter(s => s.status === 'ready');
         setSessions(readySessions);
-        if (readySessions.length > 0) {
+        // Don't clobber a session already selected via a deep link's ?session= param (captured in
+        // this closure at mount, before this async call resolves).
+        if (readySessions.length > 0 && !selectedSessionId) {
           setSelectedSessionId(readySessions[0].id);
         }
       } catch (err) {
@@ -273,6 +281,9 @@ export function Chats() {
       }
     };
     void loadSessions();
+    // Deliberately mount-only: `selectedSessionId` is read for its value at mount (see the comment
+    // above), not tracked — depending on it would re-run this fetch on every session switch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t, showErrorToast]);
 
   // 2. Fetch chats when active session changes
@@ -674,6 +685,17 @@ export function Chats() {
   // async gap: the chat-select effect picks it up once the list lands, and the scroll effect runs
   // once the messages have rendered.
   const pendingHitRef = useRef<{ chatId: string; waMessageId: string } | null>(null);
+
+  // Seeds the same pendingHitRef from a ?chat= deep link (see the ?session= handling above). No
+  // waMessageId to scroll to, so the scroll-into-view effect below just finds no matching element
+  // and no-ops — already the documented degrade-silently behavior for that case. Runs once: the
+  // "pending pickup" effect further down reacts to `chats` itself (including its first load), so
+  // this doesn't need to re-fire on every render.
+  useEffect(() => {
+    const chatId = searchParams.get('chat');
+    if (chatId) pendingHitRef.current = { chatId, waMessageId: '' };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSearchHit = useCallback(
     (hit: SearchHit) => {

@@ -886,6 +886,7 @@ export interface KirvanoEventLogEntry {
   status: KirvanoEventLogStatus;
   customerName: string | null;
   customerPhone: string | null;
+  chatId: string;
   dispatchAttempts: number;
   lastError: string | null;
   dispatchedAt: string | null;

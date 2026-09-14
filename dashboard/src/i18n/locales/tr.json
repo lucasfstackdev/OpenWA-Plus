@@ -995,7 +995,8 @@
         "status": "Durum",
         "queueEstimate": "Kuyruğa giriş (tahmini)",
         "customerName": "Müşteri",
-        "customerPhone": "Telefon"
+        "customerPhone": "Telefon",
+        "actions": "İşlemler"
       },
       "status": {
         "pending": "Beklemede",
@@ -1007,7 +1008,8 @@
       "empty": {
         "title": "Kayıtlı olay yok",
         "description": "Kirvano'dan alınan olaylar burada görünecek."
-      }
+      },
+      "openChat": "Sohbeti aç"
     },
     "variablesTitle": "Kullanılabilir değişkenler",
     "variablesDescription": "Bu yer tutucuları bir şablonun mesajı içinde kullanın. Olay tetiklendiğinde Kirvano bunları gerçek verilerle değiştirir.",

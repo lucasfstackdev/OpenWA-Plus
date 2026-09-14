@@ -37,6 +37,10 @@ export class KirvanoEventLogResponseDto {
   @Expose()
   customerPhone!: string | null;
 
+  @ApiProperty({ description: 'Target chat id for the dispatched message, for a dashboard "open chat" link' })
+  @Expose()
+  chatId!: string;
+
   @ApiProperty()
   @Expose()
   dispatchAttempts!: number;

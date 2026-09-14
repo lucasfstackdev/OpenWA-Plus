@@ -1034,7 +1034,8 @@
         "status": "الحالة",
         "queueEstimate": "دخول قائمة الانتظار (تقديري)",
         "customerName": "العميل",
-        "customerPhone": "الهاتف"
+        "customerPhone": "الهاتف",
+        "actions": "الإجراءات"
       },
       "status": {
         "pending": "قيد الانتظار",
@@ -1046,7 +1047,8 @@
       "empty": {
         "title": "لا توجد أحداث مسجلة",
         "description": "ستظهر هنا الأحداث المستلمة من Kirvano."
-      }
+      },
+      "openChat": "فتح المحادثة"
     },
     "variablesTitle": "المتغيرات المتاحة",
     "variablesDescription": "استخدم هذه العناصر النائبة داخل رسالة القالب. يستبدلها Kirvano بالبيانات الفعلية عند تشغيل الحدث.",

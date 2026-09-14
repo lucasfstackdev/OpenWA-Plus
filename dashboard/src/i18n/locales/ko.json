@@ -1019,7 +1019,8 @@
         "status": "상태",
         "queueEstimate": "대기열 진입(예상)",
         "customerName": "고객",
-        "customerPhone": "전화번호"
+        "customerPhone": "전화번호",
+        "actions": "작업"
       },
       "status": {
         "pending": "대기 중",
@@ -1031,7 +1032,8 @@
       "empty": {
         "title": "기록된 이벤트 없음",
         "description": "Kirvano에서 수신한 이벤트가 여기에 표시됩니다."
-      }
+      },
+      "openChat": "채팅 열기"
     },
     "variablesTitle": "사용 가능한 변수",
     "variablesDescription": "템플릿 메시지 안에서 이 플레이스홀더를 사용하세요. 이벤트가 발생하면 Kirvano가 실제 데이터로 대체합니다.",

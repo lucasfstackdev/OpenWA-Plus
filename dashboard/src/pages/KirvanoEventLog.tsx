@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AlertCircle, History, Loader2, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { AlertCircle, History, Loader2, MessageSquare, Search } from 'lucide-react';
 import type { KirvanoEventLogEntry, KirvanoEventType } from '../services/api';
 import { useKirvanoEventLogQuery } from '../hooks/queries';
 import { CustomSelect } from '../components/CustomSelect';
@@ -100,6 +101,7 @@ export function KirvanoEventLog({ sessionId }: { sessionId: string }) {
             <span>{t('kirvano.log.columns.queueEstimate')}</span>
             <span>{t('kirvano.log.columns.customerName')}</span>
             <span>{t('kirvano.log.columns.customerPhone')}</span>
+            <span>{t('kirvano.log.columns.actions')}</span>
           </div>
 
           {isLoading ? (
@@ -130,6 +132,16 @@ export function KirvanoEventLog({ sessionId }: { sessionId: string }) {
                 <span className="timestamp">{formatTimestamp(row.dispatchAt)}</span>
                 <span>{row.customerName || '—'}</span>
                 <span>{row.customerPhone ? formatBrazilianPhone(row.customerPhone) : '—'}</span>
+                <span>
+                  <Link
+                    to={`/chats?session=${encodeURIComponent(sessionId)}&chat=${encodeURIComponent(row.chatId)}`}
+                    className="icon-btn"
+                    title={t('kirvano.log.openChat')}
+                    aria-label={t('kirvano.log.openChat')}
+                  >
+                    <MessageSquare size={16} />
+                  </Link>
+                </span>
               </div>
             ))
           )}

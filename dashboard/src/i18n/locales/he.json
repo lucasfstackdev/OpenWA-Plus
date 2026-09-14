@@ -1028,7 +1028,8 @@
         "status": "סטטוס",
         "queueEstimate": "כניסה לתור (משוער)",
         "customerName": "לקוח",
-        "customerPhone": "טלפון"
+        "customerPhone": "טלפון",
+        "actions": "פעולות"
       },
       "status": {
         "pending": "ממתין",
@@ -1040,7 +1041,8 @@
       "empty": {
         "title": "לא נרשמו אירועים",
         "description": "אירועים שיתקבלו מ-Kirvano יופיעו כאן."
-      }
+      },
+      "openChat": "פתיחת שיחה"
     },
     "variablesTitle": "משתנים זמינים",
     "variablesDescription": "השתמשו בפלייסהולדרים האלה בתוך הודעת התבנית. Kirvano מחליף אותם בנתונים אמיתיים כאשר האירוע מופעל.",
