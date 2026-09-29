@@ -7,7 +7,7 @@ import {
 } from '../interfaces/whatsapp-engine.interface';
 import { type SerializedWid } from '../types/whatsapp-web-js.types';
 import { buildEditedMessage, buildIncomingMessageBase, mapContactFields } from './message-mapper';
-import { extractWwebjsCall, wwebjsAckToDeliveryStatus } from './wwebjs-messaging';
+import { declaredOnlyMedia, extractWwebjsCall, wwebjsAckToDeliveryStatus } from './wwebjs-messaging';
 import { type WwebjsEngineHost } from './wwebjs-host';
 
 /**
@@ -58,7 +58,15 @@ export function registerWwebjsMessageEvents(client: Client, host: WwebjsEngineHo
           const capped = await host.capInboundMediaFor(msg);
           if (capped) incomingMessage.media = capped;
         } catch (error) {
-          host.logger.error('Error downloading media', String(error));
+          // The reason goes in the context (not the trace arg): the console renderer prints context fields
+          // but drops `trace`, which left this log line with no cause at all.
+          host.logger.error('Error downloading media', undefined, {
+            msgId: msg.id?._serialized,
+            type: String(msg.type),
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Keep the envelope: the omitted marker lets the dashboard offer a fetch instead of a blank bubble.
+          incomingMessage.media = declaredOnlyMedia(msg);
         }
       }
 
