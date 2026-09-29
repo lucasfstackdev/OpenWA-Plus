@@ -213,8 +213,11 @@ function ChatThread({
                 </div>
               );
             }
-            if (!mediaInfo) return null;
-            if (mediaInfo.omitted) {
+            const isMediaTyped = ['image', 'video', 'audio', 'voice', 'sticker', 'document'].includes(msg.type);
+            if (!mediaInfo && !isMediaTyped) return null;
+            // A media-typed row with no payload at all (older rows / failed download) gets the same
+            // fetchable placeholder as an omitted one, instead of an empty bubble.
+            if (!mediaInfo || mediaInfo.omitted) {
               // Not a plain label: the bytes exist behind the per-message media route, so this is the
               // only handle the viewer has on them.
               const fetchState = msg.waMessageId ? mediaFetch[msg.waMessageId] : undefined;

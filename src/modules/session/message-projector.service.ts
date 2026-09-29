@@ -245,7 +245,9 @@ export class MessageProjector {
     engine: IWhatsAppEngine,
     incoming: IncomingMessage,
   ): Promise<InboundPersistOutcome | null> {
-    const metadata = buildMessageMetadata(incoming);
+    // Synthesize the omitted marker for a media-typed message that arrived without a payload (failed or
+    // skipped download): otherwise the row is stored bare and the dashboard renders an empty bubble.
+    const metadata = buildMessageMetadata(incoming, true);
 
     const chatName = incoming.contact?.pushName ?? incoming.contact?.name ?? undefined;
 

@@ -62,6 +62,7 @@ import { WwebjsGroups } from './wwebjs-groups';
 import { type WwebjsEngineHost } from './wwebjs-host';
 import { registerWwebjsMessageEvents } from './wwebjs-message-events';
 import { WwebjsMessaging, declaredOnlyMedia } from './wwebjs-messaging';
+import { downloadAndDecryptWaMedia } from './wwebjs-media-decrypt';
 import { WwebjsContacts } from './wwebjs-contacts';
 import { WwebjsProfile } from './wwebjs-profile';
 import { WwebjsLabels } from './wwebjs-labels';
@@ -375,7 +376,7 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
       resolveBounded = resolve;
     });
     const slotHeld = this.inboundLimiter.run(() => {
-      const download = msg.downloadMedia();
+      const download = msg.downloadMedia().catch((error: unknown) => this.downloadMediaViaCdn(msg, error));
       resolveBounded(
         withInboundDownloadTimeout(download, inboundMediaTimeoutMs(), () =>
           this.logger.warn(
@@ -434,6 +435,76 @@ export class WhatsAppWebJsAdapter extends EventEmitter implements IWhatsAppEngin
       });
     }
     return capped;
+  }
+
+  /**
+   * Fallback for a `msg.downloadMedia()` that threw. On current WhatsApp Web builds its internal
+   * downloader rejects the CDN response ("Unexpected mimetype application/octet-stream for media type
+   * image", surfaced only as the minified error `t`) even though the message is RESOLVED and carries
+   * every key. So read the key material out of the page and fetch + decrypt the blob in Node instead
+   * (see wwebjs-media-decrypt). Rethrows the ORIGINAL error when nothing could be recovered.
+   */
+  private async downloadMediaViaCdn(msg: Message, original: unknown): Promise<MessageMedia> {
+    const page = (
+      this.client as unknown as {
+        pupPage?: { evaluate: <T, A>(fn: (arg: A) => Promise<T>, arg?: A) => Promise<T> };
+      }
+    )?.pupPage;
+    const msgId = msg.id._serialized;
+    type KeyMaterial = {
+      directPath: string;
+      mediaKey: string;
+      encFilehash?: string;
+      type: string;
+      mimetype?: string;
+      filename?: string;
+    };
+    try {
+      const raw = await page?.evaluate(async (id: string): Promise<KeyMaterial | null> => {
+        const cols = (
+          window as unknown as {
+            require: (name: string) => {
+              Msg: {
+                get: (i: string) => unknown;
+                getMessagesById: (ids: string[]) => Promise<{ messages?: unknown[] }>;
+              };
+            };
+          }
+        ).require('WAWebCollections');
+        const m = (cols.Msg.get(id) ?? (await cols.Msg.getMessagesById([id]))?.messages?.[0]) as
+          | Record<string, unknown>
+          | undefined;
+        if (!m || typeof m.directPath !== 'string') return null;
+        const rawKey = m.mediaKey;
+        // Usually already base64; a byte array is encoded here so both shapes reach Node the same way.
+        const mediaKey =
+          typeof rawKey === 'string'
+            ? rawKey
+            : rawKey
+              ? btoa(String.fromCharCode(...Array.from(rawKey as ArrayLike<number>)))
+              : '';
+        if (!mediaKey) return null;
+        return {
+          directPath: m.directPath,
+          mediaKey,
+          encFilehash: typeof m.encFilehash === 'string' ? m.encFilehash : undefined,
+          type: String(m.type),
+          mimetype: typeof m.mimetype === 'string' ? m.mimetype : undefined,
+          filename: typeof m.filename === 'string' ? m.filename : undefined,
+        };
+      }, msgId);
+      if (raw) {
+        const bytes = await downloadAndDecryptWaMedia(raw, inboundMediaMaxBytes());
+        return new MessageMedia(raw.mimetype ?? '', bytes.toString('base64'), raw.filename, bytes.length);
+      }
+    } catch (fallbackError) {
+      this.logger.warn('Node-side CDN media download failed', {
+        msgId,
+        originalError: original instanceof Error ? original.message : String(original),
+        error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError),
+      });
+    }
+    throw original;
   }
 
   async initialize(callbacks: EngineEventCallbacks): Promise<void> {
