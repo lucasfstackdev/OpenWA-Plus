@@ -57,3 +57,22 @@ export function formatPhoneForDisplay(phoneOrJid: string): string | null {
   const prefixGroups = prefix.match(/.{1,3}/g) ?? [prefix];
   return `+${cc} ${[...prefixGroups, last4].join(' ')}`;
 }
+
+/** Formats raw digits into "55 (18) 99160 4584" (country code + area code + number) — Brazil-specific
+ *  grouping, unlike formatPhoneForDisplay's generic international heuristic above. Works both for a
+ *  complete stored number and for partial input as the user types. Caps at 13 digits: 2 (country) + 2
+ *  (area) + 9 (BR mobile number with the 9th digit). */
+export function formatBrazilianPhone(digits: string): string {
+  const d = digits.slice(0, 13);
+  if (d.length <= 2) return d;
+  let result = d.slice(0, 2);
+  const rest = d.slice(2);
+  result += ` (${rest.slice(0, 2)}`;
+  if (rest.length <= 2) return result;
+  result += ')';
+  const number = rest.slice(2);
+  if (number.length === 0) return result;
+  result += ` ${number.slice(0, 5)}`;
+  if (number.length > 5) result += ` ${number.slice(5, 9)}`;
+  return result;
+}

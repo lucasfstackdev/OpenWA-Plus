@@ -1,11 +1,12 @@
 // Render smoke test for the Chats page under the bare `node --test` runner (no vitest/jest).
 // It exists to catch the classic god-component extraction bugs: a missing prop that crashes the
-// render, or a lost provider (QueryClient / Role / Toast / i18n). The page is wrapped in the
-// same providers App.tsx uses (QueryClientProvider → RoleProvider → ToastProvider; i18n via the
-// side-effect import; Chats uses no router hooks, so no Router is needed) and the backend is
-// stubbed at the fetch layer with canned JSON for every endpoint the page hits on mount,
-// on chat open, on send, and on status-compose. Every stubbed request is recorded so tests can
-// assert the wire effect (POST body) of a UI action, not just its optimistic DOM echo.
+// render, or a lost provider (QueryClient / Role / Toast / i18n / Router). The page is wrapped in
+// the same providers App.tsx uses (QueryClientProvider → RoleProvider → ToastProvider, plus a
+// MemoryRouter — Chats reads ?session=/?chat= via useSearchParams for the /kirvano "open chat"
+// deep link, which throws outside a Router context; i18n via the side-effect import) and the
+// backend is stubbed at the fetch layer with canned JSON for every endpoint the page hits on
+// mount, on chat open, on send, and on status-compose. Every stubbed request is recorded so tests
+// can assert the wire effect (POST body) of a UI action, not just its optimistic DOM echo.
 //
 // Runner constraints honored here: plain .ts with React.createElement (the runner cannot parse
 // JSX), loader hooks registered before any app-module import (see test-helpers/register-hooks),
@@ -14,6 +15,7 @@ import '../test-helpers/register-hooks.ts';
 import { test, before, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { createElement } from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { Session, Chat, ChatMessage } from '../services/api';
 import type { installJsdomGlobals as installJsdomGlobalsFn } from '../test-helpers/jsdom.ts';
@@ -262,9 +264,13 @@ function renderChats(): { container: HTMLElement } {
   queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 1_000 } } });
   return rtl.render(
     createElement(
-      QueryClientProvider,
-      { client: queryClient },
-      createElement(RoleProvider, null, createElement(ToastProvider, null, createElement(Chats))),
+      MemoryRouter,
+      null,
+      createElement(
+        QueryClientProvider,
+        { client: queryClient },
+        createElement(RoleProvider, null, createElement(ToastProvider, null, createElement(Chats))),
+      ),
     ),
   );
 }

@@ -12,6 +12,7 @@
     "delete": "Supprimer",
     "create": "Créer",
     "close": "Fermer",
+    "save": "Enregistrer",
     "showApiKey": "Afficher la clé API",
     "hideApiKey": "Masquer la clé API",
     "search": "Rechercher",
@@ -63,7 +64,8 @@
     "messageTester": "Testeur de messages",
     "infrastructure": "Infrastructure",
     "plugins": "Plugins",
-    "logs": "Journaux"
+    "logs": "Journaux",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -977,5 +979,151 @@
       "current": "Cette session"
     },
     "loading": "Recherche…"
+  },
+  "kirvano": {
+    "title": "Intégration Kirvano",
+    "subtitle": "Configurez le message WhatsApp envoyé pour chaque événement du webhook de paiement Kirvano.",
+    "noSessions": "Créez d'abord une session pour configurer les événements Kirvano.",
+    "events": {
+      "ON_ABANDONED_CART": "Panier Abandonné",
+      "ON_PIX_EXPIRED": "Pix Expiré",
+      "ON_PIX_GENERATED": "Pix Généré",
+      "ON_SALE_APPROVED": "Vente Approuvée"
+    },
+    "templateLabel": "Modèle de message",
+    "enabledLabel": "Actif",
+    "editMessage": "Modifier le message",
+    "delay": {
+      "button": "Configurer le délai d'envoi",
+      "title": "Délai d'envoi",
+      "description": "Temps d'attente entre la réception de l'événement et l'envoi du message.",
+      "minutesLabel": "Minutes de délai",
+      "summary": "Envoi dans {{count}} min"
+    },
+    "tabs": {
+      "config": "Configuration",
+      "log": "Journal des événements"
+    },
+    "log": {
+      "subtitle": "Historique des événements reçus de Kirvano et le statut d'envoi de chacun.",
+      "searchPlaceholder": "Rechercher par nom ou téléphone",
+      "filters": {
+        "eventType": "Type d'événement",
+        "allEvents": "Tous les événements",
+        "from": "De",
+        "to": "À"
+      },
+      "columns": {
+        "receivedAt": "Reçu le",
+        "eventType": "Type",
+        "status": "Statut",
+        "queueEstimate": "Entrée en file (estimée)",
+        "customerName": "Client",
+        "customerPhone": "Téléphone",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "En attente",
+        "queued": "En file",
+        "dispatched": "Envoyé",
+        "failed": "Échoué"
+      },
+      "attemptLabel": "Tentative {{count}}",
+      "empty": {
+        "title": "Aucun événement enregistré",
+        "description": "Les événements reçus de Kirvano apparaîtront ici."
+      },
+      "openChat": "Ouvrir la conversation"
+    },
+    "variablesTitle": "Variables disponibles",
+    "variablesDescription": "Utilisez ces variables dans le message d'un modèle. Kirvano les remplace par les données réelles lorsque l'événement se déclenche.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "Nom du client"
+      },
+      {
+        "token": "total_price",
+        "description": "Montant total de l'achat"
+      },
+      {
+        "token": "products",
+        "description": "Noms des produits, séparés par des virgules"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Lien de l'image du QR Code Pix"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "Code Pix à copier-coller"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "Date d'expiration du paiement"
+      },
+      {
+        "token": "checkout_url",
+        "description": "URL du panier en ligne"
+      }
+    ],
+    "toasts": {
+      "updated": "Événement mis à jour",
+      "updateFailed": "Échec de la mise à jour de l'événement : {{message}}",
+      "tokenRegenerated": "Jeton régénéré",
+      "regenerateFailed": "Échec de la régénération du jeton : {{message}}"
+    },
+    "connectionTitle": "Connexion du webhook",
+    "connectionDescription": "Configurez cette URL et ce jeton comme webhook dans votre compte Kirvano pour que les événements arrivent ici.",
+    "urlLabel": "URL d'intégration",
+    "tokenLabel": "Jeton (en-tête security-token)",
+    "copy": "Copier",
+    "regenerateToken": "Régénérer le jeton",
+    "regenerateConfirm": "Régénérer invalide immédiatement le jeton actuel — vous devrez aussi le mettre à jour dans la configuration du webhook Kirvano. Continuer ?",
+    "variablesTable": {
+      "variable": "Variable",
+      "description": "Description"
+    },
+    "testMessage": {
+      "button": "Tester le message",
+      "title": "Tester le message",
+      "subtitle": "Remplissez les variables ci-dessous, vérifiez l'aperçu et envoyez un vrai message de test à un numéro WhatsApp.",
+      "phoneLabel": "Numéro de téléphone",
+      "phoneHint": "Incluez l'indicatif du pays, ex. : 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "Variables",
+      "previewTitle": "Aperçu",
+      "previewEmpty": "Remplissez les variables pour voir l'aperçu",
+      "submit": "Envoyer le test",
+      "cancel": "Annuler",
+      "errors": {
+        "required": "Ce champ est obligatoire",
+        "invalidUrl": "Saisissez une URL valide",
+        "invalidEmail": "Saisissez une adresse e-mail valide",
+        "invalidNumber": "Saisissez un nombre valide"
+      },
+      "toasts": {
+        "numberNotFound": "Ce numéro n'est pas sur WhatsApp",
+        "sent": "Message de test envoyé",
+        "sendFailed": "Échec de l'envoi du message de test : {{message}}"
+      }
+    },
+    "settingsTitle": "Paramètres",
+    "stats": {
+      "title": "Statistiques des événements",
+      "chartTitle": "Événements dans le temps",
+      "empty": "Aucun événement dans la période sélectionnée",
+      "presets": {
+        "today": "Aujourd'hui",
+        "threeDays": "3 jours",
+        "week": "Cette semaine",
+        "month": "Ce mois-ci",
+        "custom": "Personnalisé"
+      },
+      "mode": {
+        "cumulative": "Cumulé",
+        "grouped": "Groupé par période"
+      }
+    }
   }
 }

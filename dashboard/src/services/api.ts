@@ -849,6 +849,101 @@ export const templateApi = {
 };
 
 // =============================================================================
+// Kirvano Integration API
+// =============================================================================
+
+export type KirvanoEventType = 'ON_ABANDONED_CART' | 'ON_PIX_EXPIRED' | 'ON_PIX_GENERATED' | 'ON_SALE_APPROVED';
+
+export interface KirvanoEventConfig {
+  id: string;
+  sessionId: string;
+  eventType: KirvanoEventType;
+  templateId: string;
+  enabled: boolean;
+  delayMinutes: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface KirvanoEventUpdatePayload {
+  templateId?: string;
+  enabled?: boolean;
+  delayMinutes?: number;
+}
+
+export interface KirvanoTokenView {
+  token: string;
+}
+
+export type KirvanoEventLogStatus = 'pending' | 'queued' | 'dispatched' | 'failed';
+
+export interface KirvanoEventLogEntry {
+  id: string;
+  sessionId: string;
+  eventType: KirvanoEventType;
+  receivedAt: string;
+  dispatchAt: string;
+  status: KirvanoEventLogStatus;
+  customerName: string | null;
+  customerPhone: string | null;
+  chatId: string;
+  dispatchAttempts: number;
+  lastError: string | null;
+  dispatchedAt: string | null;
+}
+
+export interface KirvanoEventLogListParams {
+  from?: string;
+  to?: string;
+  eventType?: KirvanoEventType;
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface KirvanoEventStatsPoint {
+  timestamp: string;
+  ON_ABANDONED_CART: number;
+  ON_PIX_EXPIRED: number;
+  ON_PIX_GENERATED: number;
+  ON_SALE_APPROVED: number;
+}
+
+export interface KirvanoEventStats {
+  totals: Record<KirvanoEventType, number>;
+  timeSeries: KirvanoEventStatsPoint[];
+}
+
+export const kirvanoApi = {
+  list: (sessionId: string) => request<KirvanoEventConfig[]>(`/sessions/${sessionId}/kirvano/events`),
+  update: (sessionId: string, eventType: KirvanoEventType, data: KirvanoEventUpdatePayload) =>
+    request<KirvanoEventConfig>(`/sessions/${sessionId}/kirvano/events/${eventType}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+  getToken: (sessionId: string) => request<KirvanoTokenView>(`/sessions/${sessionId}/kirvano/token`),
+  regenerateToken: (sessionId: string) =>
+    request<KirvanoTokenView>(`/sessions/${sessionId}/kirvano/token/regenerate`, { method: 'POST' }),
+  listLog: (sessionId: string, params: KirvanoEventLogListParams = {}) => {
+    const query = new URLSearchParams();
+    if (params.from) query.set('from', params.from);
+    if (params.to) query.set('to', params.to);
+    if (params.eventType) query.set('eventType', params.eventType);
+    if (params.search) query.set('search', params.search);
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.offset) query.set('offset', String(params.offset));
+    const qs = query.toString();
+    return request<{ data: KirvanoEventLogEntry[]; total: number }>(
+      `/sessions/${sessionId}/kirvano/events/log${qs ? `?${qs}` : ''}`,
+    );
+  },
+  getStats: (sessionId: string, from: string, to: string) =>
+    request<KirvanoEventStats>(
+      `/sessions/${sessionId}/kirvano/events/stats?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`,
+    ),
+};
+
+// =============================================================================
 // Contact API
 // =============================================================================
 

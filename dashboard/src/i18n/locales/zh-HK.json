@@ -12,6 +12,7 @@
     "delete": "刪除",
     "create": "建立",
     "close": "關閉",
+    "save": "儲存",
     "showApiKey": "顯示 API 金鑰",
     "hideApiKey": "隱藏 API 金鑰",
     "search": "搜尋",
@@ -63,7 +64,8 @@
     "messageTester": "訊息測試器",
     "infrastructure": "基礎架構",
     "plugins": "外掛",
-    "logs": "記錄"
+    "logs": "記錄",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -977,5 +979,151 @@
       "current": "目前工作階段"
     },
     "loading": "搜尋中…"
+  },
+  "kirvano": {
+    "title": "Kirvano 整合",
+    "subtitle": "為每個 Kirvano 結賬 Webhook 事件配置要發送的 WhatsApp 訊息。",
+    "noSessions": "請先建立一個工作階段以配置 Kirvano 事件。",
+    "events": {
+      "ON_ABANDONED_CART": "購物車放棄",
+      "ON_PIX_EXPIRED": "Pix已過期",
+      "ON_PIX_GENERATED": "Pix已生成",
+      "ON_SALE_APPROVED": "銷售已批准"
+    },
+    "templateLabel": "訊息範本",
+    "enabledLabel": "啟用",
+    "editMessage": "編輯訊息",
+    "delay": {
+      "button": "設定發送延遲",
+      "title": "發送延遲",
+      "description": "從收到事件到發送訊息之間的等待時間。",
+      "minutesLabel": "延遲分鐘數",
+      "summary": "{{count}} 分鐘後發送"
+    },
+    "tabs": {
+      "config": "設定",
+      "log": "事件記錄"
+    },
+    "log": {
+      "subtitle": "從 Kirvano 收到的事件記錄及各自的發送狀態。",
+      "searchPlaceholder": "以姓名或電話搜尋",
+      "filters": {
+        "eventType": "事件類型",
+        "allEvents": "所有事件",
+        "from": "由",
+        "to": "至"
+      },
+      "columns": {
+        "receivedAt": "收到時間",
+        "eventType": "類型",
+        "status": "狀態",
+        "queueEstimate": "預計排隊時間",
+        "customerName": "客戶",
+        "customerPhone": "電話",
+        "actions": "操作"
+      },
+      "status": {
+        "pending": "待處理",
+        "queued": "排隊中",
+        "dispatched": "已發送",
+        "failed": "失敗"
+      },
+      "attemptLabel": "第 {{count}} 次嘗試",
+      "empty": {
+        "title": "尚無事件記錄",
+        "description": "從 Kirvano 收到的事件將顯示在這裡。"
+      },
+      "openChat": "開啟聊天"
+    },
+    "variablesTitle": "可用變數",
+    "variablesDescription": "在範本訊息中使用這些佔位符。事件觸發時,Kirvano 會將其替換為真實資料。",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "客戶姓名"
+      },
+      {
+        "token": "total_price",
+        "description": "訂單總金額"
+      },
+      {
+        "token": "products",
+        "description": "產品名稱,以逗號分隔"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Pix 二維碼圖片連結"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "可複製貼上的 Pix 代碼"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "付款到期日期"
+      },
+      {
+        "token": "checkout_url",
+        "description": "線上購物車網址"
+      }
+    ],
+    "toasts": {
+      "updated": "事件已更新",
+      "updateFailed": "更新事件失敗:{{message}}",
+      "tokenRegenerated": "權杖已重新產生",
+      "regenerateFailed": "重新產生權杖失敗:{{message}}"
+    },
+    "connectionTitle": "Webhook 連接",
+    "connectionDescription": "在您的 Kirvano 帳戶中將此網址和權杖配置為 Webhook,以便事件傳送到這裡。",
+    "urlLabel": "整合網址",
+    "tokenLabel": "權杖(security-token 標頭)",
+    "copy": "複製",
+    "regenerateToken": "重新產生權杖",
+    "regenerateConfirm": "重新產生會立即使目前的權杖失效 — 您還需要在 Kirvano 的 Webhook 設定中更新它。是否繼續?",
+    "variablesTable": {
+      "variable": "變數",
+      "description": "說明"
+    },
+    "testMessage": {
+      "button": "測試訊息",
+      "title": "測試訊息",
+      "subtitle": "填寫下方變數,查看預覽,然後向一個 WhatsApp 號碼發送真實的測試訊息。",
+      "phoneLabel": "電話號碼",
+      "phoneHint": "請包含國家代碼,例如:55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "變數",
+      "previewTitle": "預覽",
+      "previewEmpty": "填寫變數以查看預覽",
+      "submit": "傳送測試",
+      "cancel": "取消",
+      "errors": {
+        "required": "此欄位為必填",
+        "invalidUrl": "請輸入有效的網址",
+        "invalidEmail": "請輸入有效的電郵地址",
+        "invalidNumber": "請輸入有效的數字"
+      },
+      "toasts": {
+        "numberNotFound": "此號碼未註冊 WhatsApp",
+        "sent": "測試訊息已傳送",
+        "sendFailed": "傳送測試訊息失敗:{{message}}"
+      }
+    },
+    "settingsTitle": "設定",
+    "stats": {
+      "title": "事件統計",
+      "chartTitle": "事件趨勢",
+      "empty": "所選時間段內沒有事件",
+      "presets": {
+        "today": "今天",
+        "threeDays": "3天",
+        "week": "本週",
+        "month": "本月",
+        "custom": "自訂"
+      },
+      "mode": {
+        "cumulative": "累計",
+        "grouped": "按週期分組"
+      }
+    }
   }
 }

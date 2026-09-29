@@ -12,6 +12,7 @@
     "delete": "מחיקה",
     "create": "יצירה",
     "close": "סגירה",
+    "save": "שמירה",
     "showApiKey": "הצג מפתח API",
     "hideApiKey": "הסתר מפתח API",
     "search": "חיפוש",
@@ -63,7 +64,8 @@
     "messageTester": "בדיקת הודעות",
     "infrastructure": "תשתית",
     "plugins": "תוספים",
-    "logs": "לוגים"
+    "logs": "לוגים",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -986,5 +988,151 @@
       "current": "הפעלה זו"
     },
     "loading": "מחפש…"
+  },
+  "kirvano": {
+    "title": "אינטגרציית Kirvano",
+    "subtitle": "הגדירו את הודעת הוואטסאפ שנשלחת עבור כל אירוע webhook של תשלום ב-Kirvano.",
+    "noSessions": "צרו תחילה session כדי להגדיר את אירועי Kirvano.",
+    "events": {
+      "ON_ABANDONED_CART": "עגלה נטושה",
+      "ON_PIX_EXPIRED": "Pix פג תוקף",
+      "ON_PIX_GENERATED": "Pix נוצר",
+      "ON_SALE_APPROVED": "מכירה אושרה"
+    },
+    "templateLabel": "תבנית הודעה",
+    "enabledLabel": "פעיל",
+    "editMessage": "עריכת הודעה",
+    "delay": {
+      "button": "הגדרת עיכוב שליחה",
+      "title": "עיכוב שליחה",
+      "description": "זמן ההמתנה בין קבלת האירוע לשליחת ההודעה.",
+      "minutesLabel": "דקות עיכוב",
+      "summary": "שליחה בעוד {{count}} דק׳"
+    },
+    "tabs": {
+      "config": "הגדרות",
+      "log": "יומן אירועים"
+    },
+    "log": {
+      "subtitle": "היסטוריית האירועים שהתקבלו מ-Kirvano וסטטוס השליחה של כל אחד מהם.",
+      "searchPlaceholder": "חיפוש לפי שם או טלפון",
+      "filters": {
+        "eventType": "סוג אירוע",
+        "allEvents": "כל האירועים",
+        "from": "מ־",
+        "to": "עד"
+      },
+      "columns": {
+        "receivedAt": "התקבל ב־",
+        "eventType": "סוג",
+        "status": "סטטוס",
+        "queueEstimate": "כניסה לתור (משוער)",
+        "customerName": "לקוח",
+        "customerPhone": "טלפון",
+        "actions": "פעולות"
+      },
+      "status": {
+        "pending": "ממתין",
+        "queued": "בתור",
+        "dispatched": "נשלח",
+        "failed": "נכשל"
+      },
+      "attemptLabel": "ניסיון {{count}}",
+      "empty": {
+        "title": "לא נרשמו אירועים",
+        "description": "אירועים שיתקבלו מ-Kirvano יופיעו כאן."
+      },
+      "openChat": "פתיחת שיחה"
+    },
+    "variablesTitle": "משתנים זמינים",
+    "variablesDescription": "השתמשו בפלייסהולדרים האלה בתוך הודעת התבנית. Kirvano מחליף אותם בנתונים אמיתיים כאשר האירוע מופעל.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "שם הלקוח"
+      },
+      {
+        "token": "total_price",
+        "description": "סכום ההזמנה הכולל"
+      },
+      {
+        "token": "products",
+        "description": "שמות המוצרים, מופרדים בפסיקים"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "קישור לתמונת קוד ה-QR של Pix"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "קוד Pix להעתקה"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "תאריך תפוגת התשלום"
+      },
+      {
+        "token": "checkout_url",
+        "description": "כתובת URL של העגלה המקוונת"
+      }
+    ],
+    "toasts": {
+      "updated": "האירוע עודכן",
+      "updateFailed": "עדכון האירוע נכשל: {{message}}",
+      "tokenRegenerated": "הטוקן נוצר מחדש",
+      "regenerateFailed": "יצירת הטוקן מחדש נכשלה: {{message}}"
+    },
+    "connectionTitle": "חיבור ה-webhook",
+    "connectionDescription": "הגדירו את הכתובת והטוקן האלה כ-webhook בחשבון Kirvano שלכם כדי שהאירועים יגיעו לכאן.",
+    "urlLabel": "כתובת האינטגרציה",
+    "tokenLabel": "טוקן (כותרת security-token)",
+    "copy": "העתקה",
+    "regenerateToken": "יצירת טוקן מחדש",
+    "regenerateConfirm": "יצירה מחדש מבטלת מיד את הטוקן הנוכחי — תצטרכו לעדכן אותו גם בהגדרות ה-webhook ב-Kirvano. להמשיך?",
+    "variablesTable": {
+      "variable": "משתנה",
+      "description": "תיאור"
+    },
+    "testMessage": {
+      "button": "בדיקת הודעה",
+      "title": "בדיקת הודעה",
+      "subtitle": "מלאו את המשתנים למטה, בדקו את התצוגה המקדימה ושלחו הודעת בדיקה אמיתית למספר וואטסאפ.",
+      "phoneLabel": "מספר טלפון",
+      "phoneHint": "כללו קידומת מדינה, למשל: 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "משתנים",
+      "previewTitle": "תצוגה מקדימה",
+      "previewEmpty": "מלאו את המשתנים כדי לראות את התצוגה המקדימה",
+      "submit": "שליחת בדיקה",
+      "cancel": "ביטול",
+      "errors": {
+        "required": "שדה זה הוא חובה",
+        "invalidUrl": "הזינו כתובת URL תקינה",
+        "invalidEmail": "הזינו כתובת אימייל תקינה",
+        "invalidNumber": "הזינו מספר תקין"
+      },
+      "toasts": {
+        "numberNotFound": "המספר הזה אינו רשום בוואטסאפ",
+        "sent": "הודעת הבדיקה נשלחה",
+        "sendFailed": "שליחת הודעת הבדיקה נכשלה: {{message}}"
+      }
+    },
+    "settingsTitle": "הגדרות",
+    "stats": {
+      "title": "סטטיסטיקת אירועים",
+      "chartTitle": "אירועים לאורך זמן",
+      "empty": "אין אירועים בתקופה שנבחרה",
+      "presets": {
+        "today": "היום",
+        "threeDays": "3 ימים",
+        "week": "השבוע",
+        "month": "החודש",
+        "custom": "מותאם אישית"
+      },
+      "mode": {
+        "cumulative": "מצטבר",
+        "grouped": "מקובץ לפי תקופה"
+      }
+    }
   }
 }

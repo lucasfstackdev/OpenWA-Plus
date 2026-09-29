@@ -12,6 +12,7 @@
     "delete": "حذف",
     "create": "إنشاء",
     "close": "إغلاق",
+    "save": "حفظ",
     "showApiKey": "إظهار مفتاح API",
     "hideApiKey": "إخفاء مفتاح API",
     "search": "بحث",
@@ -63,7 +64,8 @@
     "messageTester": "اختبار الرسائل",
     "infrastructure": "البنية التحتية",
     "plugins": "الإضافات",
-    "logs": "السجلات"
+    "logs": "السجلات",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -992,5 +994,151 @@
       "current": "هذه الجلسة"
     },
     "loading": "جارٍ البحث…"
+  },
+  "kirvano": {
+    "title": "تكامل Kirvano",
+    "subtitle": "قم بتهيئة رسالة واتساب التي يتم إرسالها لكل حدث من أحداث ويب هوك الدفع في Kirvano.",
+    "noSessions": "أنشئ جلسة أولاً لتهيئة أحداث Kirvano.",
+    "events": {
+      "ON_ABANDONED_CART": "سلة متروكة",
+      "ON_PIX_EXPIRED": "انتهاء صلاحية Pix",
+      "ON_PIX_GENERATED": "إنشاء Pix",
+      "ON_SALE_APPROVED": "تم اعتماد البيع"
+    },
+    "templateLabel": "قالب الرسالة",
+    "enabledLabel": "نشط",
+    "editMessage": "تعديل الرسالة",
+    "delay": {
+      "button": "تكوين تأخير الإرسال",
+      "title": "تأخير الإرسال",
+      "description": "الوقت المستغرق بين استلام الحدث وإرسال الرسالة.",
+      "minutesLabel": "دقائق التأخير",
+      "summary": "الإرسال خلال {{count}} دقيقة"
+    },
+    "tabs": {
+      "config": "الإعدادات",
+      "log": "سجل الأحداث"
+    },
+    "log": {
+      "subtitle": "سجل الأحداث المستلمة من Kirvano وحالة إرسال كل منها.",
+      "searchPlaceholder": "البحث بالاسم أو الهاتف",
+      "filters": {
+        "eventType": "نوع الحدث",
+        "allEvents": "جميع الأحداث",
+        "from": "من",
+        "to": "إلى"
+      },
+      "columns": {
+        "receivedAt": "وقت الاستلام",
+        "eventType": "النوع",
+        "status": "الحالة",
+        "queueEstimate": "دخول قائمة الانتظار (تقديري)",
+        "customerName": "العميل",
+        "customerPhone": "الهاتف",
+        "actions": "الإجراءات"
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "queued": "في قائمة الانتظار",
+        "dispatched": "تم الإرسال",
+        "failed": "فشل"
+      },
+      "attemptLabel": "المحاولة {{count}}",
+      "empty": {
+        "title": "لا توجد أحداث مسجلة",
+        "description": "ستظهر هنا الأحداث المستلمة من Kirvano."
+      },
+      "openChat": "فتح المحادثة"
+    },
+    "variablesTitle": "المتغيرات المتاحة",
+    "variablesDescription": "استخدم هذه العناصر النائبة داخل رسالة القالب. يستبدلها Kirvano بالبيانات الفعلية عند تشغيل الحدث.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "اسم العميل"
+      },
+      {
+        "token": "total_price",
+        "description": "إجمالي مبلغ الطلب"
+      },
+      {
+        "token": "products",
+        "description": "أسماء المنتجات مفصولة بفواصل"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "رابط صورة رمز QR الخاص بـ Pix"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "كود Pix للنسخ واللصق"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "تاريخ انتهاء صلاحية الدفع"
+      },
+      {
+        "token": "checkout_url",
+        "description": "رابط سلة التسوق عبر الإنترنت"
+      }
+    ],
+    "toasts": {
+      "updated": "تم تحديث الحدث",
+      "updateFailed": "فشل تحديث الحدث: {{message}}",
+      "tokenRegenerated": "تمت إعادة إنشاء الرمز",
+      "regenerateFailed": "فشلت إعادة إنشاء الرمز: {{message}}"
+    },
+    "connectionTitle": "اتصال الويب هوك",
+    "connectionDescription": "قم بتهيئة هذا الرابط وهذا الرمز كويب هوك في حساب Kirvano الخاص بك لكي تصل الأحداث إلى هنا.",
+    "urlLabel": "رابط التكامل",
+    "tokenLabel": "الرمز (ترويسة security-token)",
+    "copy": "نسخ",
+    "regenerateToken": "إعادة إنشاء الرمز",
+    "regenerateConfirm": "تؤدي إعادة الإنشاء إلى إبطال الرمز الحالي فورًا — ستحتاج أيضًا إلى تحديثه في إعدادات الويب هوك في Kirvano. المتابعة؟",
+    "variablesTable": {
+      "variable": "المتغير",
+      "description": "الوصف"
+    },
+    "testMessage": {
+      "button": "اختبار الرسالة",
+      "title": "اختبار الرسالة",
+      "subtitle": "املأ المتغيرات أدناه، راجع المعاينة، وأرسل رسالة اختبار حقيقية إلى رقم واتساب.",
+      "phoneLabel": "رقم الهاتف",
+      "phoneHint": "أدرج رمز البلد، مثال: 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "المتغيرات",
+      "previewTitle": "معاينة",
+      "previewEmpty": "املأ المتغيرات لعرض المعاينة",
+      "submit": "إرسال الاختبار",
+      "cancel": "إلغاء",
+      "errors": {
+        "required": "هذا الحقل مطلوب",
+        "invalidUrl": "أدخل رابطًا صالحًا",
+        "invalidEmail": "أدخل بريدًا إلكترونيًا صالحًا",
+        "invalidNumber": "أدخل رقمًا صالحًا"
+      },
+      "toasts": {
+        "numberNotFound": "هذا الرقم غير مسجل في واتساب",
+        "sent": "تم إرسال رسالة الاختبار",
+        "sendFailed": "فشل إرسال رسالة الاختبار: {{message}}"
+      }
+    },
+    "settingsTitle": "الإعدادات",
+    "stats": {
+      "title": "إحصائيات الأحداث",
+      "chartTitle": "الأحداث عبر الزمن",
+      "empty": "لا توجد أحداث في الفترة المحددة",
+      "presets": {
+        "today": "اليوم",
+        "threeDays": "3 أيام",
+        "week": "هذا الأسبوع",
+        "month": "هذا الشهر",
+        "custom": "مخصص"
+      },
+      "mode": {
+        "cumulative": "تراكمي",
+        "grouped": "مجمّع حسب الفترة"
+      }
+    }
   }
 }

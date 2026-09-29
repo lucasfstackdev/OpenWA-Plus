@@ -12,6 +12,7 @@
     "delete": "Delete",
     "create": "Create",
     "close": "Close",
+    "save": "Save",
     "showApiKey": "Show API key",
     "hideApiKey": "Hide API key",
     "search": "Search",
@@ -63,7 +64,8 @@
     "messageTester": "Message Tester",
     "infrastructure": "Infrastructure",
     "plugins": "Plugins",
-    "logs": "Logs"
+    "logs": "Logs",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -977,5 +979,151 @@
       "current": "This session"
     },
     "loading": "Searching…"
+  },
+  "kirvano": {
+    "title": "Kirvano Integration",
+    "subtitle": "Configure the WhatsApp message sent for each Kirvano checkout webhook event.",
+    "noSessions": "Create a session first to configure Kirvano events.",
+    "events": {
+      "ON_ABANDONED_CART": "Abandoned Cart",
+      "ON_PIX_EXPIRED": "Pix Expired",
+      "ON_PIX_GENERATED": "Pix Generated",
+      "ON_SALE_APPROVED": "Sale Approved"
+    },
+    "templateLabel": "Message template",
+    "enabledLabel": "Active",
+    "editMessage": "Edit message",
+    "delay": {
+      "button": "Configure dispatch delay",
+      "title": "Dispatch delay",
+      "description": "Time to wait between receiving the event and sending the message.",
+      "minutesLabel": "Delay minutes",
+      "summary": "Dispatches in {{count}} min"
+    },
+    "tabs": {
+      "config": "Configuration",
+      "log": "Event log"
+    },
+    "log": {
+      "subtitle": "History of events received from Kirvano and each one's dispatch status.",
+      "searchPlaceholder": "Search by name or phone",
+      "filters": {
+        "eventType": "Event type",
+        "allEvents": "All events",
+        "from": "From",
+        "to": "To"
+      },
+      "columns": {
+        "receivedAt": "Received at",
+        "eventType": "Type",
+        "status": "Status",
+        "queueEstimate": "Queue entry (estimated)",
+        "customerName": "Customer",
+        "customerPhone": "Phone",
+        "actions": "Actions"
+      },
+      "status": {
+        "pending": "Pending",
+        "queued": "Queued",
+        "dispatched": "Dispatched",
+        "failed": "Failed"
+      },
+      "attemptLabel": "Attempt {{count}}",
+      "empty": {
+        "title": "No events recorded",
+        "description": "Events received from Kirvano will appear here."
+      },
+      "openChat": "Open chat"
+    },
+    "variablesTitle": "Available variables",
+    "variablesDescription": "Use these placeholders inside a template's message. Kirvano replaces them with real data when the event fires.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "Customer's name"
+      },
+      {
+        "token": "total_price",
+        "description": "Total order amount"
+      },
+      {
+        "token": "products",
+        "description": "Product names, separated by commas"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Pix QR Code image link"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "Pix copy-and-paste code"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "Payment expiration date"
+      },
+      {
+        "token": "checkout_url",
+        "description": "Online checkout URL"
+      }
+    ],
+    "toasts": {
+      "updated": "Event updated",
+      "updateFailed": "Failed to update event: {{message}}",
+      "tokenRegenerated": "Token regenerated",
+      "regenerateFailed": "Failed to regenerate token: {{message}}"
+    },
+    "connectionTitle": "Webhook connection",
+    "connectionDescription": "Configure this URL and token as a webhook in your Kirvano account so events are delivered here.",
+    "urlLabel": "Integration URL",
+    "tokenLabel": "Token (security-token header)",
+    "copy": "Copy",
+    "regenerateToken": "Regenerate token",
+    "regenerateConfirm": "Regenerating invalidates the current token immediately — you'll need to update it in Kirvano's webhook settings too. Continue?",
+    "variablesTable": {
+      "variable": "Variable",
+      "description": "Description"
+    },
+    "testMessage": {
+      "button": "Test message",
+      "title": "Test message",
+      "subtitle": "Fill in the variables below, review the preview, and send a real test message to a WhatsApp number.",
+      "phoneLabel": "Phone number",
+      "phoneHint": "Include the country code, e.g. 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "Variables",
+      "previewTitle": "Preview",
+      "previewEmpty": "Fill in the variables to see the preview",
+      "submit": "Send test",
+      "cancel": "Cancel",
+      "errors": {
+        "required": "This field is required",
+        "invalidUrl": "Enter a valid URL",
+        "invalidEmail": "Enter a valid email address",
+        "invalidNumber": "Enter a valid number"
+      },
+      "toasts": {
+        "numberNotFound": "This number is not on WhatsApp",
+        "sent": "Test message sent",
+        "sendFailed": "Failed to send test message: {{message}}"
+      }
+    },
+    "settingsTitle": "Settings",
+    "stats": {
+      "title": "Event statistics",
+      "chartTitle": "Events over time",
+      "empty": "No events in the selected period",
+      "presets": {
+        "today": "Today",
+        "threeDays": "3 days",
+        "week": "This week",
+        "month": "This month",
+        "custom": "Custom"
+      },
+      "mode": {
+        "cumulative": "Cumulative",
+        "grouped": "Grouped by period"
+      }
+    }
   }
 }

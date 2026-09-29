@@ -9,12 +9,16 @@ import {
   pluginsApi,
   pluginInstancesApi,
   statsApi,
+  kirvanoApi,
   type Webhook,
   type WebhookFilters,
   type TemplatePayload,
   type StatsPeriod,
   type CreateInstanceInput,
   type UpdateInstanceInput,
+  type KirvanoEventType,
+  type KirvanoEventUpdatePayload,
+  type KirvanoEventLogListParams,
 } from '../services/api';
 
 // ── Query Keys ────────────────────────────────────────────────────────
@@ -26,6 +30,12 @@ export const queryKeys = {
   sessionChats: (sessionId: string) => ['sessions', sessionId, 'chats'] as const,
   webhooks: ['webhooks'] as const,
   templates: (sessionId: string) => ['sessions', sessionId, 'templates'] as const,
+  kirvanoEvents: (sessionId: string) => ['sessions', sessionId, 'kirvano', 'events'] as const,
+  kirvanoToken: (sessionId: string) => ['sessions', sessionId, 'kirvano', 'token'] as const,
+  kirvanoEventLog: (sessionId: string, params: KirvanoEventLogListParams) =>
+    ['sessions', sessionId, 'kirvano', 'log', params] as const,
+  kirvanoStats: (sessionId: string, from: string, to: string) =>
+    ['sessions', sessionId, 'kirvano', 'stats', from, to] as const,
   apiKeys: ['apiKeys'] as const,
   logs: (params: { severity?: string; page: number; limit: number }) => ['logs', params] as const,
   infraStatus: ['infra', 'status'] as const,
@@ -169,6 +179,76 @@ export function useDeleteTemplateMutation() {
     onSuccess: (_template, params) => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.templates(params.sessionId) });
     },
+  });
+}
+
+// ── Kirvano Integration Queries ──────────────────────────────────────────────
+
+export function useKirvanoEventsQuery(sessionId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.kirvanoEvents(sessionId),
+    queryFn: () => kirvanoApi.list(sessionId),
+    enabled: enabled && !!sessionId,
+    staleTime: 30_000,
+    // Kirvano's own webhook receiver can seed/enable events outside this tab (another operator, or
+    // the first webhook ever hitting a session) — poll so the page reflects that without a manual
+    // refresh. Only ticks while the tab is visible (React Query default).
+    refetchInterval: 10_000,
+  });
+}
+
+export function useUpdateKirvanoEventMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: { sessionId: string; eventType: KirvanoEventType; data: KirvanoEventUpdatePayload }) =>
+      kirvanoApi.update(params.sessionId, params.eventType, params.data),
+    onSuccess: (_config, params) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.kirvanoEvents(params.sessionId) });
+    },
+  });
+}
+
+export function useKirvanoTokenQuery(sessionId: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.kirvanoToken(sessionId),
+    queryFn: () => kirvanoApi.getToken(sessionId),
+    enabled: enabled && !!sessionId,
+    staleTime: 30_000,
+  });
+}
+
+export function useRegenerateKirvanoTokenMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => kirvanoApi.regenerateToken(sessionId),
+    onSuccess: (_token, sessionId) => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.kirvanoToken(sessionId) });
+    },
+  });
+}
+
+export function useKirvanoEventLogQuery(sessionId: string, params: KirvanoEventLogListParams, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.kirvanoEventLog(sessionId, params),
+    queryFn: () => kirvanoApi.listLog(sessionId, params),
+    enabled: enabled && !!sessionId,
+    // Shorter than the other Kirvano hooks' 30s: automatic retries change a row's status on their
+    // own, so a fairly fresh refetch is what keeps the table honest without any user action.
+    staleTime: 10_000,
+    // New webhook events land here without any action in this tab — poll so the log fills in live.
+    refetchInterval: 10_000,
+  });
+}
+
+export function useKirvanoStatsQuery(sessionId: string, from: string, to: string, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.kirvanoStats(sessionId, from, to),
+    queryFn: () => kirvanoApi.getStats(sessionId, from, to),
+    enabled: enabled && !!sessionId && !!from && !!to,
+    staleTime: 30_000,
+    // Keeps the KPI totals/chart moving as new events arrive, same reasoning as the other Kirvano
+    // queries above.
+    refetchInterval: 10_000,
   });
 }
 

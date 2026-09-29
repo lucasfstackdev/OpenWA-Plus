@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parsePhoneFromJid, formatPhoneForDisplay } from './formatPhone.ts';
+import { parsePhoneFromJid, formatPhoneForDisplay, formatBrazilianPhone } from './formatPhone.ts';
 
 test('parsePhoneFromJid extracts digits from a personal @c.us JID', () => {
   assert.equal(parsePhoneFromJid('628123456789@c.us'), '628123456789');
@@ -56,4 +56,26 @@ test('formatPhoneForDisplay passes short codes through unchanged with a + prefix
 
 test('formatPhoneForDisplay accepts a raw JID as input (delegates to parsePhoneFromJid)', () => {
   assert.equal(formatPhoneForDisplay('628123456789@c.us'), '+62 812 345 6789');
+});
+
+test('formatBrazilianPhone formats a complete 13-digit BR mobile number', () => {
+  assert.equal(formatBrazilianPhone('5518991604584'), '55 (18) 99160 4584');
+});
+
+test('formatBrazilianPhone passes through 2 or fewer digits unchanged (country code being typed)', () => {
+  assert.equal(formatBrazilianPhone('5'), '5');
+  assert.equal(formatBrazilianPhone('55'), '55');
+});
+
+test('formatBrazilianPhone opens the area-code group without closing it until more digits follow', () => {
+  assert.equal(formatBrazilianPhone('551'), '55 (1');
+  assert.equal(formatBrazilianPhone('5518'), '55 (18');
+});
+
+test('formatBrazilianPhone closes the area-code group once the number starts', () => {
+  assert.equal(formatBrazilianPhone('55189'), '55 (18) 9');
+});
+
+test('formatBrazilianPhone caps at 13 digits, ignoring anything typed beyond that', () => {
+  assert.equal(formatBrazilianPhone('551899160458499'), '55 (18) 99160 4584');
 });

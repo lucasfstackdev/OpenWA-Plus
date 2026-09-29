@@ -1,0 +1,181 @@
+/* Kirvano stats/KPI section — all rules scoped under .kirvano-charts to avoid collisions with
+   Kirvano.css and DashboardCharts.css (both define similarly-named period-toggle/chart-card rules). */
+.kirvano-charts {
+  margin-bottom: 2rem;
+}
+
+.kirvano-charts .kirvano-charts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.kirvano-charts .kirvano-charts-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+/* Segmented pill selectors — same visual language as DashboardCharts' period-toggle. */
+.kirvano-charts .kirvano-preset-toggle,
+.kirvano-charts .kirvano-mode-toggle {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-light);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.kirvano-charts .kirvano-preset-tab,
+.kirvano-charts .kirvano-mode-tab {
+  padding: 0.35rem 0.85rem;
+  background: none;
+  border: none;
+  border-radius: 7px;
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.kirvano-charts .kirvano-preset-tab.active,
+.kirvano-charts .kirvano-mode-tab.active {
+  background: var(--bg-white);
+  color: var(--text-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.kirvano-charts .kirvano-charts-custom-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.kirvano-charts .kirvano-charts-custom-range .form-group {
+  min-width: 220px;
+}
+
+/* KPI cards — same layout/typography as Dashboard.css' .stats-grid/.stat-card, reimplemented here
+   since the project scopes styling per file rather than sharing classes across pages/components. */
+.kirvano-charts .kirvano-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.kirvano-charts .kirvano-kpi-card {
+  position: relative;
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.kirvano-charts .kirvano-kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+}
+
+.kirvano-charts .kirvano-kpi-icon {
+  position: relative;
+  z-index: 2;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.kirvano-charts .kirvano-kpi-watermark {
+  position: absolute;
+  right: -10px;
+  bottom: -15px;
+  width: 80px;
+  height: 80px;
+  opacity: 0.05;
+  color: var(--text-primary);
+  transform: rotate(-15deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.kirvano-charts .kirvano-kpi-label {
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kirvano-charts .kirvano-kpi-value {
+  position: relative;
+  z-index: 2;
+  color: var(--text-primary);
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.kirvano-charts .kirvano-chart-card {
+  background: var(--bg-white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.kirvano-charts .kirvano-chart-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.kirvano-charts .kirvano-chart-card-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.kirvano-charts .kirvano-charts-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 1024px) {
+  .kirvano-charts .kirvano-kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .kirvano-charts .kirvano-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

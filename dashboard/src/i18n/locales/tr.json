@@ -12,6 +12,7 @@
     "delete": "Sil",
     "create": "Oluştur",
     "close": "Kapat",
+    "save": "Kaydet",
     "showApiKey": "API anahtarını göster",
     "hideApiKey": "API anahtarını gizle",
     "search": "Ara",
@@ -63,7 +64,8 @@
     "messageTester": "Mesaj Test Aracı",
     "infrastructure": "Altyapı",
     "plugins": "Eklentiler",
-    "logs": "Kayıtlar (Logs)"
+    "logs": "Kayıtlar (Logs)",
+    "kirvano": "Kirvano"
   },
   "chats": {
     "media": {
@@ -953,5 +955,151 @@
       "current": "Bu oturum"
     },
     "loading": "Aranıyor…"
+  },
+  "kirvano": {
+    "title": "Kirvano Entegrasyonu",
+    "subtitle": "Her Kirvano ödeme webhook olayı için gönderilecek WhatsApp mesajını yapılandırın.",
+    "noSessions": "Kirvano olaylarını yapılandırmak için önce bir oturum oluşturun.",
+    "events": {
+      "ON_ABANDONED_CART": "Terk Edilmiş Sepet",
+      "ON_PIX_EXPIRED": "Pix Süresi Doldu",
+      "ON_PIX_GENERATED": "Pix Oluşturuldu",
+      "ON_SALE_APPROVED": "Satış Onaylandı"
+    },
+    "templateLabel": "Mesaj şablonu",
+    "enabledLabel": "Aktif",
+    "editMessage": "Mesajı düzenle",
+    "delay": {
+      "button": "Gönderim gecikmesini yapılandır",
+      "title": "Gönderim gecikmesi",
+      "description": "Olayın alınması ile mesajın gönderilmesi arasındaki bekleme süresi.",
+      "minutesLabel": "Gecikme dakikası",
+      "summary": "{{count}} dk içinde gönderilecek"
+    },
+    "tabs": {
+      "config": "Yapılandırma",
+      "log": "Olay günlüğü"
+    },
+    "log": {
+      "subtitle": "Kirvano'dan alınan olayların geçmişi ve her birinin gönderim durumu.",
+      "searchPlaceholder": "İsim veya telefon ile ara",
+      "filters": {
+        "eventType": "Olay türü",
+        "allEvents": "Tüm olaylar",
+        "from": "Başlangıç",
+        "to": "Bitiş"
+      },
+      "columns": {
+        "receivedAt": "Alınma zamanı",
+        "eventType": "Tür",
+        "status": "Durum",
+        "queueEstimate": "Kuyruğa giriş (tahmini)",
+        "customerName": "Müşteri",
+        "customerPhone": "Telefon",
+        "actions": "İşlemler"
+      },
+      "status": {
+        "pending": "Beklemede",
+        "queued": "Kuyrukta",
+        "dispatched": "Gönderildi",
+        "failed": "Başarısız"
+      },
+      "attemptLabel": "Deneme {{count}}",
+      "empty": {
+        "title": "Kayıtlı olay yok",
+        "description": "Kirvano'dan alınan olaylar burada görünecek."
+      },
+      "openChat": "Sohbeti aç"
+    },
+    "variablesTitle": "Kullanılabilir değişkenler",
+    "variablesDescription": "Bu yer tutucuları bir şablonun mesajı içinde kullanın. Olay tetiklendiğinde Kirvano bunları gerçek verilerle değiştirir.",
+    "variables": [
+      {
+        "token": "customer.name",
+        "description": "Müşterinin adı"
+      },
+      {
+        "token": "total_price",
+        "description": "Siparişin toplam tutarı"
+      },
+      {
+        "token": "products",
+        "description": "Virgülle ayrılmış ürün adları"
+      },
+      {
+        "token": "payment.qrcode_image",
+        "description": "Pix QR Kodu görsel bağlantısı"
+      },
+      {
+        "token": "payment.qrcode",
+        "description": "Kopyalanabilir Pix kodu"
+      },
+      {
+        "token": "payment.expires_at",
+        "description": "Ödemenin son geçerlilik tarihi"
+      },
+      {
+        "token": "checkout_url",
+        "description": "Çevrimiçi sepet URL'si"
+      }
+    ],
+    "toasts": {
+      "updated": "Olay güncellendi",
+      "updateFailed": "Olay güncellenemedi: {{message}}",
+      "tokenRegenerated": "Token yenilendi",
+      "regenerateFailed": "Token yenilenemedi: {{message}}"
+    },
+    "connectionTitle": "Webhook bağlantısı",
+    "connectionDescription": "Olayların buraya ulaşması için bu URL'yi ve bu token'ı Kirvano hesabınızda webhook olarak yapılandırın.",
+    "urlLabel": "Entegrasyon URL'si",
+    "tokenLabel": "Token (security-token başlığı)",
+    "copy": "Kopyala",
+    "regenerateToken": "Token'ı yenile",
+    "regenerateConfirm": "Yenileme mevcut token'ı hemen geçersiz kılar — Kirvano webhook ayarlarında da güncellemeniz gerekecek. Devam edilsin mi?",
+    "variablesTable": {
+      "variable": "Değişken",
+      "description": "Açıklama"
+    },
+    "testMessage": {
+      "button": "Mesajı test et",
+      "title": "Mesajı test et",
+      "subtitle": "Aşağıdaki değişkenleri doldurun, önizlemeyi kontrol edin ve bir WhatsApp numarasına gerçek bir test mesajı gönderin.",
+      "phoneLabel": "Telefon numarası",
+      "phoneHint": "Ülke kodunu ekleyin, ör.: 55 (18) 99160 4584",
+      "phonePlaceholder": "55 (18) 99160 4584",
+      "variablesTitle": "Değişkenler",
+      "previewTitle": "Önizleme",
+      "previewEmpty": "Önizlemeyi görmek için değişkenleri doldurun",
+      "submit": "Testi gönder",
+      "cancel": "İptal",
+      "errors": {
+        "required": "Bu alan zorunludur",
+        "invalidUrl": "Geçerli bir URL girin",
+        "invalidEmail": "Geçerli bir e-posta adresi girin",
+        "invalidNumber": "Geçerli bir sayı girin"
+      },
+      "toasts": {
+        "numberNotFound": "Bu numara WhatsApp'ta kayıtlı değil",
+        "sent": "Test mesajı gönderildi",
+        "sendFailed": "Test mesajı gönderilemedi: {{message}}"
+      }
+    },
+    "settingsTitle": "Ayarlar",
+    "stats": {
+      "title": "Olay istatistikleri",
+      "chartTitle": "Zaman içinde olaylar",
+      "empty": "Seçilen dönemde olay yok",
+      "presets": {
+        "today": "Bugün",
+        "threeDays": "3 gün",
+        "week": "Bu hafta",
+        "month": "Bu ay",
+        "custom": "Özel"
+      },
+      "mode": {
+        "cumulative": "Kümülatif",
+        "grouped": "Döneme göre gruplanmış"
+      }
+    }
   }
 }
